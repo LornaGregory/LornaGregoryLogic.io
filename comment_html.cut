@@ -1,0 +1,5 @@
+\begin{center}
+\begin{tikzpicture}
+\synttree[$F(G(c,F(c,c),c),F(c,F(c,c)))$[$G(c,F(c,c),c)$[$c$][$F(c,c)$[$c$][$c$]][$c$]][$F(c,F(c,c))$[$c$][$F(c,c)$[$c$][$c$]]]]
+\end{tikzpicture}
+\end{center}

@@ -1,0 +1,2 @@
+\CustomizeMathJax{\newcommand{\LWRmarginnote}[1][]{}}
+\CustomizeMathJax{\newcommand{\marginnote}[2][]{\qquad{\small\textrm{#2}}\LWRmarginnote}}

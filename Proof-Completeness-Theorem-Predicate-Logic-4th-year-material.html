@@ -1,0 +1,1879 @@
+
+<!DOCTYPE html>
+<html lang="en-UK">
+<head>
+<meta charset="UTF-8" />
+<meta name="author" content="Lorna Gregory" />
+<meta name="generator" content="LaTeX Lwarp package" />
+<meta name="description" content="A description." />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Logic — Proof of the Completeness Theorem for Predicate Logic (4th year material)</title>
+<link rel="stylesheet" type="text/css" href="lwarpLorna.css" />
+
+<script>
+// Lwarp MathJax emulation code
+//
+// Based on code by Davide P. Cervone.
+// Equation numbering: https://github.com/mathjax/MathJax/issues/2427
+// Starred and ifnextchar macros: https://github.com/mathjax/MathJax/issues/2428
+// \left, \right delimiters: https://github.com/mathjax/MathJax/issues/2535
+//
+// Modified by Brian Dunn to adjust equation numbering and add subequations.
+//
+// LaTeX can use \seteqnumber{subequations?}{section}{number} before each equation.
+// subequations? is 0 usually, 1 if inside subequations.
+// section is a string printed as-is, or empty.
+// number is auto-incremented by MathJax between equations.
+//
+MathJax = {
+     subequations: "0",
+     section: "",
+     loader: {
+          load: ['[tex]/tagformat', '[tex]/textmacros'],
+     },
+     startup: {
+          ready() {
+              //       These would be replaced by import commands if you wanted to make
+              //       a proper extension.
+              const Configuration = MathJax._.input.tex.Configuration.Configuration;
+              const CommandMap = MathJax._.input.tex.SymbolMap.CommandMap;
+              const Macro = MathJax._.input.tex.Symbol.Macro;
+              const TexError = MathJax._.input.tex.TexError.default;
+              const ParseUtil = MathJax._.input.tex.ParseUtil.default;
+              const expandable = MathJax._.util.Options.expandable;
+
+
+              //       Insert the replacement string into the TeX string, and check
+              //       that there haven't been too many maxro substitutions (prevents
+              //       infinite loops).
+              const useArgument = (parser, text) => {
+                   parser.string = ParseUtil.addArgs(parser, text, parser.string.slice(parser.i));
+                   parser.i = 0;
+                   if (++parser.macroCount > parser.configuration.options.maxMacros) {
+                        throw new TexError('MaxMacroSub1',
+                        'MathJax maximum macro substitution count exceeded; ' +
+                        'is there a recursive macro call?');
+                   }
+              }
+
+
+              //       Create the command map for:
+              //            \ifstar, \ifnextchar, \ifblank, \ifstrequal, \gsub, \seteqnumber
+              new CommandMap('Lwarp-macros', {
+                   ifstar: 'IfstarFunction',
+                   ifnextchar: 'IfnextcharFunction',
+                   ifblank: 'IfblankFunction',
+                   ifstrequal: 'IfstrequalFunction',
+                   gsubstitute: 'GsubstituteFunction',
+                   seteqnumber: 'SeteqnumberFunction'
+              }, {
+                   //       This function implements an ifstar macro.
+                   IfstarFunction(parser, name) {
+                        const resultstar = parser.GetArgument(name);
+                        const resultnostar = parser.GetArgument(name);
+                        const star = parser.GetStar();                        // true if there is a *
+                        useArgument(parser, star ? resultstar : resultnostar);
+                   },
+
+
+                   //       This function implements an ifnextchar macro.
+                   IfnextcharFunction(parser, name) {
+                        let whichchar = parser.GetArgument(name);
+                        if (whichchar.match(/^(?:0x[0-9A-F]+|[0-9]+)$/i)) {
+                            // $ syntax highlighting
+                            whichchar = String.fromCodePoint(parseInt(whichchar));
+                        }
+                        const resultnextchar = parser.GetArgument(name);
+                        const resultnotnextchar = parser.GetArgument(name);
+                        const gotchar = (parser.GetNext() === whichchar);
+                        useArgument(parser, gotchar ? resultnextchar : resultnotnextchar);
+                   },
+
+
+                   // This function implements an ifblank macro.
+                   IfblankFunction(parser, name) {
+                        const blankarg = parser.GetArgument(name);
+                        const resultblank = parser.GetArgument(name);
+                        const resultnotblank = parser.GetArgument(name);
+                        const isblank = (blankarg.trim() == "");
+                        useArgument(parser, isblank ? resultblank : resultnotblank);
+                   },
+
+
+                   // This function implements an ifstrequal macro.
+                   IfstrequalFunction(parser, name) {
+                        const strequalfirst = parser.GetArgument(name);
+                        const strequalsecond = parser.GetArgument(name);
+                        const resultequal = parser.GetArgument(name);
+                        const resultnotequal = parser.GetArgument(name);
+                        const isequal = (strequalfirst == strequalsecond);
+                        useArgument(parser, isequal ? resultequal : resultnotequal);
+                   },
+
+
+                   // This function implements a gsub macro.
+                   GsubstituteFunction(parser, name) {
+                        const gsubfirst = parser.GetArgument(name);
+                        const gsubsecond = parser.GetArgument(name);
+                        const gsubthird = parser.GetArgument(name);
+                        let gsubresult=gsubfirst.replace(gsubsecond, gsubthird);
+                        useArgument(parser, gsubresult);
+                   },
+
+
+                   //       This function modifies the equation numbers.
+                   SeteqnumberFunction(parser, name) {
+                            //   Get the macro parameters
+                            const star = parser.GetStar();                      // true if there is a *
+                            const optBrackets = parser.GetBrackets(name);        // contents of optional brackets
+                            const newsubequations = parser.GetArgument(name);      // the subequations argument
+                            const neweqsection = parser.GetArgument(name);      // the eq section argument
+                            const neweqnumber = parser.GetArgument(name);        // the eq number argument
+                            MathJax.config.subequations=newsubequations ;       // a string with boolean meaning
+                            MathJax.config.section=neweqsection ;               // a string with numeric meaning
+                            parser.tags.counter = parser.tags.allCounter = neweqnumber ;
+                   }
+
+
+              });
+
+
+              //       Create the Lwarp-macros package
+              Configuration.create('Lwarp-macros', {
+                   handler: {macro: ['Lwarp-macros']}
+              });
+
+
+              MathJax.startup.defaultReady();
+
+
+              // For forward references:
+              MathJax.startup.input[0].preFilters.add(({math}) => {
+                   if (math.inputData.recompile){
+                            MathJax.config.subequations = math.inputData.recompile.subequations;
+                            MathJax.config.section = math.inputData.recompile.section;
+                   }
+              });
+              MathJax.startup.input[0].postFilters.add(({math}) => {
+                   if (math.inputData.recompile){
+                            math.inputData.recompile.subequations = MathJax.config.subequations;
+                            math.inputData.recompile.section = MathJax.config.section;
+                   }
+              });
+
+
+                   // For \left, \right with unicode-math:
+                   const {DelimiterMap} = MathJax._.input.tex.SymbolMap;
+                   const {Symbol} = MathJax._.input.tex.Symbol;
+                   const {MapHandler} = MathJax._.input.tex.MapHandler;
+                   const delimiter = MapHandler.getMap('delimiter');
+                   delimiter.add('\\lBrack', new Symbol('\\lBrack', '\u27E6'));
+                   delimiter.add('\\rBrack', new Symbol('\\rBrack', '\u27E7'));
+                   delimiter.add('\\lAngle', new Symbol('\\lAngle', '\u27EA'));
+                   delimiter.add('\\rAngle', new Symbol('\\rAngle', '\u27EB'));
+                   delimiter.add('\\lbrbrak', new Symbol('\\lbrbrak', '\u2772'));
+                   delimiter.add('\\rbrbrak', new Symbol('\\rbrbrak', '\u2773'));
+                   delimiter.add('\\lbag', new Symbol('\\lbag', '\u27C5'));
+                   delimiter.add('\\rbag', new Symbol('\\rbag', '\u27C6'));
+                   delimiter.add('\\llparenthesis', new Symbol('\\llparenthesis', '\u2987'));
+                   delimiter.add('\\rrparenthesis', new Symbol('\\rrparenthesis', '\u2988'));
+                   delimiter.add('\\llangle', new Symbol('\\llangle', '\u2989'));
+                   delimiter.add('\\rrangle', new Symbol('\\rrangle', '\u298A'));
+                   delimiter.add('\\Lbrbrak', new Symbol('\\Lbrbrak', '\u27EC'));
+                   delimiter.add('\\Rbrbrak', new Symbol('\\Rbrbrak', '\u27ED'));
+                   delimiter.add('\\lBrace', new Symbol('\\lBrace', '\u2983'));
+                   delimiter.add('\\rBrace', new Symbol('\\rBrace', '\u2984'));
+                   delimiter.add('\\lParen', new Symbol('\\lParen', '\u2985'));
+                   delimiter.add('\\rParen', new Symbol('\\rParen', '\u2986'));
+                   delimiter.add('\\lbrackubar', new Symbol('\\lbrackubar', '\u298B'));
+                   delimiter.add('\\rbrackubar', new Symbol('\\rbrackubar', '\u298C'));
+                   delimiter.add('\\lbrackultick', new Symbol('\\lbrackultick', '\u298D'));
+                   delimiter.add('\\rbracklrtick', new Symbol('\\rbracklrtick', '\u298E'));
+                   delimiter.add('\\lbracklltick', new Symbol('\\lbracklltick', '\u298F'));
+                   delimiter.add('\\rbrackurtick', new Symbol('\\rbrackurtick', '\u2990'));
+                   delimiter.add('\\langledot', new Symbol('\\langledot', '\u2991'));
+                   delimiter.add('\\rangledot', new Symbol('\\rangledot', '\u2992'));
+                   delimiter.add('\\lparenless', new Symbol('\\lparenless', '\u2993'));
+                   delimiter.add('\\rparengtr', new Symbol('\\rparengtr', '\u2994'));
+                   delimiter.add('\\Lparengtr', new Symbol('\\Lparengtr', '\u2995'));
+                   delimiter.add('\\Rparenless', new Symbol('\\Rparenless', '\u2996'));
+                   delimiter.add('\\lblkbrbrak', new Symbol('\\lblkbrbrak', '\u2997'));
+                   delimiter.add('\\rblkbrbrak', new Symbol('\\rblkbrbrak', '\u2998'));
+                   delimiter.add('\\lvzigzag', new Symbol('\\lvzigzag', '\u29D8'));
+                   delimiter.add('\\rvzigzag', new Symbol('\\rvzigzag', '\u29D9'));
+                   delimiter.add('\\Lvzigzag', new Symbol('\\Lvzigzag', '\u29DA'));
+                   delimiter.add('\\Rvzigzag', new Symbol('\\Rvzigzag', '\u29DB'));
+                   delimiter.add('\\lcurvyangle', new Symbol('\\lcurvyangle', '\u29FC'));
+                   delimiter.add('\\rcurvyangle', new Symbol('\\rcurvyangle', '\u29FD'));
+                   delimiter.add('\\Vvert', new Symbol('\\Vvert', '\u2980'));
+          }       // ready
+     },           // startup
+
+
+     tex: {
+          packages: {'[+]': ['tagformat', 'Lwarp-macros', 'textmacros']},
+          tags: "ams",
+                   tagformat: {
+                            number: function (n) {
+                                 if(MathJax.config.subequations==0)
+                                        return(MathJax.config.section + n);
+                                 else
+                                        return(MathJax.config.section + String.fromCharCode(96+n));
+                            },
+                   },
+     }
+}
+</script>
+
+
+<script
+          id="MathJax-script"
+          src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"
+></script>
+
+</head>
+<body>
+
+
+<a id="Logic-autopage-271"></a>
+<nav class="topnavigation"><a href="Logic.html" class="linkhome" >
+Home</a></nav>
+
+
+<div class="bodyandsidetoc">
+<div class="sidetoccontainer">
+
+
+<nav class="sidetoc">
+
+
+<div class="sidetoctitle">
+
+<p>
+<span class="sidetocthetitle">Mathematical Logic</span>
+</p>
+
+<p>
+Contents
+</p>
+</div>
+
+
+<div class="sidetoccontents">
+
+<p>
+<a href="Logic.html" class="linkhome" >
+Home</a>
+</p>
+
+<p>
+<a href="Introduction.html#autosec-5" class="tocsection" >
+<span class="sectionnumber">1</span>&#x2003;Introduction</a>
+</p>
+
+
+<p>
+<a href="Propositional-Logic.html#autosec-16" class="tocsection" >
+<span class="sectionnumber">2</span>&#x2003;Propositional Logic</a>
+</p>
+
+
+<p>
+<a href="Propositional-Logic.html#autosec-17" class="tocsubsection" >
+<span class="sectionnumber">2.1</span>&#x2003;Propositional formulas</a>
+</p>
+
+
+<p>
+<a href="Truth.html#autosec-95" class="tocsubsection" >
+<span class="sectionnumber">2.2</span>&#x2003;Truth</a>
+</p>
+
+
+<p>
+<a href="Proofs.html#autosec-146" class="tocsubsection" >
+<span class="sectionnumber">2.3</span>&#x2003;Proofs</a>
+</p>
+
+
+<p>
+<a href="Completeness.html#autosec-157" class="tocsubsection" >
+<span class="sectionnumber">2.4</span>&#x2003;Completeness</a>
+</p>
+
+
+<p>
+<a href="Predicate-Logic.html#autosec-168" class="tocsection" >
+<span class="sectionnumber">3</span>&#x2003;Predicate Logic</a>
+</p>
+
+
+<p>
+<a href="Predicate-Logic.html#autosec-169" class="tocsubsection" >
+<span class="sectionnumber">3.1</span>&#x2003;Languages and Structures</a>
+</p>
+
+
+<p>
+<a href="Formulas.html#autosec-174" class="tocsubsection" >
+<span class="sectionnumber">3.2</span>&#x2003;Formulas</a>
+</p>
+
+
+<p>
+<a href="Tarski-Truth-Definition.html#autosec-199" class="tocsubsection" >
+<span class="sectionnumber">3.3</span>&#x2003;Tarski’s Truth Definition</a>
+</p>
+
+
+<p>
+<a href="Proofs-9.html#autosec-245" class="tocsubsection" >
+<span class="sectionnumber">3.4</span>&#x2003;Proofs</a>
+</p>
+
+
+<p>
+<a href="Completeness-10.html#autosec-258" class="tocsubsection" >
+<span class="sectionnumber">3.5</span>&#x2003;Completeness</a>
+</p>
+
+
+<p>
+<a href="Proof-Completeness-Theorem-Predicate-Logic-4th-year-material.html#autosec-272" class="tocsection" >
+<span class="sectionnumber">4</span>&#x2003;Proof of the Completeness Theorem for Predicate Logic (4th year material)</a>
+</p>
+
+
+<p>
+<a href="Application-Compactness-Theorem-Extension-Constants.html#autosec-310" class="tocsection" >
+<span class="sectionnumber">5</span>&#x2003;Application of the Compactness Theorem and Extension by Constants</a>
+</p>
+
+
+<p>
+<a href="Universal-Algebra-Substructures-Homomorphisms.html#autosec-336" class="tocsection" >
+<span class="sectionnumber">6</span>&#x2003;Universal Algebra: Substructures and Homomorphisms</a>
+</p>
+
+
+<p>
+<a href="Further-Model-Theory-4th-year-material.html#autosec-346" class="tocsection" >
+<span class="sectionnumber">7</span>&#x2003;Further Model Theory (4th year material)</a>
+</p>
+
+
+<p>
+<a href="Further-Model-Theory-4th-year-material.html#autosec-347" class="tocsubsection" >
+<span class="sectionnumber">7.1</span>&#x2003;Definable Sets</a>
+</p>
+
+
+<p>
+<a href="Elementary-Substructures.html#autosec-354" class="tocsubsection" >
+<span class="sectionnumber">7.2</span>&#x2003;Elementary Substructures</a>
+</p>
+
+
+<p>
+<a href="Downwards-Lowenheim-Skolem-Theorem.html#autosec-364" class="tocsubsection" >
+<span class="sectionnumber">7.3</span>&#x2003;Downwards Lo&#x0308;wenheim-Skolem Theorem</a>
+</p>
+
+
+<p>
+<a href="Upwards-Lowenheim-Skolem-Theorem.html#autosec-368" class="tocsubsection" >
+<span class="sectionnumber">7.4</span>&#x2003;Upwards Lo&#x0308;wenheim-Skolem Theorem</a>
+</p>
+
+
+<p>
+<a href="Categoricity.html#autosec-371" class="tocsubsection" >
+<span class="sectionnumber">7.5</span>&#x2003;Categoricity</a>
+</p>
+
+
+</div>
+
+</nav>
+
+</div>
+
+
+<main class="bodycontainer">
+
+
+<section class="textbody">
+
+<h1>Mathematical Logic</h1>
+
+<!--MathJax customizations:-->
+<div data-nosnippet
+    style="display:none"
+>
+
+\(\newcommand{\footnotename}{footnote}\)
+
+\(\def \LWRfootnote {1}\)
+
+\(\newcommand {\footnote }[2][\LWRfootnote ]{{}^{\mathrm {#1}}}\)
+
+\(\newcommand {\footnotemark }[1][\LWRfootnote ]{{}^{\mathrm {#1}}}\)
+
+\(\let \LWRorighspace \hspace \)
+
+\(\renewcommand {\hspace }{\ifstar \LWRorighspace \LWRorighspace }\)
+
+\(\newcommand {\TextOrMath }[2]{#2}\)
+
+\(\newcommand {\mathnormal }[1]{{#1}}\)
+
+\(\newcommand \ensuremath [1]{#1}\)
+
+\(\newcommand {\LWRframebox }[2][]{\fbox {#2}} \newcommand {\framebox }[1][]{\LWRframebox } \)
+
+\(\newcommand {\setlength }[2]{}\)
+
+\(\newcommand {\addtolength }[2]{}\)
+
+\(\newcommand {\setcounter }[2]{}\)
+
+\(\newcommand {\addtocounter }[2]{}\)
+
+\(\newcommand {\arabic }[1]{}\)
+
+\(\newcommand {\number }[1]{}\)
+
+\(\newcommand {\noalign }[1]{\text {#1}\notag \\}\)
+
+\(\newcommand {\cline }[1]{}\)
+
+\(\newcommand {\directlua }[1]{\text {(directlua)}}\)
+
+\(\newcommand {\luatexdirectlua }[1]{\text {(directlua)}}\)
+
+\(\newcommand {\protect }{}\)
+
+\(\def \LWRabsorbnumber #1 {}\)
+
+\(\def \LWRabsorbquotenumber &quot;#1 {}\)
+
+\(\newcommand {\LWRabsorboption }[1][]{}\)
+
+\(\newcommand {\LWRabsorbtwooptions }[1][]{\LWRabsorboption }\)
+
+\(\def \mathchar {\ifnextchar &quot;\LWRabsorbquotenumber \LWRabsorbnumber }\)
+
+\(\def \mathcode #1={\mathchar }\)
+
+\(\let \delcode \mathcode \)
+
+\(\let \delimiter \mathchar \)
+
+\(\def \oe {\unicode {x0153}}\)
+
+\(\def \OE {\unicode {x0152}}\)
+
+\(\def \ae {\unicode {x00E6}}\)
+
+\(\def \AE {\unicode {x00C6}}\)
+
+\(\def \aa {\unicode {x00E5}}\)
+
+\(\def \AA {\unicode {x00C5}}\)
+
+\(\def \o {\unicode {x00F8}}\)
+
+\(\def \O {\unicode {x00D8}}\)
+
+\(\def \l {\unicode {x0142}}\)
+
+\(\def \L {\unicode {x0141}}\)
+
+\(\def \ss {\unicode {x00DF}}\)
+
+\(\def \SS {\unicode {x1E9E}}\)
+
+\(\def \dag {\unicode {x2020}}\)
+
+\(\def \ddag {\unicode {x2021}}\)
+
+\(\def \P {\unicode {x00B6}}\)
+
+\(\def \copyright {\unicode {x00A9}}\)
+
+\(\def \pounds {\unicode {x00A3}}\)
+
+\(\let \LWRref \ref \)
+
+\(\renewcommand {\ref }{\ifstar \LWRref \LWRref }\)
+
+\( \newcommand {\multicolumn }[3]{#3}\)
+
+\(\require {textcomp}\)
+
+\(\newcommand {\intertext }[1]{\text {#1}\notag \\}\)
+
+\(\let \Hat \hat \)
+
+\(\let \Check \check \)
+
+\(\let \Tilde \tilde \)
+
+\(\let \Acute \acute \)
+
+\(\let \Grave \grave \)
+
+\(\let \Dot \dot \)
+
+\(\let \Ddot \ddot \)
+
+\(\let \Breve \breve \)
+
+\(\let \Bar \bar \)
+
+\(\let \Vec \vec \)
+
+\(\newcommand {\bm }[1]{\boldsymbol {#1}}\)
+
+\(\newcommand {\R }{\mathbb {R}}\)
+
+\(\newcommand {\C }{\mathbb {C}}\)
+
+\(\newcommand {\Z }{\mathbb {Z}}\)
+
+\(\newcommand {\N }{\mathbb {N}}\)
+
+\(\newcommand {\Q }{\mathbb {Q}}\)
+
+\(\newcommand {\st }{\ \vert \ }\)
+
+\(\newcommand {\mcal }[1]{\mathcal {#1}}\)
+
+\(\newcommand {\TmAlg }{\mathrm {TmAlg}}\)
+
+\(\newcommand {\PROP }{\mathrm {PROP}}\)
+
+\(\newcommand {\PF }{\mathrm {S}}\)
+
+\(\newcommand {\proves }{\vdash }\)
+
+\(\newcommand {\tm }{\textrm {tm}}\)
+
+\(\newcommand {\ctm }{\textrm {ctm}}\)
+
+\(\newcommand {\Fml }{\textrm {Fml}}\)
+
+\(\newcommand {\Fr }{\textrm {Fr}}\)
+
+\(\newcommand {\Vbl }{\textrm {Vbl}}\)
+
+\(\newcommand {\cmpx }{\texttt {cmpx}}\)
+
+\(\newcommand {\supp }{\text {supp}}\)
+
+\(\newcommand {\conn }{\,\square \,}\)
+
+\(\newcommand {\con }{\,\diamond \,}\)
+
+\(\newcommand {\ct }{\texttt {c}}\)
+
+\(\newcommand {\T }{\mathbb {T}}\)
+
+\(\newcommand {\F }{\mathbb {F}}\)
+
+\(\newcommand {\mathlarger }[1]{#1}\)
+
+\(\newcommand {\mathsmaller }[1]{#1}\)
+
+\(\newcommand {\LWRmarginnote }[1][]{}\)
+
+\(\newcommand {\marginnote }[2][]{\qquad {\small \textrm {#2}}\LWRmarginnote }\)
+
+</div>
+
+<!--
+...... section Proof of the Completeness Theorem for Predicate Logic (4th year material) ......
+-->
+<h4 id="autosec-272"><span class="sectionnumber">4&#x2003;</span>Proof of the Completeness Theorem for Predicate Logic (4th year material)</h4>
+<a id="Logic-autopage-272"></a>
+<a id="Logic-autofile-11"></a>
+
+<p>
+The content of this section is one of the advanced topics. We will refer forward to material in the next section at least once. The aim of this section is to prove the Model Existence Theorem and to deduce from it Go&#x0308;del’s Completeness Theorem.
+</p>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-273"></a>
+<span class="amsthmnameplain">Theorem</span><span class="amsthmnumberplain"> <span class="textup">4.1</span></span><span class="amsthmnoteplain"> (Model Existence Theorem)</span>. </span> <a id="ModelExThm"></a> Let
+\(\mcal {L}\) be a (first order) language. If \(\Sigma \) is a consistent set of \(\mcal {L}\)-sentences then \(\Sigma \) has a model.
+</p>
+
+</li>
+
+</ul>
+
+</div>
+
+<p>
+Although this theorem is true without any assumption on \(\mcal {L}\), to avoid using Zorn’s Lemma, we will prove it only for the case when \(\mcal {L}\) and hence \(\Fml (\mcal {L})\) are countable. I will make it clear exactly when I am using
+countability of \(\mcal {L}\).
+</p>
+
+<p>
+The first thing we need is a tool for constructing \(\mcal {L}\)-structures out of sentences. What we will do is a bit more general than what we actually need for the proof of the Model Existence Theorem. The \(\mcal {L}\)-structures we will construct are
+called term algebras. They are built out of the constant terms of \(\mcal {L}\). If our language has no constant symbols then it has no constant terms. So we work under the assumption that our language has at least one constant symbol. This might seem a
+bit strange at this point but by the time we actually get to using them we will have extended our original language to a language with lots of constants - so it won’t cause any harm.
+</p>
+<!--
+...... subsubsection Term Algebras ......
+-->
+<h6 id="autosec-274">Term Algebras</h6>
+<a id="Logic-autopage-274"></a>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-275"></a>
+<span class="amsthmnameplain">Definition</span><span class="amsthmnumberplain"> <span class="textup">4.2</span></span>. </span> Let \(\mcal {L}\) be a language and \(\Sigma \subseteq \Fml (\mcal {L})\).
+</p>
+<ul class="enumerate" style="list-style-type:none">
+
+
+<li>
+<p>
+<span class="listmarker">(i)</span> Let \(\ctm (\mcal {L})\) denote the set of constant terms of \(\mcal {L}\).
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">(ii)</span> Define the relation \(\sim _\Sigma \) on \(\ctm (\mcal {L})\) by \(t_1\sim _\Sigma t_2\) for \(t_1,t_2\in \ctm (\mcal {L})\) if \(\Sigma \proves t_1=t_2\).
+</p>
+</li>
+</ul>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-276"></a>
+<span class="amsthmnameplain">Lemma</span><span class="amsthmnumberplain"> <span class="textup">4.3</span></span>. </span> Let \(\Sigma \subseteq \Fml (\mcal {L})\) and let \(t_1,s_1,\ldots ,t_n,s_n\in \ctm (\mcal
+{L})\).
+</p>
+<ul class="enumerate" style="list-style-type:none">
+
+
+<li>
+<p>
+<span class="listmarker">(i)</span> \(\sim _\Sigma \) is an equivalence relation.
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">(ii)</span> If \(F\) is a function symbol of \(\mcal {L}\) of arity \(n\) such that \(t_i\sim _\Sigma s_i\) for each \(1\leq i\leq n\) then \(F(t_1,\ldots ,t_n)\sim _\Sigma F(s_1,\ldots ,s_n)\).
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">(iii)</span> If \(R\) is a relation symbol of \(\mcal {L}\) of arity \(n\) such that \(t_i\sim _\Sigma s_i\) for each \(1\leq i\leq n\) then \(\Sigma \vdash R(t_1,\ldots ,t_n)\leftrightarrow R(s_1,\ldots
+,s_n)\).
+</p>
+</li>
+</ul>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmproof">
+
+<a id="Logic-autopage-277"></a>
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"> <span class="amsthmproofname">Proof.</span></span> (i) Let \(t\in \ctm (\mcal {L})\). By <b>(Ax x=x)</b> and <b>(Ax\(\forall \))</b>,\(\proves v_1=v_1\) and \(\proves \forall v_1\, v_1=v_1\).
+Thus, by <b>(AxSub)</b> and modus ponens, \(\proves t=t\). So \(\sim _\Sigma \) is reflexive.
+</p>
+
+<p>
+From Exercise Sheet 8, we know that for all variables \(x,y,z\)
+</p>
+
+<p>
+\[\vdash \forall x,y (x=y\rightarrow y=x)\]
+</p>
+
+<p>
+and
+</p>
+
+<p>
+\[\vdash \forall x,y,z (x=y\rightarrow (y=z\rightarrow x=z)).\]
+</p>
+
+<p>
+Suppose \(t_1\sim _\Sigma t_2\). Then \(\Sigma \vdash t_1=t_2\). By <b>(AxSub)</b> and modus ponens,
+</p>
+
+<p>
+\[\Sigma \proves t_2=t_1.\]
+</p>
+
+<p>
+So \(\sim _\Sigma \) is symmetric.
+</p>
+
+<p>
+Suppose \(t_1\sim _\Sigma t_2\) and \(t_2\sim _\Sigma t_3\). Then \(\Sigma \vdash t_1=t_2\) and \(\Sigma \vdash t_2=t_3\). By <b>(AxSub)</b>,
+</p>
+
+<p>
+\[\Sigma \proves (t_1=t_2\rightarrow (t_2=t_3\rightarrow t_1=t_3)).\]
+</p>
+
+<p>
+By modus ponens applied twice,
+</p>
+
+<p>
+\[\Sigma \proves t_1=t_3.\]
+</p>
+
+<p>
+So \(t_1\sim _\Sigma t_3\). Therefore \(\sim _\Sigma \) is transitive.
+</p>
+
+<p>
+(ii) I will do the case where \(F\) is a unary function symbol. Suppose that \(\Sigma \proves t=s\). We need to show that \(\Sigma \proves F(t)=F(s)\). Let \(x,y,z\in \Vbl \) which are distinct and don’t occur in \(t\) or \(s\).
+</p>
+
+<p>
+By <b>(AxEq)</b>,
+</p>
+
+<p>
+\[\proves x=y\rightarrow (z=F(x)\rightarrow z=F(y)).\]
+</p>
+
+<p>
+By <b>(AxSub)</b>,
+</p>
+
+<p>
+\[\proves t=s\rightarrow (z=F(t)\rightarrow z=F(s)).\]
+</p>
+
+<p>
+Using modus ponens,
+</p>
+
+<p>
+\[\Sigma \proves z=F(t)\rightarrow z=F(s).\]
+</p>
+
+<p>
+Using <b>(AxSub)</b>,
+</p>
+
+<p>
+\[\Sigma \proves F(t)=F(t)\rightarrow F(t)=F(s).\]
+</p>
+
+<p>
+Since
+</p>
+
+<p>
+\[\proves \forall x \, x=x,\]
+</p>
+
+<p>
+by <b>(AxSub)</b> and modus ponens,
+</p>
+
+<p>
+\[\Sigma \proves F(t)=F(t).\]
+</p>
+
+<p>
+Therefore, by modus ponens,
+</p>
+
+<p>
+\[\Sigma \proves F(t)=F(s)\]
+</p>
+
+<p>
+as required.
+</p>
+
+<p>
+(iii) This is a similar nightmare to (ii).
+</p>
+
+<p>
+<span class="theoremendmark">&#x25A1;</span>
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-278"></a>
+<span class="amsthmnameplain">Definition</span><span class="amsthmnumberplain"> <span class="textup">4.4</span></span><span class="amsthmnoteplain"> (The term algebra)</span>. </span> Let \(\mcal {L}\) be a language with at
+least one constant symbol and let \(\Sigma \subseteq \Fml (\mcal {L})\). We define an \(\mcal {L}\)-structure \(\TmAlg (\Sigma )\) called the <b>term algebra of \(\Sigma \)</b>. The domain of \(\TmAlg (\Sigma )\) is
+</p>
+
+<p>
+\[\ctm (\mcal {L})/\sim _\Sigma .\]
+</p>
+
+<p>
+We write \([t]_\Sigma \) for the \(\sim _\Sigma \)-equivalence class of \(t\).
+</p>
+
+<ul class="enumerate" style="list-style-type:none">
+
+
+<li>
+<p>
+<span class="listmarker">(i)</span> For each relation symbol \(R\) of \(\mcal {L}\) of arity \(n\), we define
+</p>
+<p>
+\[R^{\TmAlg (\Sigma )}:=\{([t_1]_\Sigma ,\ldots ,[t_n]_\Sigma )\st \Sigma \proves R(t_1,\ldots ,t_n)\}.\]
+</p>
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">(ii)</span> For each function symbol \(F\) of \(\mcal {L}\) of arity \(n\) we define
+</p>
+<p>
+\[F^{\TmAlg (\Sigma )}([t_1]_\Sigma ,\ldots ,[t_n]_\Sigma )=[F(t_1,\ldots ,t_n)]_\Sigma .\]
+</p>
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">(iii)</span> For \(c\) a constant symbol of \(\mcal {L}\) we define
+</p>
+<p>
+\[c^{\TmAlg (\Sigma )}:=[c]_\Sigma .\]
+</p>
+<p>
+
+
+</p>
+</li>
+</ul>
+
+<p>
+For a single formula \(\sigma \), we define the term algebra of \(\sigma \) to be \(\TmAlg (\{\sigma \})\).
+</p>
+
+</li>
+
+</ul>
+
+</div>
+
+<p>
+We do some examples.
+</p>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-279"></a>
+<span class="amsthmnameplain">Examples</span><span class="amsthmnumberplain"> <span class="textup">4.5</span></span>. </span> <a id="termalgex"></a>
+</p>
+<ul class="enumerate" style="list-style-type:none">
+
+
+<li>
+<p>
+<span class="listmarker">(i)</span> Let \(\mcal {L}:=\langle c\rangle \) where \(c\) is a constant symbol. Then \(\ctm (\mcal {L})\) has just one element \(c\). This means that no matter what set of \(\mcal {L}\)-sentences with pick,
+\(\TmAlg (\Sigma )\) has just one element. Let \(\Sigma =\{\exists v_1 \, v_1\neq c \}\). Then \(\TmAlg (\Sigma )\) is the \(\mcal {L}\)-structure with domain \(\{[c]_\Sigma \}\) \(c\) interpreted as \([c]_\Sigma \). Note, \(\TmAlg
+(\Sigma )\) is not a model of \(\Sigma \) in this case.
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">(ii)</span> Let \(\mcal {L}:=\langle R, c,d,e\rangle \) where \(R\) is a unary relation symbol and \(c,d,e\) are constant symbols. Then \(\ctm (\mcal {L})\) has \(3\) elements \(c,d,e\). Let \(\sigma \) be
+the formula \(c=d\vee c=e\). The term algebra of \(\sigma \) has at most \(3\) elements \([c]_\sigma ,[d]_\sigma \) and \([e]_\sigma \).
+</p>
+<p>
+We can check using the soundness theorem that \(\sigma \nvdash c=d\), \(\sigma \nvdash c=e\) and \(\sigma \nvdash d=e\). I will show that \(\sigma \nvdash c=d\). By the Soundness Theorem, \(\sigma \nvDash c=d\) implies \(\sigma
+\nvdash c=d\). Let \(\mcal {M}\) be the \(\mcal {L}\)-structure with domain \(\{1,2\}\), \(R^{\mcal {M}}:=\{1,2\}\) and
+</p>
+<p>
+\[c^{\mcal {M}}:=1, d^{\mcal {M}}:=2 \text { and } e^{\mcal {M}}=1.\]
+</p>
+<p>
+Then \(\mcal {M}\models c=d\vee c=e\) because \(c^{\mcal {M}}=e^{\mcal {M}}\). But \(\mcal {M}\nvDash c=d\). Therefore \(\sigma \nvDash c=d\). So \(\sigma \nvdash c=d\) as required.
+</p>
+<p>
+This shows that \(\TmAlg (\sigma )\) has \(3\) elements \([c]_\sigma ,[d]_\sigma \) and \([e]_\sigma \). I claim \(R^{\TmAlg (\sigma )}=\emptyset \). To show this, we should show that \(\sigma \nvdash R(t)\) for all \(t\in \ctm
+(\mcal {L})\). Let \(\mcal {M}\) be the \(\mcal {L}\)-structure with domain \(\{1\}\) and \(R^{\mcal {M}}=\emptyset \). Then \(\mcal {M}\models \sigma \) but \(\mcal {M}\nvDash R(t)\) for all \(t\in \ctm (\mcal {L})\) because
+\(R^{\mcal {M}}=\emptyset \).
+</p>
+<p>
+
+
+</p>
+</li>
+</ul>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-280"></a>
+<span class="amsthmnameplain">Proposition</span><span class="amsthmnumberplain"> <span class="textup">4.6</span></span>. </span> <a id="tmalggoodat"></a> Let \(\mcal {L}\) be a language with at least one constant symbol and let
+\(\Sigma \subseteq \Fml (\mcal {L}) \). Let \(n\in \N \), \(t_1,...,t_n\in \ctm (\mcal {L}) \), \(x_1,...,x_n\in \Vbl \) pairwise distinct and let \(h\) be an assignment of \(\TmAlg (\Sigma ) \) with \(h(x_i)=[t_i]_\Sigma \)
+\((1\leq i\leq n)\).
+</p>
+<ul class="enumerate" style="list-style-type:none">
+
+
+<li>
+<p>
+<span class="listmarker">(i)</span> If \(t(x_1,...,x_n)\in \tm (\mcal {L}) \) then \(t^{\TmAlg (\Sigma ) }[h]=[t(x_1/t_1,...,x_n/t_n)]_\Sigma \).
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">(ii)</span> If \(\phi (x_1,...,x_n)\in \Fml (\mcal {L}) \) is atomic then
+</p>
+<p>
+\[\TmAlg (\Sigma ) \models \phi [h]\text { if and only if } \Sigma \vdash \phi (x_1/t_1,...,x_n/t_n).\]
+</p>
+<p>
+
+
+</p>
+</li>
+</ul>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmproof">
+
+<a id="Logic-autopage-281"></a>
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"> <span class="amsthmproofname">Proof.</span></span> (i) The first statement is proved by induction on the complexity of the term \(t\). If \(t\) has complexity \(0\) then \(t\) is either a variable or a constant
+symbol.
+</p>
+
+<p>
+Suppose \(t\) is the variable \(x_i\) for some \(1\leq i\leq n\). Then \(t(x_1/t_1,\ldots ,x_n/t_n)\) is \(t_i\) and \(t^\TmAlg (\Sigma )[h]=h(x_i)\). By assumption, \(h(x_i)=[t_i]_{\Sigma }\). Therefore \(t^{\TmAlg (\Sigma )
+}[h]=[t(x_1/t_1,...,x_n/t_n)]_\Sigma \) as required.
+</p>
+
+<p>
+Suppose \(t\) is a constant symbol \(c\). Then \(t(x_1/t_1,\ldots ,x_n/t_n)\) is \(c\) and \(t^\TmAlg (\Sigma )[h]=c^{\TmAlg (\Sigma )}\). By definition of \(\TmAlg (\Sigma )\), \(c^{\TmAlg (\Sigma )}=[c]_{\Sigma }\). So we get
+the required conclusion.
+</p>
+
+<p>
+Now suppose that for all terms \(t\) of complexity less than or equal to \(n\), \((i)\) holds. Suppose \(s\in \tm _{n+1}(\mcal {L})\). Then \(s\) is of the form \(F(s_1,\ldots ,s_m)\) for \(F\) a function symbol of arity \(m\) and terms
+\(s_i\in \tm _n(\mcal {L})\). By definition, \(F(s_1,\ldots ,s_m)[h]=F^{\TmAlg (\Sigma )}(s_1[h],\ldots ,s_m[h])\). By the induction hypothesis,
+</p>
+
+<span class="hidden"> \(\seteqnumber{0}{}{0}\)</span>
+
+<p>
+
+
+\begin{eqnarray*}
+F^{\TmAlg (\Sigma )}(s_1[h],\ldots ,s_m[h]) &amp;=&amp; F^{\TmAlg (\Sigma )}([s_1(x_1/t_1,...,x_n/t_n)]_\Sigma ,\ldots ,[s_m(x_1/t_1,...,x_n/t_n)]_\Sigma ) \\ &amp;=&amp; [F(s_1(x_1/t_1,...,x_n/t_n),\ldots
+,s_m(x_1/t_1,...,x_n/t_n))]_\Sigma \\ &amp;=&amp; [s(x_1/t_1,\ldots ,x_n/t_n)]_\Sigma .
+\end{eqnarray*}
+
+
+</p>
+
+<p>
+(ii) This is an application of (i) and the definition of the term algebra. <span class="theoremendmark">&#x25A1;</span>
+</p>
+
+</li>
+
+</ul>
+
+</div>
+
+<p>
+We’ve seen that the term algebra of a set of sentences \(\Sigma \) is not always a model of \(\Sigma \). In the 2 cases we have seen there are ways to fix this.
+</p>
+
+<p>
+We first consider <a href="Proof-Completeness-Theorem-Predicate-Logic-4th-year-material.html#termalgex">4.5</a>(i). Let \(\mcal {L}:=\langle c\rangle \) where \(c\) is a constant symbol and let \(\sigma \) be the formula \(\exists
+v_1 v_1\neq c\). In order to make the term algebra of \(\Sigma :=\{\sigma \}\) into a model of \(\sigma \) we can extend the language \(\mcal {L}\) by a constant \(c_{\sigma }\) to get \(\mcal {L}(c_{\sigma })\) and replace \(\Sigma \) with
+</p>
+
+<p>
+\[\{\sigma , (\exists v_1 \, v_1\neq c)\rightarrow c_\sigma \neq c\}.\]
+</p>
+
+<p>
+Then \(\TmAlg (\Sigma )\models \sigma \).
+</p>
+
+<p>
+Now consider <a href="Proof-Completeness-Theorem-Predicate-Logic-4th-year-material.html#termalgex">4.5</a>(ii). Let \(\mcal {L}:=\langle R,c,d,e\rangle \) and let \(\sigma \) be \(c=d\vee c=e\). If we replace \(\Sigma
+:=\{\sigma \}\) with a consistent set of \(\mcal {L}\)-sentences \(\Sigma ^+\) containing \(\Sigma \) such that for all \(\mcal {L}\)-sentences \(\phi \), either \(\phi \in \Sigma ^+\) or \(\neg \phi \in \Sigma ^+\) then a little work will allow
+you to conclude that either \(c=d\in \Sigma ^+\) or \(c=e\in \Sigma ^+\). This will force \(\TmAlg (\Sigma ^+)\) to be a model of \(\sigma \).
+</p>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-282"></a>
+<span class="amsthmnameplain">Definition</span><span class="amsthmnumberplain"> <span class="textup">4.7</span></span>. </span> Let \(\mcal {L}\) be a language with set of constant symbols \(\mcal {C}\). We write \(\Fml (\mcal
+{L})(1)\) for the set of all \(\mcal {L}\)-formulas with at most one free variable.
+</p>
+
+<p>
+Let \(\Sigma \) be a set of \(\mcal {L}\)-sentences. A <b>system of witnesses</b> for \(\Sigma \) is a map
+</p>
+
+<p>
+\[\gamma :   \Fml (\mcal {L})(1)\rightarrow \mcal {C}\]
+</p>
+
+<p>
+such that for all \(x\in \Vbl \) and all \(\phi (x)\in \Fml (\mcal {L})(1)\) we have
+</p>
+
+<p>
+\[\Sigma \proves (\exists x\, \phi )\rightarrow \phi (x/\gamma (\phi )).\]
+</p>
+
+<p>
+
+
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-283"></a>
+<span class="amsthmnameplain">Definition</span><span class="amsthmnumberplain"> <span class="textup">4.8</span></span>. </span> An <b>\(\mcal {L}\)-theory</b> is a consistent set of \(\mcal {L}\)-sentences. An \(\mcal
+{L}\)-theory \(T\) is <b>complete</b> if for all \(\mcal {L}\)-sentences \(\phi \), either \(\phi \in T\) or \(\neg \phi \in T\).
+</p>
+
+</li>
+
+</ul>
+
+</div>
+
+<p>
+The set of sentences satisfied by an \(\mcal {L}\)-structure is an example of a complete theory (in fact, all complete theories are of this form but we need the Completeness Theorem to prove this).
+</p>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-284"></a>
+<span class="amsthmnameplain">Proposition</span><span class="amsthmnumberplain"> <span class="textup">4.9</span></span>. </span> <a id="TmAlgmodel"></a> If \(\Sigma \) is a complete \(\mcal {L}\)-theory which has a system of
+witnesses then the term algebra of \(\Sigma \) is a model of \(\Sigma \).
+</p>
+
+</li>
+
+</ul>
+
+</div>
+
+<p>
+We can use the Completeness Theorem for Propositional Logic to prove 1. and 2. of the following lemma.
+</p>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-285"></a>
+<span class="amsthmnameplain">Lemma</span><span class="amsthmnumberplain"> <span class="textup">4.10</span></span>. </span> <a id="dedweneed"></a> Let \(\Sigma \) be a complete \(\mcal {L}\)-theory. Then
+</p>
+<ul class="enumerate" style="list-style-type:none">
+
+
+<li>
+<p>
+<span class="listmarker">1.</span> \(\Sigma \proves \phi \) if and only if \(\phi \in \Sigma \);
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">2.</span> \(\phi _1\rightarrow \phi _2\in \Sigma \) if and only if \(\phi _1,\phi _2\in \Sigma \) or \(\phi _1\notin \Sigma \); and
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">3.</span> \(\forall y\,\psi \notin \Sigma \) implies \(\exists y\, \neg \psi \in \Sigma \).
+</p>
+</li>
+</ul>
+
+</li>
+
+</ul>
+
+</div>
+
+<p>
+This proof is why we are first proving the completeness theorem for sets of sentences. Essentially it would be much more confusing if we tried to prove a version for formulas.
+</p>
+<div class="amsthmproof">
+
+<a id="Logic-autopage-286"></a>
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"> <span class="amsthmproofname">Proof of Proposition <a href="Proof-Completeness-Theorem-Predicate-Logic-4th-year-material.html#TmAlgmodel">4.9</a>.</span></span> We prove by induction on the
+complexity of \(\phi (x_1,\ldots ,x_n)\in \Fml (\mcal {L})\) that: For all constant terms \(t_1,\ldots ,t_n\),
+</p>
+
+<p>
+\[\phi (x_1/t_1,\ldots ,x_n/t_n)\in \Sigma \text { if and only if } \TmAlg (\Sigma )\models \phi (x_1/t_1,\ldots ,x_n/t_n).                 \tag {$\dagger $}\]
+</p>
+
+<p>
+If \(\phi \) is atomic then this is <a href="Proof-Completeness-Theorem-Predicate-Logic-4th-year-material.html#tmalggoodat">4.6</a>. The case when \(\phi \) is \(\bot \) follows from the fact that \(\Sigma \) is consistent.
+</p>
+
+<p>
+Suppose \((\dagger )\) is true for \(\phi _1\) and \(\phi _2\). We show that \((\dagger )\) is true for \(\phi _1\rightarrow \phi _2\).
+</p>
+
+<p>
+Since \(\Sigma \) is complete, \(\phi _1\rightarrow \phi _2\in \Sigma \) if and only if \(\phi _1,\phi _2\in \Sigma \) or \(\phi _1\notin \Sigma \). Since \((\dagger )\) holds for \(\phi _1\) and \(\phi _2\),
+</p>
+
+<p>
+\[ \TmAlg (\Sigma )\models \phi _1(x_1/t_1,\ldots ,x_n/t_n) \text { and } \TmAlg (\Sigma )\models \phi _2(x_1/t_1,\ldots ,x_n/t_n),\]
+</p>
+
+<p>
+or
+</p>
+
+<p>
+\[\TmAlg (\Sigma )\nvDash \phi _1(x_1/t_1,\ldots ,x_n/t_n).\]
+</p>
+
+<p>
+Considering Tarski’s Truth definition, this is true if and only if
+</p>
+
+<p>
+\[\TmAlg (\Sigma )\models \phi _1(x_1/t_1,\ldots ,x_n/t_n)\rightarrow \phi _2(x_1/t_1,\ldots ,x_n/t_n).\]
+</p>
+
+<p>
+We now need to consider the case where \(\phi \) is \(\forall y \, \psi \) for some \(y\in \Vbl \). Suppose \((\dagger )\) is true for \(\psi \). By definition, \(y\) is not a free variable of \(\phi \). Since \(\Fr (\phi )\subseteq
+\{x_1,\ldots ,x_n\}\), no harm is done by assuming that \(y\neq x_i\) for \(1\leq i\leq n\).
+</p>
+
+<p>
+We first prove the forward direction of \((\dagger )\) for \(\phi \). Suppose \(\phi (x_1/t_1,\ldots ,x_n/t_n)\in \Sigma \). Then \(\forall y\,\psi (x_1/t_1,\ldots ,x_n/t_n,y)\in \Sigma \). By the substitution axiom \(\Sigma
+\proves \psi (x_1/t_1,\ldots ,x_n/t_n,y/t)\) for all constant terms \(t\). Thus, by the induction hypothesis,
+</p>
+
+<p>
+\[\TmAlg (\Sigma )\models \psi (x_1/t_1,\ldots ,x_n/t_n,y/t).\]
+</p>
+
+<p>
+Therefore
+</p>
+
+<p>
+\[\TmAlg (\Sigma )\models \psi (x_1/t_1,\ldots ,x_n/t_n)[h]\]
+</p>
+
+<p>
+for all \(h\) with \(h(y)=[t]_\Sigma \). Since \(t\) was an arbitrary constant term, this means
+</p>
+
+<p>
+\[\TmAlg (\Sigma )\models \phi (x_1/t_1,\ldots ,x_n/t_n)\]
+</p>
+
+<p>
+as we wanted.
+</p>
+
+<p>
+We now prove the reverse direction of \((\dagger )\) for \(\phi \). This is where we need that \(\Sigma \) has a system of witnesses. Let
+</p>
+
+<p>
+\[\gamma :\Fml (\mcal {L})(1)\rightarrow \mcal {C}\]
+</p>
+
+<p>
+be a system of witnesses for \(\Sigma \).
+</p>
+
+<p>
+Suppose \(\TmAlg (\Sigma )\models \forall y \,\psi (x_1/t_1,\ldots ,x_n/t_n,y)\) but \(\forall y\,\psi (x_1/t_1,\ldots ,x_n/t_n,y)\notin \Sigma \) with the intention of deriving a contradition. Since \(\Sigma \) is complete, by
+<a href="Proof-Completeness-Theorem-Predicate-Logic-4th-year-material.html#dedweneed">4.10</a>, \(\exists y \, \neg \psi (x_1/t_1,\ldots ,x_n/t_n,y)\in \Sigma \). Let \(c:=\gamma (\neg \psi (x_1/t_1,\ldots
+,x_n/t_n,y))\). Since \(\gamma \) is a system of witnesses for \(\Sigma \) we have
+</p>
+
+<p>
+\[\Sigma \proves \exists y \, \neg \psi (x_1/t_1,\ldots ,x_n/t_n,y)\rightarrow \neg \psi (x_1/t_1,\ldots ,x_n/t_n,y/c).\]
+</p>
+
+<p>
+Then modus ponens gives
+</p>
+
+<p>
+\[\Sigma \proves \neg \psi (x_1/t_1,\ldots ,x_n/t_n,y/c)\]
+</p>
+
+<p>
+Hence \(\psi (x_1/t_1,\ldots ,x_n/t_n,y/c)\notin \Sigma \). Since \((\dagger )\) holds for \(\psi \), this implies
+</p>
+
+<p>
+\[\TmAlg (\Sigma )\nvDash \psi (x_1/t_1,\ldots ,x_n/t_n,y/c).\]
+</p>
+
+<p>
+But then by <a href="Tarski-Truth-Definition.html#sublemma">3.45</a>, this contradicts our assumption that
+</p>
+
+<p>
+\[\TmAlg (\Sigma )\models \forall y\,\psi (x_1/t_1,\ldots ,x_n/t_n).\]
+</p>
+
+<p>
+<span class="theoremendmark">&#x25A1;</span>
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<!--
+...... subsubsection Adding witnesses ......
+-->
+<h6 id="autosec-287">Adding witnesses</h6>
+<a id="Logic-autopage-287"></a>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-288"></a>
+<span class="amsthmnameplain">Proposition</span><span class="amsthmnumberplain"> <span class="textup">4.11</span></span>. </span> <a id="addingwitnesses"></a> Let \(\mcal {L}\) be a language and let \(\Sigma \) be a set of
+\(\mcal {L}\)-formulas. Let \(\gamma :\Fml (\mcal {L})(1)\rightarrow \mcal {D}\) be a bijection onto a some set of constant symbols disjoint from those of \(\mcal {L}\). If \(\Sigma \) is consistent then so is the set of \(\mcal {L}(\mcal
+{D})\)-sentences
+</p>
+
+<p>
+\[\Sigma ^W:=\Sigma \cup \{\exists x\,\phi (x)\rightarrow \phi (x/\gamma (\phi )) \st \phi \in \Fml (\mcal {L})(1)\}.\]
+</p>
+
+<p>
+
+
+</p>
+
+</li>
+
+</ul>
+
+</div>
+
+<p>
+In order to prove this we need some not totally trivial facts.
+</p>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-289"></a>
+<span class="amsthmnameplain">Proposition</span><span class="amsthmnumberplain"> <span class="textup">4.12</span></span>. </span> <a id="constbyvar"></a> Let \(\mcal {L}\) be a language, let \(\Sigma \) a set of \(\mcal
+{L}\)-formulas and let \(c\) be a constant symbol which is not a constant symbol of \(\mcal {L}\). Suppose that \(y\) is a variable that does not occur in \(\phi \). Let \(\phi _y^c\) be the result of replacing every instance of \(c\) in \(\phi \)
+by \(y\). Then \(\Sigma \proves _{\mcal {L}(c)} \phi \) implies \(\Sigma \proves _{\mcal {L}}\phi _y^c\).
+</p>
+
+<p>
+Here \(\proves _\mcal {L}\) indicates that there is an “\(\mcal {L}\)-deduction” of \(\phi \) from \(\Sigma \).
+</p>
+
+<p>
+
+
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmproof">
+
+<a id="Logic-autopage-290"></a>
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"> <span class="amsthmproofname">Proof.</span></span> Omitted for now. <span class="theoremendmark">&#x25A1;</span>
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-291"></a>
+<span class="amsthmnameplain">Lemma</span><span class="amsthmnumberplain"> <span class="textup">4.13</span></span>. </span> Let \(\mcal {L}\) be a language, \(\mcal {D}\) a set of constant symbols disjoint from those of \(\mcal
+{L}\). Let \(\Sigma \) be a set of \(\mcal {L}\)-formulas and \(\phi \) an \(\mcal {L}\)-formula. Then
+</p>
+
+<p>
+\[\Sigma \proves _\mcal {L} \phi \text { if and only if }\Sigma \proves _{\mcal {L}(\mcal {D})}\phi .\]
+</p>
+
+<p>
+
+
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmproof">
+
+<a id="Logic-autopage-292"></a>
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"> <span class="amsthmproofname">Proof.</span></span> Omitted for now. <span class="theoremendmark">&#x25A1;</span>
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-293"></a>
+<span class="amsthmnameplain">Lemma</span><span class="amsthmnumberplain"> <span class="textup">4.14</span></span>. </span> <a id="Adedforwit"></a> Let \(\phi ,\psi \) be \(\mcal {L}\)-formulas and \(\Sigma \) a set of
+\(\mcal {L}\)-formulas.
+</p>
+<ul class="enumerate" style="list-style-type:none">
+
+
+<li>
+<p>
+<span class="listmarker">1.</span> If \(y\) does not occur free in \(\phi \) then \(\proves \forall y\,\phi (x/y)\rightarrow \forall x \, \phi \).
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">2.</span> If \(\Sigma \proves \phi \rightarrow \psi \) then \(\Sigma \proves \neg \psi \rightarrow \neg \phi \).
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">3.</span> \(\proves (\phi \rightarrow \exists x\,\psi )\rightarrow \exists x\,(\phi \rightarrow \psi )\)
+</p>
+</li>
+</ul>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmproof">
+
+<a id="Logic-autopage-294"></a>
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"> <span class="amsthmproofname">Proof.</span></span> Omitted for now. <span class="theoremendmark">&#x25A1;</span>
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-295"></a>
+<span class="amsthmnameplain">Remark</span><span class="amsthmnumberplain"> <span class="textup">4.15</span></span>. </span> If \(\Sigma \) has a system of witnesses and \(\Sigma ^*\) is a complete theory containing \(\Sigma
+\) then \(\Sigma ^*\) has a system of witnesses (the same system works with no changes).
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmproof">
+
+<a id="Logic-autopage-296"></a>
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"> <span class="amsthmproofname">Proof of <a href="Proof-Completeness-Theorem-Predicate-Logic-4th-year-material.html#addingwitnesses">4.11</a>.</span></span>
+</p>
+
+<p>
+<b>Claim:</b> If \(\Sigma \) is a finite consistent set of sentences and \(\phi \in \Fml (\mcal {L})(1)\) is such that \(\gamma (\phi )\) does not occur in any \(\sigma \in \Sigma \) then
+</p>
+
+<p>
+\[\Sigma &apos;:=\Sigma \cup \{\exists x\,\phi (x)\rightarrow \phi (x/\gamma (\phi ))\}\]
+</p>
+
+<p>
+is consistent.
+</p>
+
+<p>
+Suppose for a contradiction that \(\Sigma &apos;\proves \bot \). By the deduction theorem \(\Sigma \proves \neg (\exists x\,\phi (x)\rightarrow \phi (x/\gamma (\phi )))\). Let \(y\) be a variable that does not occur in any formula
+in \(\Sigma &apos;\) and let \(\psi :=\exists x\,\phi (x)\rightarrow \phi (x/y)\). By <a href="Proof-Completeness-Theorem-Predicate-Logic-4th-year-material.html#constbyvar">4.12</a>, \(\Sigma \proves \neg \psi \). The
+Generalisation Theorem now implies \(\Sigma \proves \forall y \, \neg \psi \). Since \(\exists y\,\psi \) is an abbreviation for \(\neg \forall y\, \neg \psi \), it is enough to show \(\Sigma \proves \exists y\,\psi \) because this
+implies \(\Sigma \proves \bot \). By <a href="Proof-Completeness-Theorem-Predicate-Logic-4th-year-material.html#Adedforwit">4.14</a>, \(\Sigma \proves \forall y\,(\neg \phi (x/y))\rightarrow \forall x\, \neg \phi \).
+By <a href="Proof-Completeness-Theorem-Predicate-Logic-4th-year-material.html#Adedforwit">4.14</a>, \(\Sigma \proves \neg \forall x\,\neg \phi \rightarrow \neg \forall y(\neg \phi (x/y))\), i.e., \(\Sigma \proves
+\exists x\phi \rightarrow \exists y\, \phi (x/y)\). By <a href="Proof-Completeness-Theorem-Predicate-Logic-4th-year-material.html#Adedforwit">4.14</a>, \(\Sigma \proves \exists y\, (\exists x\,\phi \rightarrow \phi
+(x/y))\), i.e., \(\Sigma \proves \exists y\, \psi \). So \(\Sigma \proves \bot \). This contradicts our assumption that \(\Sigma \) is consistent. Therefore \(\Sigma &apos;\) is consistent.
+</p>
+
+<p>
+We now prove the proposition based on the claim. Suppose \(\Sigma ^W\proves \bot \). Since proofs are finite, \(\Sigma _0\proves \bot \) for some finite subset \(\Sigma _0\) of \(\Sigma ^W\). We may assume that \(\Sigma _0\) is of
+minimal size with this property. Since \(\Sigma \) is consistent, this means there is some consistent set \(\Sigma _0&apos;\) and some \(\phi \in \Fml (\mcal {L})(1)\) such that \(\Sigma _0=\Sigma _0&apos;\cup \{\exists x\,\phi
+(x)\rightarrow \phi (x/\gamma (\phi ))\}\). But \(\Sigma _0\) being inconsistent contradicts the claim. Thus \(\Sigma ^W\) is consistent. <span class="theoremendmark">&#x25A1;</span>
+</p>
+
+</li>
+
+</ul>
+
+</div>
+
+<p>
+We are not quite there because there is no reason that all \(\mcal {L}(\mcal {D})\)-formulas in one free variable should have witnesses.
+</p>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-297"></a>
+<span class="amsthmnameplain">Proposition</span><span class="amsthmnumberplain"> <span class="textup">4.16</span></span>. </span> <a id="extendwit"></a> Let \(\Sigma \) be a consistent set of \(\mcal {L}\)-sentences. There is
+an extension \(\mcal {L}^+\) of \(\mcal {L}\) by constants and a consistent set of \(\mcal {L}^+\)-sentences \(\Sigma ^+\supseteq \Sigma \) such that \(\Sigma ^+\) has a system of witnesses.
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmproof">
+
+<a id="Logic-autopage-298"></a>
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"> <span class="amsthmproofname">Proof.</span></span> We iterate the construction from <a href="Proof-Completeness-Theorem-Predicate-Logic-4th-year-material.html#addingwitnesses">4.11</a>. Define
+\(\mcal {L}_0:=\mcal {L}\) and \(\Sigma _0:=\Sigma \). For \(i\in \N _0\), let \(\mcal {L}_{i+1}:=(\mcal {L}_i)^W\) where \(\mcal {L}_i^{W}\) denotes the language \(\mcal {L}(\mcal {D})\) from <a
+href="Proof-Completeness-Theorem-Predicate-Logic-4th-year-material.html#addingwitnesses">4.11</a> and \(\Sigma _{i+1}:=(\Sigma _i)^W\) is as in the statement of <a
+href="Proof-Completeness-Theorem-Predicate-Logic-4th-year-material.html#addingwitnesses">4.11</a>. Then \(\mcal {L}_\infty :=\bigcup _{i\in \N _0}\mcal {L}_i\) is an extension of \(\mcal {L}\) by constants and \(\Sigma
+_\infty :=\bigcup _{i\in \N _0}\Sigma _i\) is a consistent set of \(\mcal {L}_\infty \)-sentences containing \(\Sigma \). To see that \(\Sigma _\infty \) is consistent note that, since “Proofs are finite”, if \(\Sigma _\infty \proves \bot
+\) then \(\Sigma _i\proves \bot \) for some \(i\in \N _0\). By <a href="Proof-Completeness-Theorem-Predicate-Logic-4th-year-material.html#addingwitnesses">4.11</a>, each \(\Sigma _i\) is consistent. Moreover \(\Sigma _\infty
+\) has a set of witnesses because every \(\mcal {L}_\infty \)-formula \(\phi \) is an \(\mcal {L}_i\)-formula for some \(i\in \N _0\). By construction, if \(\phi \in \Fml (\mcal {L}_i)(1)\) then \(\phi \) “has a witness” gains a witness in
+\(\mcal {L}_{i+1}.\) <span class="theoremendmark">&#x25A1;</span>
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<!--
+...... subsubsection Every consistent set of sentences is contained in a complete theory.                       ......
+-->
+<h6 id="autosec-299">Every consistent set of sentences is contained in a complete theory.</h6>
+<a id="Logic-autopage-299"></a>
+
+
+<p>
+This is the only point in the proof where use the fact that \(\mcal {L}\) is countable. Everything here works as it does for Propositional Logic. For this reason, I may not lecture this bit but I do expect you (4th years and PhD students) to be able to produce
+the proofs in this subsection in an exam.
+</p>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-300"></a>
+<span class="amsthmnameplain">Lemma</span><span class="amsthmnumberplain"> <span class="textup">4.17</span></span>. </span> <a id="conext"></a> Let \(\Sigma \) be a consistent set of \(\mcal {L}\)-sentences and let \(\phi \)
+be an \(\mcal {L}\)-sentence. Then either \(\Sigma \cup \{\phi \}\) is consistent or \(\Sigma \cup \{(\neg \phi )\}\) is consistent.
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmproof">
+
+<a id="Logic-autopage-301"></a>
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"> <span class="amsthmproofname">Proof.</span></span> Suppose \(\Sigma \cup \{\phi \}\proves \bot \). Then, by the Deduction Theorem, \(\Sigma \models (\phi \rightarrow \bot )\), i.e., \(\Sigma
+\proves (\neg \phi )\). Hence \(\Sigma \cup \{(\neg \phi )\}\) is consistent. <span class="theoremendmark">&#x25A1;</span>
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-302"></a>
+<span class="amsthmnameplain">Proposition</span><span class="amsthmnumberplain"> <span class="textup">4.18</span></span>. </span> <a id="extcomp"></a> Let \(X\) be a consistent set of \(\mcal {L}\)-sentences. There exists a
+complete \(\mcal {L}\)-theory \(T\) such that \(X\subseteq T\).
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmproof">
+
+<a id="Logic-autopage-303"></a>
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"> <span class="amsthmproofname">Proof.</span></span> We proceed exactly as we did in the proof of <a href="Completeness.html#adequ">2.52</a> for Propositional Logic. Let \(\phi _1,\phi _2,\ldots \) be an
+enumeration of the \(\mcal {L}\)-formulas. Define \(\Sigma _1:=X\). For each \(i\), let \(\Sigma _{i+1}:=\Sigma _i\cup \{\phi \}\) if it is consistent and let \(\Sigma _{i+1}:=\Sigma _i\cup \{(\neg \phi _i)\}\) otherwise. In either case,
+\(\Sigma _{i+1}\) is consistent by <a href="Proof-Completeness-Theorem-Predicate-Logic-4th-year-material.html#conext">4.17</a>. Let \(\Sigma _*:=\bigcup _{i\in \N }\Sigma _i\). Suppose for a contradiction that \(\Sigma _*\) is
+not consistent. Then \(\Sigma _*\proves \bot \). Since “Proofs are finite” there is some finite subset \(\Sigma &apos;\subseteq \Sigma _*\) such that \(\Sigma &apos;\proves \bot \). But then, by definition of \(\Sigma _*\), \(\Sigma
+&apos;\subseteq \Sigma _i\) for some \(i\in \N \) and hence \(\Sigma _i\proves \bot \) which give a contradiction. Thus \(\Sigma _*\) is consistent. By definition, for all \(\mcal {L}\)-sentences \(\phi \), either \(\phi \in \Sigma _*\)
+or \((\neg \phi )\in \Sigma _*\). Therefore \(\Sigma _*\) is complete. <span class="theoremendmark">&#x25A1;</span>
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<!--
+...... subsubsection Finishing of the proof ......
+-->
+<h6 id="autosec-304">Finishing of the proof</h6>
+<a id="Logic-autopage-304"></a>
+
+
+<p>
+We prove the Model Existence Theorem.
+</p>
+<div class="amsthmproof">
+
+<a id="Logic-autopage-305"></a>
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"> <span class="amsthmproofname">Proof of <a href="Proof-Completeness-Theorem-Predicate-Logic-4th-year-material.html#ModelExThm">4.1</a>.</span></span> Let \(\Sigma \) be a consistent set of \(\mcal
+{L}\)-sentences. By <a href="Proof-Completeness-Theorem-Predicate-Logic-4th-year-material.html#extendwit">4.16</a>, there exists \(\mcal {L}^+\) an extension of \(\mcal {L}\) by constants and a set \(\Sigma ^+\supseteq \Sigma \)
+of \(\mcal {L}^+\)-sentences such that \(\Sigma ^+\) has a system of witnesses. By <a href="Proof-Completeness-Theorem-Predicate-Logic-4th-year-material.html#extcomp">4.18</a>, there is a complete \(\mcal {L}^+\)-theory \(\Sigma
+^*\) containing \(\Sigma ^+\). As we have already observed, \(\Sigma ^*\) has a system of witnesses because \(\Sigma ^+\) does. Therefore \(\TmAlg (\Sigma ^*)\models \Sigma ^*\). Hence the \(\mcal {L}\)-reduct of \(\TmAlg (\Sigma
+^*)\) is a model of \(\Sigma \). <span class="theoremendmark">&#x25A1;</span>
+</p>
+
+</li>
+
+</ul>
+
+</div>
+
+<p>
+We now reduce a version of the Model Existence Theorem for formulas to the case of sentences.
+</p>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-306"></a>
+<span class="amsthmnameplain">Corollary</span><span class="amsthmnumberplain"> <span class="textup">4.19</span></span>. </span> Let \(\Sigma \) be a set of \(\mcal {L}\)-formulas. If \(\Sigma \models \bot \) then \(\Sigma
+\proves \bot \).
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmproof">
+
+<a id="Logic-autopage-307"></a>
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"> <span class="amsthmproofname">Proof.</span></span> Full proof is omitted (at least for now). Essentially, you replace any free variables of formulas in \(\Sigma \) by constant symbols. Suppose \(\Sigma \nvdash
+\bot \). Let \(\mcal {D}:=\{c_i\st i\in \N \}\) be a set of constant symbols. For \(\sigma \in \Fml (\mcal {L})\), let \(\sigma (\mcal {D})\) be the formula obtained from \(\sigma \) by replacing all free instances of \(v_i\) by \(c_i\).
+Let \(\Sigma (\mcal {D}):=\{\sigma (\mcal {D})\st \sigma \in \Sigma \}\). It follows, with some work, that \(\Sigma (\mcal {D})\nvdash \bot \). Thus, by the Model Existence Theorem, there is an \(\mcal {L}(\mcal {D})\)-structure
+\(\mcal {M}\) such that \(\mcal {M}\models \Sigma (\mcal {D})\). Now, let \(h\) be an assignment of \(\mcal {M}\) where \(h(v_i)=c_i^\mcal {M}\) for all \(i\in \N \). Then \(h\) is also an assignment of the \(\mcal {L}\)-reduct \(\mcal
+{M}^{-}\) of \(\mcal {M}\). With a bit of work, we can show that \(\mcal {M}^{-}\models \sigma [h]\) for all \(\sigma \in \Sigma \). Therefore \(\Sigma \nvDash \bot \). <span class="theoremendmark">&#x25A1;</span>
+</p>
+
+</li>
+
+</ul>
+
+</div>
+
+<p>
+We can now deduce the difficult direction of the Completeness Theorem exactly as we did in Propositional Logic.
+</p>
+<div class="amsthmproof">
+
+<a id="Logic-autopage-308"></a>
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"> <span class="amsthmproofname">Proof of the Completeness Theorem for Predicate Logic.</span></span> Let \(\Sigma \) be a set of \(\mcal {L}\)-formulas and let \(\phi \) be an \(\mcal {L}\)-formula. By the
+Soundness Theorem \(\Sigma \proves \phi \) implies \(\Sigma \models \phi \). We now prove the converse. Suppose that \(\Sigma \models \phi \). Let \(\mcal {M}\) be an \(\mcal {L}\)-structure and let \(h\) be an assignment of \(\mcal
+{M}\). Suppose that \(\mcal {M}\models \sigma [h]\) for all \(\sigma \in \Sigma \). Since \(\Sigma \models \phi \), \(\mcal {M}\models \phi [h]\). Thus, \(\mcal {M}\nvDash \neg \phi [h]\). Therefore \(\Sigma \cup \{\neg \phi
+\}\models \bot \). So, by the Model Existence Theorem, \(\Sigma \cup \{\neg \phi \}\proves \bot \). By the Deduction Theorem, this implies \(\Sigma \proves (\neg \phi )\rightarrow \bot \) i.e. \(\Sigma \proves \neg \neg \phi
+\). Since \(\neg \neg \phi \rightarrow \phi \) is an instance of <b>(AxProp)</b>, applying modus ponens gives \(\Sigma \proves \phi \) as required. <span class="theoremendmark">&#x25A1;</span>
+</p>
+
+</li>
+
+</ul>
+
+</div>
+
+</section>
+
+</main>
+
+</div>
+
+
+<nav class="botnavigation"><a href="Logic.html" class="linkhome" >
+Home</a></nav>
+
+</body>
+</html>

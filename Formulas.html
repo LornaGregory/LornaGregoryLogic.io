@@ -1,0 +1,1422 @@
+
+<!DOCTYPE html>
+<html lang="en-UK">
+<head>
+<meta charset="UTF-8" />
+<meta name="author" content="Lorna Gregory" />
+<meta name="generator" content="LaTeX Lwarp package" />
+<meta name="description" content="A description." />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Logic — Formulas</title>
+<link rel="stylesheet" type="text/css" href="lwarpLorna.css" />
+
+<script>
+// Lwarp MathJax emulation code
+//
+// Based on code by Davide P. Cervone.
+// Equation numbering: https://github.com/mathjax/MathJax/issues/2427
+// Starred and ifnextchar macros: https://github.com/mathjax/MathJax/issues/2428
+// \left, \right delimiters: https://github.com/mathjax/MathJax/issues/2535
+//
+// Modified by Brian Dunn to adjust equation numbering and add subequations.
+//
+// LaTeX can use \seteqnumber{subequations?}{section}{number} before each equation.
+// subequations? is 0 usually, 1 if inside subequations.
+// section is a string printed as-is, or empty.
+// number is auto-incremented by MathJax between equations.
+//
+MathJax = {
+     subequations: "0",
+     section: "",
+     loader: {
+          load: ['[tex]/tagformat', '[tex]/textmacros'],
+     },
+     startup: {
+          ready() {
+              //       These would be replaced by import commands if you wanted to make
+              //       a proper extension.
+              const Configuration = MathJax._.input.tex.Configuration.Configuration;
+              const CommandMap = MathJax._.input.tex.SymbolMap.CommandMap;
+              const Macro = MathJax._.input.tex.Symbol.Macro;
+              const TexError = MathJax._.input.tex.TexError.default;
+              const ParseUtil = MathJax._.input.tex.ParseUtil.default;
+              const expandable = MathJax._.util.Options.expandable;
+
+
+              //       Insert the replacement string into the TeX string, and check
+              //       that there haven't been too many maxro substitutions (prevents
+              //       infinite loops).
+              const useArgument = (parser, text) => {
+                   parser.string = ParseUtil.addArgs(parser, text, parser.string.slice(parser.i));
+                   parser.i = 0;
+                   if (++parser.macroCount > parser.configuration.options.maxMacros) {
+                        throw new TexError('MaxMacroSub1',
+                        'MathJax maximum macro substitution count exceeded; ' +
+                        'is there a recursive macro call?');
+                   }
+              }
+
+
+              //       Create the command map for:
+              //            \ifstar, \ifnextchar, \ifblank, \ifstrequal, \gsub, \seteqnumber
+              new CommandMap('Lwarp-macros', {
+                   ifstar: 'IfstarFunction',
+                   ifnextchar: 'IfnextcharFunction',
+                   ifblank: 'IfblankFunction',
+                   ifstrequal: 'IfstrequalFunction',
+                   gsubstitute: 'GsubstituteFunction',
+                   seteqnumber: 'SeteqnumberFunction'
+              }, {
+                   //       This function implements an ifstar macro.
+                   IfstarFunction(parser, name) {
+                        const resultstar = parser.GetArgument(name);
+                        const resultnostar = parser.GetArgument(name);
+                        const star = parser.GetStar();                        // true if there is a *
+                        useArgument(parser, star ? resultstar : resultnostar);
+                   },
+
+
+                   //       This function implements an ifnextchar macro.
+                   IfnextcharFunction(parser, name) {
+                        let whichchar = parser.GetArgument(name);
+                        if (whichchar.match(/^(?:0x[0-9A-F]+|[0-9]+)$/i)) {
+                            // $ syntax highlighting
+                            whichchar = String.fromCodePoint(parseInt(whichchar));
+                        }
+                        const resultnextchar = parser.GetArgument(name);
+                        const resultnotnextchar = parser.GetArgument(name);
+                        const gotchar = (parser.GetNext() === whichchar);
+                        useArgument(parser, gotchar ? resultnextchar : resultnotnextchar);
+                   },
+
+
+                   // This function implements an ifblank macro.
+                   IfblankFunction(parser, name) {
+                        const blankarg = parser.GetArgument(name);
+                        const resultblank = parser.GetArgument(name);
+                        const resultnotblank = parser.GetArgument(name);
+                        const isblank = (blankarg.trim() == "");
+                        useArgument(parser, isblank ? resultblank : resultnotblank);
+                   },
+
+
+                   // This function implements an ifstrequal macro.
+                   IfstrequalFunction(parser, name) {
+                        const strequalfirst = parser.GetArgument(name);
+                        const strequalsecond = parser.GetArgument(name);
+                        const resultequal = parser.GetArgument(name);
+                        const resultnotequal = parser.GetArgument(name);
+                        const isequal = (strequalfirst == strequalsecond);
+                        useArgument(parser, isequal ? resultequal : resultnotequal);
+                   },
+
+
+                   // This function implements a gsub macro.
+                   GsubstituteFunction(parser, name) {
+                        const gsubfirst = parser.GetArgument(name);
+                        const gsubsecond = parser.GetArgument(name);
+                        const gsubthird = parser.GetArgument(name);
+                        let gsubresult=gsubfirst.replace(gsubsecond, gsubthird);
+                        useArgument(parser, gsubresult);
+                   },
+
+
+                   //       This function modifies the equation numbers.
+                   SeteqnumberFunction(parser, name) {
+                            //   Get the macro parameters
+                            const star = parser.GetStar();                      // true if there is a *
+                            const optBrackets = parser.GetBrackets(name);        // contents of optional brackets
+                            const newsubequations = parser.GetArgument(name);      // the subequations argument
+                            const neweqsection = parser.GetArgument(name);      // the eq section argument
+                            const neweqnumber = parser.GetArgument(name);        // the eq number argument
+                            MathJax.config.subequations=newsubequations ;       // a string with boolean meaning
+                            MathJax.config.section=neweqsection ;               // a string with numeric meaning
+                            parser.tags.counter = parser.tags.allCounter = neweqnumber ;
+                   }
+
+
+              });
+
+
+              //       Create the Lwarp-macros package
+              Configuration.create('Lwarp-macros', {
+                   handler: {macro: ['Lwarp-macros']}
+              });
+
+
+              MathJax.startup.defaultReady();
+
+
+              // For forward references:
+              MathJax.startup.input[0].preFilters.add(({math}) => {
+                   if (math.inputData.recompile){
+                            MathJax.config.subequations = math.inputData.recompile.subequations;
+                            MathJax.config.section = math.inputData.recompile.section;
+                   }
+              });
+              MathJax.startup.input[0].postFilters.add(({math}) => {
+                   if (math.inputData.recompile){
+                            math.inputData.recompile.subequations = MathJax.config.subequations;
+                            math.inputData.recompile.section = MathJax.config.section;
+                   }
+              });
+
+
+                   // For \left, \right with unicode-math:
+                   const {DelimiterMap} = MathJax._.input.tex.SymbolMap;
+                   const {Symbol} = MathJax._.input.tex.Symbol;
+                   const {MapHandler} = MathJax._.input.tex.MapHandler;
+                   const delimiter = MapHandler.getMap('delimiter');
+                   delimiter.add('\\lBrack', new Symbol('\\lBrack', '\u27E6'));
+                   delimiter.add('\\rBrack', new Symbol('\\rBrack', '\u27E7'));
+                   delimiter.add('\\lAngle', new Symbol('\\lAngle', '\u27EA'));
+                   delimiter.add('\\rAngle', new Symbol('\\rAngle', '\u27EB'));
+                   delimiter.add('\\lbrbrak', new Symbol('\\lbrbrak', '\u2772'));
+                   delimiter.add('\\rbrbrak', new Symbol('\\rbrbrak', '\u2773'));
+                   delimiter.add('\\lbag', new Symbol('\\lbag', '\u27C5'));
+                   delimiter.add('\\rbag', new Symbol('\\rbag', '\u27C6'));
+                   delimiter.add('\\llparenthesis', new Symbol('\\llparenthesis', '\u2987'));
+                   delimiter.add('\\rrparenthesis', new Symbol('\\rrparenthesis', '\u2988'));
+                   delimiter.add('\\llangle', new Symbol('\\llangle', '\u2989'));
+                   delimiter.add('\\rrangle', new Symbol('\\rrangle', '\u298A'));
+                   delimiter.add('\\Lbrbrak', new Symbol('\\Lbrbrak', '\u27EC'));
+                   delimiter.add('\\Rbrbrak', new Symbol('\\Rbrbrak', '\u27ED'));
+                   delimiter.add('\\lBrace', new Symbol('\\lBrace', '\u2983'));
+                   delimiter.add('\\rBrace', new Symbol('\\rBrace', '\u2984'));
+                   delimiter.add('\\lParen', new Symbol('\\lParen', '\u2985'));
+                   delimiter.add('\\rParen', new Symbol('\\rParen', '\u2986'));
+                   delimiter.add('\\lbrackubar', new Symbol('\\lbrackubar', '\u298B'));
+                   delimiter.add('\\rbrackubar', new Symbol('\\rbrackubar', '\u298C'));
+                   delimiter.add('\\lbrackultick', new Symbol('\\lbrackultick', '\u298D'));
+                   delimiter.add('\\rbracklrtick', new Symbol('\\rbracklrtick', '\u298E'));
+                   delimiter.add('\\lbracklltick', new Symbol('\\lbracklltick', '\u298F'));
+                   delimiter.add('\\rbrackurtick', new Symbol('\\rbrackurtick', '\u2990'));
+                   delimiter.add('\\langledot', new Symbol('\\langledot', '\u2991'));
+                   delimiter.add('\\rangledot', new Symbol('\\rangledot', '\u2992'));
+                   delimiter.add('\\lparenless', new Symbol('\\lparenless', '\u2993'));
+                   delimiter.add('\\rparengtr', new Symbol('\\rparengtr', '\u2994'));
+                   delimiter.add('\\Lparengtr', new Symbol('\\Lparengtr', '\u2995'));
+                   delimiter.add('\\Rparenless', new Symbol('\\Rparenless', '\u2996'));
+                   delimiter.add('\\lblkbrbrak', new Symbol('\\lblkbrbrak', '\u2997'));
+                   delimiter.add('\\rblkbrbrak', new Symbol('\\rblkbrbrak', '\u2998'));
+                   delimiter.add('\\lvzigzag', new Symbol('\\lvzigzag', '\u29D8'));
+                   delimiter.add('\\rvzigzag', new Symbol('\\rvzigzag', '\u29D9'));
+                   delimiter.add('\\Lvzigzag', new Symbol('\\Lvzigzag', '\u29DA'));
+                   delimiter.add('\\Rvzigzag', new Symbol('\\Rvzigzag', '\u29DB'));
+                   delimiter.add('\\lcurvyangle', new Symbol('\\lcurvyangle', '\u29FC'));
+                   delimiter.add('\\rcurvyangle', new Symbol('\\rcurvyangle', '\u29FD'));
+                   delimiter.add('\\Vvert', new Symbol('\\Vvert', '\u2980'));
+          }       // ready
+     },           // startup
+
+
+     tex: {
+          packages: {'[+]': ['tagformat', 'Lwarp-macros', 'textmacros']},
+          tags: "ams",
+                   tagformat: {
+                            number: function (n) {
+                                 if(MathJax.config.subequations==0)
+                                        return(MathJax.config.section + n);
+                                 else
+                                        return(MathJax.config.section + String.fromCharCode(96+n));
+                            },
+                   },
+     }
+}
+</script>
+
+
+<script
+          id="MathJax-script"
+          src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"
+></script>
+
+</head>
+<body>
+
+
+<a id="Logic-autopage-173"></a>
+<nav class="topnavigation"><a href="Logic.html" class="linkhome" >
+Home</a></nav>
+
+
+<div class="bodyandsidetoc">
+<div class="sidetoccontainer">
+
+
+<nav class="sidetoc">
+
+
+<div class="sidetoctitle">
+
+<p>
+<span class="sidetocthetitle">Mathematical Logic</span>
+</p>
+
+<p>
+Contents
+</p>
+</div>
+
+
+<div class="sidetoccontents">
+
+<p>
+<a href="Logic.html" class="linkhome" >
+Home</a>
+</p>
+
+<p>
+<a href="Introduction.html#autosec-5" class="tocsection" >
+<span class="sectionnumber">1</span>&#x2003;Introduction</a>
+</p>
+
+
+<p>
+<a href="Propositional-Logic.html#autosec-16" class="tocsection" >
+<span class="sectionnumber">2</span>&#x2003;Propositional Logic</a>
+</p>
+
+
+<p>
+<a href="Propositional-Logic.html#autosec-17" class="tocsubsection" >
+<span class="sectionnumber">2.1</span>&#x2003;Propositional formulas</a>
+</p>
+
+
+<p>
+<a href="Truth.html#autosec-95" class="tocsubsection" >
+<span class="sectionnumber">2.2</span>&#x2003;Truth</a>
+</p>
+
+
+<p>
+<a href="Proofs.html#autosec-146" class="tocsubsection" >
+<span class="sectionnumber">2.3</span>&#x2003;Proofs</a>
+</p>
+
+
+<p>
+<a href="Completeness.html#autosec-157" class="tocsubsection" >
+<span class="sectionnumber">2.4</span>&#x2003;Completeness</a>
+</p>
+
+
+<p>
+<a href="Predicate-Logic.html#autosec-168" class="tocsection" >
+<span class="sectionnumber">3</span>&#x2003;Predicate Logic</a>
+</p>
+
+
+<p>
+<a href="Predicate-Logic.html#autosec-169" class="tocsubsection" >
+<span class="sectionnumber">3.1</span>&#x2003;Languages and Structures</a>
+</p>
+
+
+<p>
+<a href="Formulas.html#autosec-174" class="tocsubsection" >
+<span class="sectionnumber">3.2</span>&#x2003;Formulas</a>
+</p>
+
+
+<p>
+<a href="Tarski-Truth-Definition.html#autosec-199" class="tocsubsection" >
+<span class="sectionnumber">3.3</span>&#x2003;Tarski’s Truth Definition</a>
+</p>
+
+
+<p>
+<a href="Proofs-9.html#autosec-245" class="tocsubsection" >
+<span class="sectionnumber">3.4</span>&#x2003;Proofs</a>
+</p>
+
+
+<p>
+<a href="Completeness-10.html#autosec-258" class="tocsubsection" >
+<span class="sectionnumber">3.5</span>&#x2003;Completeness</a>
+</p>
+
+
+<p>
+<a href="Proof-Completeness-Theorem-Predicate-Logic-4th-year-material.html#autosec-272" class="tocsection" >
+<span class="sectionnumber">4</span>&#x2003;Proof of the Completeness Theorem for Predicate Logic (4th year material)</a>
+</p>
+
+
+<p>
+<a href="Application-Compactness-Theorem-Extension-Constants.html#autosec-310" class="tocsection" >
+<span class="sectionnumber">5</span>&#x2003;Application of the Compactness Theorem and Extension by Constants</a>
+</p>
+
+
+<p>
+<a href="Universal-Algebra-Substructures-Homomorphisms.html#autosec-336" class="tocsection" >
+<span class="sectionnumber">6</span>&#x2003;Universal Algebra: Substructures and Homomorphisms</a>
+</p>
+
+
+<p>
+<a href="Further-Model-Theory-4th-year-material.html#autosec-346" class="tocsection" >
+<span class="sectionnumber">7</span>&#x2003;Further Model Theory (4th year material)</a>
+</p>
+
+
+<p>
+<a href="Further-Model-Theory-4th-year-material.html#autosec-347" class="tocsubsection" >
+<span class="sectionnumber">7.1</span>&#x2003;Definable Sets</a>
+</p>
+
+
+<p>
+<a href="Elementary-Substructures.html#autosec-354" class="tocsubsection" >
+<span class="sectionnumber">7.2</span>&#x2003;Elementary Substructures</a>
+</p>
+
+
+<p>
+<a href="Downwards-Lowenheim-Skolem-Theorem.html#autosec-364" class="tocsubsection" >
+<span class="sectionnumber">7.3</span>&#x2003;Downwards Lo&#x0308;wenheim-Skolem Theorem</a>
+</p>
+
+
+<p>
+<a href="Upwards-Lowenheim-Skolem-Theorem.html#autosec-368" class="tocsubsection" >
+<span class="sectionnumber">7.4</span>&#x2003;Upwards Lo&#x0308;wenheim-Skolem Theorem</a>
+</p>
+
+
+<p>
+<a href="Categoricity.html#autosec-371" class="tocsubsection" >
+<span class="sectionnumber">7.5</span>&#x2003;Categoricity</a>
+</p>
+
+
+</div>
+
+</nav>
+
+</div>
+
+
+<main class="bodycontainer">
+
+
+<section class="textbody">
+
+<h1>Mathematical Logic</h1>
+
+<!--MathJax customizations:-->
+<div data-nosnippet
+    style="display:none"
+>
+
+\(\newcommand{\footnotename}{footnote}\)
+
+\(\def \LWRfootnote {1}\)
+
+\(\newcommand {\footnote }[2][\LWRfootnote ]{{}^{\mathrm {#1}}}\)
+
+\(\newcommand {\footnotemark }[1][\LWRfootnote ]{{}^{\mathrm {#1}}}\)
+
+\(\let \LWRorighspace \hspace \)
+
+\(\renewcommand {\hspace }{\ifstar \LWRorighspace \LWRorighspace }\)
+
+\(\newcommand {\TextOrMath }[2]{#2}\)
+
+\(\newcommand {\mathnormal }[1]{{#1}}\)
+
+\(\newcommand \ensuremath [1]{#1}\)
+
+\(\newcommand {\LWRframebox }[2][]{\fbox {#2}} \newcommand {\framebox }[1][]{\LWRframebox } \)
+
+\(\newcommand {\setlength }[2]{}\)
+
+\(\newcommand {\addtolength }[2]{}\)
+
+\(\newcommand {\setcounter }[2]{}\)
+
+\(\newcommand {\addtocounter }[2]{}\)
+
+\(\newcommand {\arabic }[1]{}\)
+
+\(\newcommand {\number }[1]{}\)
+
+\(\newcommand {\noalign }[1]{\text {#1}\notag \\}\)
+
+\(\newcommand {\cline }[1]{}\)
+
+\(\newcommand {\directlua }[1]{\text {(directlua)}}\)
+
+\(\newcommand {\luatexdirectlua }[1]{\text {(directlua)}}\)
+
+\(\newcommand {\protect }{}\)
+
+\(\def \LWRabsorbnumber #1 {}\)
+
+\(\def \LWRabsorbquotenumber &quot;#1 {}\)
+
+\(\newcommand {\LWRabsorboption }[1][]{}\)
+
+\(\newcommand {\LWRabsorbtwooptions }[1][]{\LWRabsorboption }\)
+
+\(\def \mathchar {\ifnextchar &quot;\LWRabsorbquotenumber \LWRabsorbnumber }\)
+
+\(\def \mathcode #1={\mathchar }\)
+
+\(\let \delcode \mathcode \)
+
+\(\let \delimiter \mathchar \)
+
+\(\def \oe {\unicode {x0153}}\)
+
+\(\def \OE {\unicode {x0152}}\)
+
+\(\def \ae {\unicode {x00E6}}\)
+
+\(\def \AE {\unicode {x00C6}}\)
+
+\(\def \aa {\unicode {x00E5}}\)
+
+\(\def \AA {\unicode {x00C5}}\)
+
+\(\def \o {\unicode {x00F8}}\)
+
+\(\def \O {\unicode {x00D8}}\)
+
+\(\def \l {\unicode {x0142}}\)
+
+\(\def \L {\unicode {x0141}}\)
+
+\(\def \ss {\unicode {x00DF}}\)
+
+\(\def \SS {\unicode {x1E9E}}\)
+
+\(\def \dag {\unicode {x2020}}\)
+
+\(\def \ddag {\unicode {x2021}}\)
+
+\(\def \P {\unicode {x00B6}}\)
+
+\(\def \copyright {\unicode {x00A9}}\)
+
+\(\def \pounds {\unicode {x00A3}}\)
+
+\(\let \LWRref \ref \)
+
+\(\renewcommand {\ref }{\ifstar \LWRref \LWRref }\)
+
+\( \newcommand {\multicolumn }[3]{#3}\)
+
+\(\require {textcomp}\)
+
+\(\newcommand {\intertext }[1]{\text {#1}\notag \\}\)
+
+\(\let \Hat \hat \)
+
+\(\let \Check \check \)
+
+\(\let \Tilde \tilde \)
+
+\(\let \Acute \acute \)
+
+\(\let \Grave \grave \)
+
+\(\let \Dot \dot \)
+
+\(\let \Ddot \ddot \)
+
+\(\let \Breve \breve \)
+
+\(\let \Bar \bar \)
+
+\(\let \Vec \vec \)
+
+\(\newcommand {\bm }[1]{\boldsymbol {#1}}\)
+
+\(\newcommand {\R }{\mathbb {R}}\)
+
+\(\newcommand {\C }{\mathbb {C}}\)
+
+\(\newcommand {\Z }{\mathbb {Z}}\)
+
+\(\newcommand {\N }{\mathbb {N}}\)
+
+\(\newcommand {\Q }{\mathbb {Q}}\)
+
+\(\newcommand {\st }{\ \vert \ }\)
+
+\(\newcommand {\mcal }[1]{\mathcal {#1}}\)
+
+\(\newcommand {\TmAlg }{\mathrm {TmAlg}}\)
+
+\(\newcommand {\PROP }{\mathrm {PROP}}\)
+
+\(\newcommand {\PF }{\mathrm {S}}\)
+
+\(\newcommand {\proves }{\vdash }\)
+
+\(\newcommand {\tm }{\textrm {tm}}\)
+
+\(\newcommand {\ctm }{\textrm {ctm}}\)
+
+\(\newcommand {\Fml }{\textrm {Fml}}\)
+
+\(\newcommand {\Fr }{\textrm {Fr}}\)
+
+\(\newcommand {\Vbl }{\textrm {Vbl}}\)
+
+\(\newcommand {\cmpx }{\texttt {cmpx}}\)
+
+\(\newcommand {\supp }{\text {supp}}\)
+
+\(\newcommand {\conn }{\,\square \,}\)
+
+\(\newcommand {\con }{\,\diamond \,}\)
+
+\(\newcommand {\ct }{\texttt {c}}\)
+
+\(\newcommand {\T }{\mathbb {T}}\)
+
+\(\newcommand {\F }{\mathbb {F}}\)
+
+\(\newcommand {\mathlarger }[1]{#1}\)
+
+\(\newcommand {\mathsmaller }[1]{#1}\)
+
+\(\newcommand {\LWRmarginnote }[1][]{}\)
+
+\(\newcommand {\marginnote }[2][]{\qquad {\small \textrm {#2}}\LWRmarginnote }\)
+
+</div>
+
+<!--
+...... subsection Formulas ......
+-->
+<h5 id="autosec-174"><span class="sectionnumber">3.2&#x2003;</span>Formulas</h5>
+<a id="Logic-autopage-174"></a>
+<a id="Logic-autofile-7"></a>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-175"></a>
+<span class="amsthmnameplain">Definition</span><span class="amsthmnumberplain"> <span class="textup">3.4</span></span>. </span> The <b>alphabet</b> of a language \(\mcal {L}\) is the relation, functions and constant symbols of
+\(\mcal {L}\) together with a set of logical symbols which are part of every language consisting of:
+</p>
+<ul class="enumerate" style="list-style-type:none">
+
+
+<li>
+<p>
+<span class="listmarker">1.</span> Connectives: \(\{\rightarrow , \bot \}\)
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">2.</span> A quantifier: \(\forall \)
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">3.</span> The equality symbols \(=\)
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">4.</span> Brackets \()\) and \((\)
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">5.</span> Comma: ,
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">6.</span> A set of variables denoted \(\textrm {Vbl}:=\{v_i \st i\in \N \}\)
+</p>
+</li>
+</ul>
+
+</li>
+
+</ul>
+
+</div>
+
+<p>
+As in propositional logic, words in an alphabet are just finite tuples from that alphabet and again, as in propositional logic, we write \(a_1a_2\ldots a_n\) rather than \((a_1,\ldots ,a_n)\).
+</p>
+<!--
+...... subsubsection Terms and the functions they define ......
+-->
+<h6 id="autosec-176">Terms and the functions they define</h6>
+<a id="Logic-autopage-176"></a>
+
+
+<p>
+We define the set of terms of \(\mcal {L}\) inductively.
+</p>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-177"></a>
+<span class="amsthmnameplain">Definition</span><span class="amsthmnumberplain"> <span class="textup">3.5</span></span>. </span> Let \(\mcal {L}\) be a language. Define \(\tm _0(\mcal {L})\) to be the set \(\textrm {Vbl}\cup
+\mcal {C}\). For all \(k\in \N \), let
+</p>
+
+<p>
+\[\tm _{k+1}(\mcal {L}):=\tm _k(\mcal {L})\cup \{F(t_1,t_2,\ldots ,t_n) \st F\in \mcal {F}, n\text { is the arity of }F \text { and } t_1,\ldots ,t_n\in \tm _{k}(\mcal {L}) \}.\]
+</p>
+
+<p>
+We define the set of \(\mcal {L}\)-terms to be
+</p>
+
+<p>
+\[\tm (\mcal {L}):=\bigcup _{k\in \N _0}\tm _k(\mcal {L}).\]
+</p>
+
+<p>
+The complexity \(\cmpx (t)\) of an \(\mcal {L}\)-term \(t\) is the least \(k\) such that \(t\in \tm _k(\mcal {L})\).
+</p>
+
+</li>
+
+</ul>
+
+</div>
+
+<p>
+When a language \(\mcal {L}\) has no function symbols the set of \(\mcal {L}\)-terms is just \(\textrm {Vbl}\cup \mcal {C}\).
+</p>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-178"></a>
+<span class="amsthmnameplain">Examples</span><span class="amsthmnumberplain"> <span class="textup">3.6</span></span>. </span>
+</p>
+<ul class="enumerate" style="list-style-type:none">
+
+
+<li>
+<p>
+<span class="listmarker">1.</span> Let \(\mcal {L}\) be the empty language i.e. the language with no relation, function or constant symbols. Then the \(\mcal {L}\)-terms are exactly the set of variables.
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">2.</span> The set of \(\mcal {L}_{graph}\)-terms is exactly the set of variables.
+</p>
+</li>
+</ul>
+
+</li>
+
+</ul>
+
+</div>
+
+<p>
+Every variable which occurs in a term \(t\) is called a <b>free variable</b> of \(t\) and the set of free variables of \(t\) is denoted \(\textrm {Fr}(t)\). We call those terms without free variables <b>constant terms</b>.
+</p>
+
+<p>
+As we did for propositional formulas, we can draw construction trees for terms. We define them inductively.
+</p>
+
+<ul class="enumerate" style="list-style-type:none">
+
+<li>
+<p>
+<span class="listmarker">(I)</span> If \(t\) is a constant symbol or a variable then the construction tree \(\text {CT}(t)\) of \(t\) is just \(t\).
+</p>
+
+</li>
+<li>
+
+<p>
+<span class="listmarker">(II)</span> If \(t\) is of the form \(F(t_1,t_2,\ldots , t_n)\) for some function symbol of arity \(n\) and terms \(t_1,\ldots t_n\) then the construction tree of \(t\) is
+</p>
+<div class="center">
+<p>
+
+<a href="Termtreedef.png" target="_blank" ><img
+    src="Termtreedef.png"
+    style="
+    width:130pt;
+    "
+    class="inlineimage"
+    alt="(image)"
+></a>
+</p>
+</div>
+</li>
+</ul>
+
+<p>
+Exactly as for propositional formulas, we can draw a construction tree for a term to show that it is indeed a term.
+</p>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-180"></a>
+<span class="amsthmnameplain">Example</span><span class="amsthmnumberplain"> <span class="textup">3.7</span></span>. </span> Let \(\mcal {L}=\langle F,G,c\rangle \) where \(F\) is a function symbol of arity \(2\), \(G\) is a
+function symbol of arity \(3\) and \(c\) is a constant symbol. Then \(F(G(c,v_4,v_2),F(v_1,F(c,c)))\) is and \(\mcal {L}\)-term. Here is its construction tree:
+</p>
+<div class="center">
+
+<p>
+<span
+      id="lateximage-Logic-18"
+      class="lateximagesource"
+><!--
+c   v4   v2   v1       F (c, c)
+
+
+                   c              c
+--><img
+      src="Logic-images\image-18.svg"
+      alt="(-tikz-&nbsp;diagram)"
+      style=""
+      class="lateximage"
+></span>
+</p>
+</div>
+
+<p>
+Its complexity is \(3\).
+</p>
+
+<p>
+The \(\mcal {L}\)-term \(F(G(c,F(c,c),c),F(c,F(c,c)))\) is a constant term. Here is its construction tree:
+</p>
+<div class="center">
+
+<p>
+<span
+      id="lateximage-Logic-19"
+      class="lateximagesource"
+><!--
+c       F (c, c)       c c       F (c, c)
+
+
+    c              c         c              c
+--><img
+    src="Logic-images\image-19.svg"
+    alt="(-tikz-&nbsp;diagram)"
+    style=""
+    class="lateximage"
+></span>
+</p>
+</div>
+
+</li>
+
+</ul>
+
+</div>
+
+<p>
+In many algebraic subjects, for instance Group Theory, we use “infix” notation to denote the group operation applied to elements of the group. For instance, in \(\Z \) as a group under \(+\) we write \(5+4\) rather than \(+(5,4)\). We will do this for function
+symbols in some situations (mainly when our language is meant to be the language for an algebraic structure where this is the common notation) to make our terms more easily readable.
+</p>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-187"></a>
+<span class="amsthmnameplain">Example</span><span class="amsthmnumberplain"> <span class="textup">3.8</span></span>. </span> In this language of rings \(\mcal {L}_{ring}\), \(+(v_1,\cdot (v_1,v_2))\) is an \(\mcal
+{L}_{ring}\)-term of complexity \(2\). In infix notation this is written \(v_1+(v_1\cdot v_2)\). The expression \(\cdot (v_2,v_2)\) is an \(\mcal {L}_{ring}\)-term. In infix notation it’s written \(v_2\cdot v_2\). We might even write it
+\(v_2^2\) sometimes.
+</p>
+
+</li>
+
+</ul>
+
+</div>
+
+<p>
+Informally, this theorem says that every term has a unique construction tree. It’s proof is similar in flavour to the Unique Construction Theorem for propositional formulas. We won’t cover it.
+</p>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-188"></a>
+<span class="amsthmnameplain">Theorem</span><span class="amsthmnumberplain"> <span class="textup">3.9</span></span><span class="amsthmnoteplain"> (Unique Construction Theorem for Terms)</span>. </span> <a
+id="UniConTerms"></a> If \(t\) is an \(\mcal {L}\)-term then exactly one of the following is true:
+</p>
+<ul class="enumerate" style="list-style-type:none">
+
+
+<li>
+<p>
+<span class="listmarker">1.</span> \(t\) is a variable.
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">2.</span> \(t\) is a constant symbol.
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">3.</span> \(t\) is of the form \(F(t_1,\ldots ,t_n)\) for a unique function symbol \(F\) of arity \(n\) and a unique \(n\)-tuple of terms \((t_1,\ldots ,t_n)\).
+</p>
+</li>
+</ul>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-189"></a>
+<span class="amsthmnameplain">Corollary</span><span class="amsthmnumberplain"> <span class="textup">3.10</span></span>. </span> For \(n\in \N \), \(F\) a function symbol of \(\mcal {L}\) of arity \(n\) and \(t_1,\ldots ,t_n\in
+\tm (\mcal {L})\),
+</p>
+
+<p>
+\[\cmpx (F(t_1,\ldots ,t_n))=1+\max \{\cmpx (t_1),\ldots ,\cmpx (t_n)\}.\]
+</p>
+
+<p>
+
+
+</p>
+
+</li>
+
+</ul>
+
+</div>
+
+<p>
+We are now ready to discuss the functions terms define. We start with some informal examples.
+</p>
+
+<ul class="enumerate" style="list-style-type:none">
+
+<li>
+<p>
+<span class="listmarker">1.</span> Let \(\mcal {L}\) be a language with a binary function symbol \(F\) and a unary function symbol \(H\). Let \(\mcal {A}\) be the \(\mcal {L}\)-structure with underlying set \(\R \), \(F^\mcal {A}(r,s)=r+7\)
+and \(H^\mcal {A}(r)=r^2+1\). Let \(t\) be the \(\mcal {L}\)-term \(F(v_1,H(v_1))\). Then \(t\) defines the function from \(\R ^2\) to \(\R \) which maps \((a,b)\) to \(a+7\).
+</p>
+
+</li>
+<li>
+
+<p>
+<span class="listmarker">2.</span> Let \(t\) be the \(\mcal {L}_{ring}\)-term \(+(v_1,\cdot (v_2,+(v_1,v_2)))\), written in infix notation as \(v_1+(v_2\cdot (v_1+v_2))\). If we view \(\Z \) as an \(\mcal {L}_{ring}\)-structure in the
+usual way then this term defines the function from \(\Z ^2\) to \(\Z \) which maps \((a,b)\in \Z ^{2}\) to \(a+ab+b^2\).
+</p>
+</li>
+</ul>
+
+<p>
+In some books you will see \(\mcal {L}\)-terms \(t\) having interpretations in \(\mcal {L}\)-structures \(\mcal {A}\) as functions \(t^\mcal {A}:A^n\rightarrow A\) where \(n\) is the size of a set of free variables containing the free variables of \(t\).
+We choose to do something slightly different which, although slightly contrary to our natural intuition about how \(\mcal {L}\)-terms should be interpreted, will result in each \(\mcal {L}\)-term having just one interpretation rather than technically having
+many.
+</p>
+
+<p>
+Before making our definition we compare this with the situation of polynomials in many variables. The polynomial \(X_1^2+5X_3\) defines a function \(\R ^3\rightarrow \R \). However, perhaps I had in mind that \(X_1^2+5X_3\) was actually an element of
+the polynomial ring \(\R [X_1,\ldots ,X_4]\). In this case it defines a function \(\R ^4\rightarrow \R \). So, one polynomial defines many functions. The next definition avoids this phenomena.
+</p>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-190"></a>
+<span class="amsthmnameplain">Definition</span><span class="amsthmnumberplain"> <span class="textup">3.11</span></span>. </span> Let \(\mcal {L}\) be a language and let \(\mcal {A}\) be an \(\mcal {L}\)-structure with domain
+\(A\).
+</p>
+<ul class="enumerate" style="list-style-type:none">
+
+
+<li>
+<p>
+<span class="listmarker">(i)</span> An <b>assignment</b> of an \(\mcal {L} \)-structure \(\mcal {A} \) is a map
+</p>
+<p>
+\[h:\textrm {Vbl} \rightarrow A .\]
+</p>
+<p>
+Given an assignment \(h\) of \(\mcal {A}\), a variable \(x\) and an element \(a\in A\) we denote by \(h({x\atop a})\) the assignment of \(\mcal {A} \) which differs from \(h\) only at the variable \(x\), with value \(a\) at \(x\):
+</p>
+<p>
+\[h\left ({x\atop a}\right )(y)= \begin {cases} h(y) &amp; \text {if }y\neq x \\ a &amp; \text {if }y=x.              \end {cases} \]
+</p>
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">(ii)</span> We define by induction on the complexity of an \(\mcal {L}\)-term \(t\) an element \(t^\mcal {A} [h]\in A\) for each assignment \(h\) of \(\mcal {A} \) as follows:
+</p>
+<ul class="enumerate" style="list-style-type:none">
+
+
+<li>
+<p>
+<span class="listmarker">(a)</span> If \(\cmpx (t)=0\), then
+</p>
+<p>
+\[t^\mcal {A} [h]= \begin {cases} t^\mcal {A} &amp; \text {if }t\in \mcal {C} \\ h(t) &amp; \text {if }t\in \textrm {Vbl} .                 \end {cases} \]
+</p>
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">(b)</span> If \(t_1,\ldots ,t_n\) are \(\mcal {L} \)-terms and \(F\in \mcal {F} \) is of arity \(n\), then we define
+</p>
+<p>
+\[F(t_1,\ldots ,t_n)^\mcal {A} [h]:=F^\mcal {A} (t_1^\mcal {A} [h],\ldots ,t_n^\mcal {A} [h]).\]
+</p>
+<p>
+
+
+</p>
+</li>
+</ul>
+<p>
+For each \(\mcal {L}\)-term \(t\), this definition gives a well-defined element \(t^\mcal {A}\) of \(A\) by <a href="Formulas.html#UniConTerms">3.9</a>.
+</p>
+</li>
+</ul>
+
+<p>
+For each \(\mcal {L}\)-term \(t\), we define a function
+</p>
+
+<p>
+\[t^\mcal {A}:A^\infty \rightarrow A,\]
+</p>
+
+<p>
+where
+</p>
+
+<p>
+\[A^\infty =\{ \bar {a} \st \bar {a}=(a_1,a_2,a_3,\ldots , a_l,\ldots ) \text { with } a_l\in A \text { for all } l\in \N \},\]
+</p>
+
+<p>
+that is \(A^\infty \) is the set of all infinite sequences of elements of \(A\). So here an assignment \(h:\textrm {Vbl}\rightarrow A\) is denoted as a sequence \({\bar a}=(h(v_1),h(v_2),h(v_3),\ldots )\).
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-191"></a>
+<span class="amsthmnameplain">Remark</span><span class="amsthmnumberplain"> <span class="textup">3.12</span></span>. </span> You will show on your exercise sheet that for \(t\) an \(\mcal {L}\)-term and \(\mcal {A}\) an
+\(\mcal {L}\)-structure, \(t^\mcal {A}[h]\) only depends on the values of \(h(v_i)\) for \(v_i\in \textrm {Fr}(t)\).
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<!--
+...... subsubsection Formulas ......
+-->
+<h6 id="autosec-192">Formulas</h6>
+<a id="Logic-autopage-192"></a>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-193"></a>
+<span class="amsthmnameplain">Definition</span><span class="amsthmnumberplain"> <span class="textup">3.13</span></span>. </span> An <b>atomic \(\mcal {L}\)-formula</b> is a word in the alphabet of \(\mcal {L}\) of the form
+</p>
+
+<p>
+\[t_1=t_2\]
+</p>
+
+<p>
+where \(t_1\) and \(t_2\) are \(\mcal {L}\)-terms or of the form
+</p>
+
+<p>
+\[R(t_1,\ldots ,t_n)\]
+</p>
+
+<p>
+where \(n\in \N \), \(t_1,\ldots ,t_n\) are \(\mcal {L}\)-terms and \(R\in \mcal {R}\) has arity \(n\).
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-194"></a>
+<span class="amsthmnameplain">Definition</span><span class="amsthmnumberplain"> <span class="textup">3.14</span></span>. </span> We define the set of formulas \(\Fml (\mcal {L})\) of a language by induction. Let \(\Fml _0(\mcal
+{L})\) be the set of all atomic \(\mcal {L}\)-formulas together with \(\bot \). For each \(k\in \N _0\), let
+</p>
+
+<p>
+\[\Fml _{k+1}(\mcal {L}):=\Fml _k(\mcal {L})\cup \{(\phi \rightarrow \psi ), \st \phi ,\psi \in \Fml _k\}\cup \{ (\forall x \phi ) \st \phi \in \Fml _k\}.\]
+</p>
+
+<p>
+We define the set of <b>\(\mcal {L}\)-formulas</b> to be
+</p>
+
+<p>
+\[\Fml (\mcal {L}):=\bigcup _{i\in \N _0}\Fml _i(\mcal {L}).\]
+</p>
+
+<p>
+The <b>complexity </b>of an \(\mcal {L}\)-formula \(\phi \) is the least \(k\in \N _0\) such that \(\phi \in \Fml _k(\mcal {L})\).
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-195"></a>
+<span class="amsthmnameplain">Theorem</span><span class="amsthmnumberplain"> <span class="textup">3.15</span></span><span class="amsthmnoteplain"> (Unique Construction for Formulas in Predicate Logic)</span>. </span>
+</p>
+
+<p>
+Let \(\mcal {L}\) be a language and let \(\phi \) be an \(\mcal {L}\)-formula. Then exactly one of the following is true:
+</p>
+<ul class="enumerate" style="list-style-type:none">
+
+
+<li>
+<p>
+<span class="listmarker">(i)</span> \(\phi \) is \(\bot \);
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">(ii)</span> \(\phi \) is atomic and there are uniquely determined \(t_1,t_2\in \tm (\mcal {L})\) such that \(\phi \) is \(t_1 = t_2\);
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">(iii)</span> \(\phi \) is atomic and there are a unique \(n\in \N \), a unique relation symbol \(R\in \mcal {R}\) and uniquely determined \(\mcal {L}\)-terms \(t_1,\ldots ,t_n\) such that \(\phi \) is \(R (t_1
+,\ldots ,t_n)\);
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">(iv)</span> \(\phi \) is equal to \((\phi _1\rightarrow \phi _2)\) for uniquely determined \(\phi _1,\phi _2\in \Fml (\mcal {L}) \); or
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">(v)</span> \(\phi \) is equal to \((\forall x \psi )\) for uniquely determined \(\psi \in \Fml (\mcal {L}) \) and \(x\in \Vbl \).
+</p>
+</li>
+</ul>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-196"></a>
+<span class="amsthmnameplain">Exercise</span>. </span> Come up with a definition of the construction tree \(\textrm {CT}(\phi )\) of a formula \(\phi \) in a (first order) language \(\mcal {L}\) based on the inductive definition of an
+\(\mcal {L}\)-formula. Use the following as your base case:
+</p>
+
+<p>
+(I) If \(\phi \) is either an atomic formula or \(\bot \) then the construction tree of \(\phi \) is just \(\phi \).
+</p>
+
+<p>
+This exercise will be on Exercise Sheet 6. For inspiration, you should look at the definition of the construction tree of a propositional formula and the definition of the construction tree of a term.
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-197"></a>
+<span class="amsthmnameplain">Definition</span><span class="amsthmnumberplain"> <span class="textup">3.16</span></span>. </span> <a id="freevar"></a> We define the set of free-variables \(\Fr (\phi )\) of an \(\mcal
+{L}\)-formula \(\phi \) by induction.
+</p>
+<ul class="enumerate" style="list-style-type:none">
+
+
+<li>
+<p>
+<span class="listmarker">(0)</span> \(\Fr (\bot )=\emptyset \).
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">(1)</span> For all terms \(t_1,t_2\), \(\Fr (t_1=t_2)=\Fr (t_1)\cup \Fr (t_2)\) and for all terms \(t_1,\ldots ,t_n\) and relation symbols \(R\), \(\Fr (R(t_1,\ldots ,t_n))=\bigcup _{i=1}^n\Fr (t_i)\).
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">(2)</span> For the inductive step, for \(\phi ,\psi \) \(\mcal {L}\)-formulas and \(x\in \Vbl \), we define
+</p>
+<p>
+\[\Fr ((\phi \rightarrow \psi )):=\Fr (\phi )\cup \Fr (\psi )\]
+</p>
+<p>
+and
+</p>
+<p>
+\[\Fr ((\forall x\phi )):=\Fr (\phi )\backslash \{x\}.\]
+</p>
+<p>
+
+
+</p>
+</li>
+</ul>
+
+</li>
+
+</ul>
+
+</div>
+
+<p>
+<b>Warning:</b> There will be a more complicated definition relating to free variables when we study formal proofs. <span role="note" class="marginpar">End of L19 &amp; L20</span>
+</p>
+
+<p>
+<b>Abbreviations and making the language readable:</b>
+</p>
+
+<ul class="enumerate" style="list-style-type:none">
+
+<li>
+<p>
+<span class="listmarker">(i)</span> In some parts of the notes, we will drop some brackets when it does not lead to ambiguity. In some places I will add brackets to increase readability.
+</p>
+
+</li>
+<li>
+
+<p>
+<span class="listmarker">(ii)</span> As we did in the later part of Propositional Logic, we will view
+</p>
+<ul class="itemize" style="list-style-type:none">
+
+<li>
+<p>
+<span class="listmarker">•</span> \((\neg \phi )\) for \(\phi \) an \(\mcal {L}\)-formula as an abbreviation for \((\phi \rightarrow \bot )\);
+</p>
+
+</li>
+<li>
+
+<p>
+<span class="listmarker">•</span> \((\phi \vee \psi )\) for \(\phi ,\psi \) \(\mcal {L}\)-formulas as an abbreviation for \(((\neg \phi )\rightarrow \psi )\);
+</p>
+
+</li>
+<li>
+
+<p>
+<span class="listmarker">•</span> \((\phi \wedge \psi )\) for \(\phi ,\psi \) \(\mcal {L}\)-formulas as an abbreviation for \((\neg (\phi \rightarrow (\neg \psi )))\); and
+</p>
+
+</li>
+<li>
+
+<p>
+<span class="listmarker">•</span> \((\phi \leftrightarrow \psi )\) for \(\phi ,\psi \) \(\mcal {L}\)-formulas as an abbreviation for \(((\phi \rightarrow \psi )\wedge (\psi \rightarrow \phi ))\).
+</p>
+</li>
+</ul>
+</li>
+<li>
+
+<p>
+<span class="listmarker">(iii)</span> You may have expected there to be a second quantifier. We will write \((\exists x \phi )\) as an abbreviation for \((\neg (\forall x(\neg \phi )))\) when \(x\in \textrm {Vbl}\) and \(\phi \) is an
+\(\mcal {L}\)-formula.
+</p>
+
+</li>
+<li>
+
+<p>
+<span class="listmarker">(iv)</span> If \(t,s\in \tm (\mcal {L})\) then we will write \(t\neq s\) to mean \((\neg t=s)\).
+</p>
+
+</li>
+<li>
+
+<p>
+<span class="listmarker">(v)</span> We will write
+</p>
+<p>
+\[\forall x_1,\ldots ,x_n\ \phi \text { instead of }\forall x_1...\forall x_n\phi \ldots \text { and } \exists x_1,\ldots ,x_n\ \phi \text { instead of }\exists x_1...\exists x_n\phi \]
+</p>
+<p>
+where each \(x_i\) is a variable and \(\phi \) is a formula. Words in \(\mcal {L}\) of the form \(\forall x\) and \(\exists x\) where \(x\in \Vbl \) are called <b>quantifiers</b>.
+</p>
+</li>
+</ul>
+
+</section>
+
+</main>
+
+</div>
+
+
+<nav class="botnavigation"><a href="Logic.html" class="linkhome" >
+Home</a></nav>
+
+</body>
+</html>

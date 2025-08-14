@@ -1,0 +1,2179 @@
+
+<!DOCTYPE html>
+<html lang="en-UK">
+<head>
+<meta charset="UTF-8" />
+<meta name="author" content="Lorna Gregory" />
+<meta name="generator" content="LaTeX Lwarp package" />
+<meta name="description" content="A description." />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Logic — Truth</title>
+<link rel="stylesheet" type="text/css" href="lwarpLorna.css" />
+
+<script>
+// Lwarp MathJax emulation code
+//
+// Based on code by Davide P. Cervone.
+// Equation numbering: https://github.com/mathjax/MathJax/issues/2427
+// Starred and ifnextchar macros: https://github.com/mathjax/MathJax/issues/2428
+// \left, \right delimiters: https://github.com/mathjax/MathJax/issues/2535
+//
+// Modified by Brian Dunn to adjust equation numbering and add subequations.
+//
+// LaTeX can use \seteqnumber{subequations?}{section}{number} before each equation.
+// subequations? is 0 usually, 1 if inside subequations.
+// section is a string printed as-is, or empty.
+// number is auto-incremented by MathJax between equations.
+//
+MathJax = {
+     subequations: "0",
+     section: "",
+     loader: {
+          load: ['[tex]/tagformat', '[tex]/textmacros'],
+     },
+     startup: {
+          ready() {
+              //       These would be replaced by import commands if you wanted to make
+              //       a proper extension.
+              const Configuration = MathJax._.input.tex.Configuration.Configuration;
+              const CommandMap = MathJax._.input.tex.SymbolMap.CommandMap;
+              const Macro = MathJax._.input.tex.Symbol.Macro;
+              const TexError = MathJax._.input.tex.TexError.default;
+              const ParseUtil = MathJax._.input.tex.ParseUtil.default;
+              const expandable = MathJax._.util.Options.expandable;
+
+
+              //       Insert the replacement string into the TeX string, and check
+              //       that there haven't been too many maxro substitutions (prevents
+              //       infinite loops).
+              const useArgument = (parser, text) => {
+                   parser.string = ParseUtil.addArgs(parser, text, parser.string.slice(parser.i));
+                   parser.i = 0;
+                   if (++parser.macroCount > parser.configuration.options.maxMacros) {
+                        throw new TexError('MaxMacroSub1',
+                        'MathJax maximum macro substitution count exceeded; ' +
+                        'is there a recursive macro call?');
+                   }
+              }
+
+
+              //       Create the command map for:
+              //            \ifstar, \ifnextchar, \ifblank, \ifstrequal, \gsub, \seteqnumber
+              new CommandMap('Lwarp-macros', {
+                   ifstar: 'IfstarFunction',
+                   ifnextchar: 'IfnextcharFunction',
+                   ifblank: 'IfblankFunction',
+                   ifstrequal: 'IfstrequalFunction',
+                   gsubstitute: 'GsubstituteFunction',
+                   seteqnumber: 'SeteqnumberFunction'
+              }, {
+                   //       This function implements an ifstar macro.
+                   IfstarFunction(parser, name) {
+                        const resultstar = parser.GetArgument(name);
+                        const resultnostar = parser.GetArgument(name);
+                        const star = parser.GetStar();                        // true if there is a *
+                        useArgument(parser, star ? resultstar : resultnostar);
+                   },
+
+
+                   //       This function implements an ifnextchar macro.
+                   IfnextcharFunction(parser, name) {
+                        let whichchar = parser.GetArgument(name);
+                        if (whichchar.match(/^(?:0x[0-9A-F]+|[0-9]+)$/i)) {
+                            // $ syntax highlighting
+                            whichchar = String.fromCodePoint(parseInt(whichchar));
+                        }
+                        const resultnextchar = parser.GetArgument(name);
+                        const resultnotnextchar = parser.GetArgument(name);
+                        const gotchar = (parser.GetNext() === whichchar);
+                        useArgument(parser, gotchar ? resultnextchar : resultnotnextchar);
+                   },
+
+
+                   // This function implements an ifblank macro.
+                   IfblankFunction(parser, name) {
+                        const blankarg = parser.GetArgument(name);
+                        const resultblank = parser.GetArgument(name);
+                        const resultnotblank = parser.GetArgument(name);
+                        const isblank = (blankarg.trim() == "");
+                        useArgument(parser, isblank ? resultblank : resultnotblank);
+                   },
+
+
+                   // This function implements an ifstrequal macro.
+                   IfstrequalFunction(parser, name) {
+                        const strequalfirst = parser.GetArgument(name);
+                        const strequalsecond = parser.GetArgument(name);
+                        const resultequal = parser.GetArgument(name);
+                        const resultnotequal = parser.GetArgument(name);
+                        const isequal = (strequalfirst == strequalsecond);
+                        useArgument(parser, isequal ? resultequal : resultnotequal);
+                   },
+
+
+                   // This function implements a gsub macro.
+                   GsubstituteFunction(parser, name) {
+                        const gsubfirst = parser.GetArgument(name);
+                        const gsubsecond = parser.GetArgument(name);
+                        const gsubthird = parser.GetArgument(name);
+                        let gsubresult=gsubfirst.replace(gsubsecond, gsubthird);
+                        useArgument(parser, gsubresult);
+                   },
+
+
+                   //       This function modifies the equation numbers.
+                   SeteqnumberFunction(parser, name) {
+                            //   Get the macro parameters
+                            const star = parser.GetStar();                      // true if there is a *
+                            const optBrackets = parser.GetBrackets(name);        // contents of optional brackets
+                            const newsubequations = parser.GetArgument(name);      // the subequations argument
+                            const neweqsection = parser.GetArgument(name);      // the eq section argument
+                            const neweqnumber = parser.GetArgument(name);        // the eq number argument
+                            MathJax.config.subequations=newsubequations ;       // a string with boolean meaning
+                            MathJax.config.section=neweqsection ;               // a string with numeric meaning
+                            parser.tags.counter = parser.tags.allCounter = neweqnumber ;
+                   }
+
+
+              });
+
+
+              //       Create the Lwarp-macros package
+              Configuration.create('Lwarp-macros', {
+                   handler: {macro: ['Lwarp-macros']}
+              });
+
+
+              MathJax.startup.defaultReady();
+
+
+              // For forward references:
+              MathJax.startup.input[0].preFilters.add(({math}) => {
+                   if (math.inputData.recompile){
+                            MathJax.config.subequations = math.inputData.recompile.subequations;
+                            MathJax.config.section = math.inputData.recompile.section;
+                   }
+              });
+              MathJax.startup.input[0].postFilters.add(({math}) => {
+                   if (math.inputData.recompile){
+                            math.inputData.recompile.subequations = MathJax.config.subequations;
+                            math.inputData.recompile.section = MathJax.config.section;
+                   }
+              });
+
+
+                   // For \left, \right with unicode-math:
+                   const {DelimiterMap} = MathJax._.input.tex.SymbolMap;
+                   const {Symbol} = MathJax._.input.tex.Symbol;
+                   const {MapHandler} = MathJax._.input.tex.MapHandler;
+                   const delimiter = MapHandler.getMap('delimiter');
+                   delimiter.add('\\lBrack', new Symbol('\\lBrack', '\u27E6'));
+                   delimiter.add('\\rBrack', new Symbol('\\rBrack', '\u27E7'));
+                   delimiter.add('\\lAngle', new Symbol('\\lAngle', '\u27EA'));
+                   delimiter.add('\\rAngle', new Symbol('\\rAngle', '\u27EB'));
+                   delimiter.add('\\lbrbrak', new Symbol('\\lbrbrak', '\u2772'));
+                   delimiter.add('\\rbrbrak', new Symbol('\\rbrbrak', '\u2773'));
+                   delimiter.add('\\lbag', new Symbol('\\lbag', '\u27C5'));
+                   delimiter.add('\\rbag', new Symbol('\\rbag', '\u27C6'));
+                   delimiter.add('\\llparenthesis', new Symbol('\\llparenthesis', '\u2987'));
+                   delimiter.add('\\rrparenthesis', new Symbol('\\rrparenthesis', '\u2988'));
+                   delimiter.add('\\llangle', new Symbol('\\llangle', '\u2989'));
+                   delimiter.add('\\rrangle', new Symbol('\\rrangle', '\u298A'));
+                   delimiter.add('\\Lbrbrak', new Symbol('\\Lbrbrak', '\u27EC'));
+                   delimiter.add('\\Rbrbrak', new Symbol('\\Rbrbrak', '\u27ED'));
+                   delimiter.add('\\lBrace', new Symbol('\\lBrace', '\u2983'));
+                   delimiter.add('\\rBrace', new Symbol('\\rBrace', '\u2984'));
+                   delimiter.add('\\lParen', new Symbol('\\lParen', '\u2985'));
+                   delimiter.add('\\rParen', new Symbol('\\rParen', '\u2986'));
+                   delimiter.add('\\lbrackubar', new Symbol('\\lbrackubar', '\u298B'));
+                   delimiter.add('\\rbrackubar', new Symbol('\\rbrackubar', '\u298C'));
+                   delimiter.add('\\lbrackultick', new Symbol('\\lbrackultick', '\u298D'));
+                   delimiter.add('\\rbracklrtick', new Symbol('\\rbracklrtick', '\u298E'));
+                   delimiter.add('\\lbracklltick', new Symbol('\\lbracklltick', '\u298F'));
+                   delimiter.add('\\rbrackurtick', new Symbol('\\rbrackurtick', '\u2990'));
+                   delimiter.add('\\langledot', new Symbol('\\langledot', '\u2991'));
+                   delimiter.add('\\rangledot', new Symbol('\\rangledot', '\u2992'));
+                   delimiter.add('\\lparenless', new Symbol('\\lparenless', '\u2993'));
+                   delimiter.add('\\rparengtr', new Symbol('\\rparengtr', '\u2994'));
+                   delimiter.add('\\Lparengtr', new Symbol('\\Lparengtr', '\u2995'));
+                   delimiter.add('\\Rparenless', new Symbol('\\Rparenless', '\u2996'));
+                   delimiter.add('\\lblkbrbrak', new Symbol('\\lblkbrbrak', '\u2997'));
+                   delimiter.add('\\rblkbrbrak', new Symbol('\\rblkbrbrak', '\u2998'));
+                   delimiter.add('\\lvzigzag', new Symbol('\\lvzigzag', '\u29D8'));
+                   delimiter.add('\\rvzigzag', new Symbol('\\rvzigzag', '\u29D9'));
+                   delimiter.add('\\Lvzigzag', new Symbol('\\Lvzigzag', '\u29DA'));
+                   delimiter.add('\\Rvzigzag', new Symbol('\\Rvzigzag', '\u29DB'));
+                   delimiter.add('\\lcurvyangle', new Symbol('\\lcurvyangle', '\u29FC'));
+                   delimiter.add('\\rcurvyangle', new Symbol('\\rcurvyangle', '\u29FD'));
+                   delimiter.add('\\Vvert', new Symbol('\\Vvert', '\u2980'));
+          }       // ready
+     },           // startup
+
+
+     tex: {
+          packages: {'[+]': ['tagformat', 'Lwarp-macros', 'textmacros']},
+          tags: "ams",
+                   tagformat: {
+                            number: function (n) {
+                                 if(MathJax.config.subequations==0)
+                                        return(MathJax.config.section + n);
+                                 else
+                                        return(MathJax.config.section + String.fromCharCode(96+n));
+                            },
+                   },
+     }
+}
+</script>
+
+
+<script
+          id="MathJax-script"
+          src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"
+></script>
+
+</head>
+<body>
+
+
+<a id="Logic-autopage-94"></a>
+<nav class="topnavigation"><a href="Logic.html" class="linkhome" >
+Home</a></nav>
+
+
+<div class="bodyandsidetoc">
+<div class="sidetoccontainer">
+
+
+<nav class="sidetoc">
+
+
+<div class="sidetoctitle">
+
+<p>
+<span class="sidetocthetitle">Mathematical Logic</span>
+</p>
+
+<p>
+Contents
+</p>
+</div>
+
+
+<div class="sidetoccontents">
+
+<p>
+<a href="Logic.html" class="linkhome" >
+Home</a>
+</p>
+
+<p>
+<a href="Introduction.html#autosec-5" class="tocsection" >
+<span class="sectionnumber">1</span>&#x2003;Introduction</a>
+</p>
+
+
+<p>
+<a href="Propositional-Logic.html#autosec-16" class="tocsection" >
+<span class="sectionnumber">2</span>&#x2003;Propositional Logic</a>
+</p>
+
+
+<p>
+<a href="Propositional-Logic.html#autosec-17" class="tocsubsection" >
+<span class="sectionnumber">2.1</span>&#x2003;Propositional formulas</a>
+</p>
+
+
+<p>
+<a href="Truth.html#autosec-95" class="tocsubsection" >
+<span class="sectionnumber">2.2</span>&#x2003;Truth</a>
+</p>
+
+
+<p>
+<a href="Proofs.html#autosec-146" class="tocsubsection" >
+<span class="sectionnumber">2.3</span>&#x2003;Proofs</a>
+</p>
+
+
+<p>
+<a href="Completeness.html#autosec-157" class="tocsubsection" >
+<span class="sectionnumber">2.4</span>&#x2003;Completeness</a>
+</p>
+
+
+<p>
+<a href="Predicate-Logic.html#autosec-168" class="tocsection" >
+<span class="sectionnumber">3</span>&#x2003;Predicate Logic</a>
+</p>
+
+
+<p>
+<a href="Predicate-Logic.html#autosec-169" class="tocsubsection" >
+<span class="sectionnumber">3.1</span>&#x2003;Languages and Structures</a>
+</p>
+
+
+<p>
+<a href="Formulas.html#autosec-174" class="tocsubsection" >
+<span class="sectionnumber">3.2</span>&#x2003;Formulas</a>
+</p>
+
+
+<p>
+<a href="Tarski-Truth-Definition.html#autosec-199" class="tocsubsection" >
+<span class="sectionnumber">3.3</span>&#x2003;Tarski’s Truth Definition</a>
+</p>
+
+
+<p>
+<a href="Proofs-9.html#autosec-245" class="tocsubsection" >
+<span class="sectionnumber">3.4</span>&#x2003;Proofs</a>
+</p>
+
+
+<p>
+<a href="Completeness-10.html#autosec-258" class="tocsubsection" >
+<span class="sectionnumber">3.5</span>&#x2003;Completeness</a>
+</p>
+
+
+<p>
+<a href="Proof-Completeness-Theorem-Predicate-Logic-4th-year-material.html#autosec-272" class="tocsection" >
+<span class="sectionnumber">4</span>&#x2003;Proof of the Completeness Theorem for Predicate Logic (4th year material)</a>
+</p>
+
+
+<p>
+<a href="Application-Compactness-Theorem-Extension-Constants.html#autosec-310" class="tocsection" >
+<span class="sectionnumber">5</span>&#x2003;Application of the Compactness Theorem and Extension by Constants</a>
+</p>
+
+
+<p>
+<a href="Universal-Algebra-Substructures-Homomorphisms.html#autosec-336" class="tocsection" >
+<span class="sectionnumber">6</span>&#x2003;Universal Algebra: Substructures and Homomorphisms</a>
+</p>
+
+
+<p>
+<a href="Further-Model-Theory-4th-year-material.html#autosec-346" class="tocsection" >
+<span class="sectionnumber">7</span>&#x2003;Further Model Theory (4th year material)</a>
+</p>
+
+
+<p>
+<a href="Further-Model-Theory-4th-year-material.html#autosec-347" class="tocsubsection" >
+<span class="sectionnumber">7.1</span>&#x2003;Definable Sets</a>
+</p>
+
+
+<p>
+<a href="Elementary-Substructures.html#autosec-354" class="tocsubsection" >
+<span class="sectionnumber">7.2</span>&#x2003;Elementary Substructures</a>
+</p>
+
+
+<p>
+<a href="Downwards-Lowenheim-Skolem-Theorem.html#autosec-364" class="tocsubsection" >
+<span class="sectionnumber">7.3</span>&#x2003;Downwards Lo&#x0308;wenheim-Skolem Theorem</a>
+</p>
+
+
+<p>
+<a href="Upwards-Lowenheim-Skolem-Theorem.html#autosec-368" class="tocsubsection" >
+<span class="sectionnumber">7.4</span>&#x2003;Upwards Lo&#x0308;wenheim-Skolem Theorem</a>
+</p>
+
+
+<p>
+<a href="Categoricity.html#autosec-371" class="tocsubsection" >
+<span class="sectionnumber">7.5</span>&#x2003;Categoricity</a>
+</p>
+
+
+</div>
+
+</nav>
+
+</div>
+
+
+<main class="bodycontainer">
+
+
+<section class="textbody">
+
+<h1>Mathematical Logic</h1>
+
+<!--MathJax customizations:-->
+<div data-nosnippet
+    style="display:none"
+>
+
+\(\newcommand{\footnotename}{footnote}\)
+
+\(\def \LWRfootnote {1}\)
+
+\(\newcommand {\footnote }[2][\LWRfootnote ]{{}^{\mathrm {#1}}}\)
+
+\(\newcommand {\footnotemark }[1][\LWRfootnote ]{{}^{\mathrm {#1}}}\)
+
+\(\let \LWRorighspace \hspace \)
+
+\(\renewcommand {\hspace }{\ifstar \LWRorighspace \LWRorighspace }\)
+
+\(\newcommand {\TextOrMath }[2]{#2}\)
+
+\(\newcommand {\mathnormal }[1]{{#1}}\)
+
+\(\newcommand \ensuremath [1]{#1}\)
+
+\(\newcommand {\LWRframebox }[2][]{\fbox {#2}} \newcommand {\framebox }[1][]{\LWRframebox } \)
+
+\(\newcommand {\setlength }[2]{}\)
+
+\(\newcommand {\addtolength }[2]{}\)
+
+\(\newcommand {\setcounter }[2]{}\)
+
+\(\newcommand {\addtocounter }[2]{}\)
+
+\(\newcommand {\arabic }[1]{}\)
+
+\(\newcommand {\number }[1]{}\)
+
+\(\newcommand {\noalign }[1]{\text {#1}\notag \\}\)
+
+\(\newcommand {\cline }[1]{}\)
+
+\(\newcommand {\directlua }[1]{\text {(directlua)}}\)
+
+\(\newcommand {\luatexdirectlua }[1]{\text {(directlua)}}\)
+
+\(\newcommand {\protect }{}\)
+
+\(\def \LWRabsorbnumber #1 {}\)
+
+\(\def \LWRabsorbquotenumber &quot;#1 {}\)
+
+\(\newcommand {\LWRabsorboption }[1][]{}\)
+
+\(\newcommand {\LWRabsorbtwooptions }[1][]{\LWRabsorboption }\)
+
+\(\def \mathchar {\ifnextchar &quot;\LWRabsorbquotenumber \LWRabsorbnumber }\)
+
+\(\def \mathcode #1={\mathchar }\)
+
+\(\let \delcode \mathcode \)
+
+\(\let \delimiter \mathchar \)
+
+\(\def \oe {\unicode {x0153}}\)
+
+\(\def \OE {\unicode {x0152}}\)
+
+\(\def \ae {\unicode {x00E6}}\)
+
+\(\def \AE {\unicode {x00C6}}\)
+
+\(\def \aa {\unicode {x00E5}}\)
+
+\(\def \AA {\unicode {x00C5}}\)
+
+\(\def \o {\unicode {x00F8}}\)
+
+\(\def \O {\unicode {x00D8}}\)
+
+\(\def \l {\unicode {x0142}}\)
+
+\(\def \L {\unicode {x0141}}\)
+
+\(\def \ss {\unicode {x00DF}}\)
+
+\(\def \SS {\unicode {x1E9E}}\)
+
+\(\def \dag {\unicode {x2020}}\)
+
+\(\def \ddag {\unicode {x2021}}\)
+
+\(\def \P {\unicode {x00B6}}\)
+
+\(\def \copyright {\unicode {x00A9}}\)
+
+\(\def \pounds {\unicode {x00A3}}\)
+
+\(\let \LWRref \ref \)
+
+\(\renewcommand {\ref }{\ifstar \LWRref \LWRref }\)
+
+\( \newcommand {\multicolumn }[3]{#3}\)
+
+\(\require {textcomp}\)
+
+\(\newcommand {\intertext }[1]{\text {#1}\notag \\}\)
+
+\(\let \Hat \hat \)
+
+\(\let \Check \check \)
+
+\(\let \Tilde \tilde \)
+
+\(\let \Acute \acute \)
+
+\(\let \Grave \grave \)
+
+\(\let \Dot \dot \)
+
+\(\let \Ddot \ddot \)
+
+\(\let \Breve \breve \)
+
+\(\let \Bar \bar \)
+
+\(\let \Vec \vec \)
+
+\(\newcommand {\bm }[1]{\boldsymbol {#1}}\)
+
+\(\newcommand {\R }{\mathbb {R}}\)
+
+\(\newcommand {\C }{\mathbb {C}}\)
+
+\(\newcommand {\Z }{\mathbb {Z}}\)
+
+\(\newcommand {\N }{\mathbb {N}}\)
+
+\(\newcommand {\Q }{\mathbb {Q}}\)
+
+\(\newcommand {\st }{\ \vert \ }\)
+
+\(\newcommand {\mcal }[1]{\mathcal {#1}}\)
+
+\(\newcommand {\TmAlg }{\mathrm {TmAlg}}\)
+
+\(\newcommand {\PROP }{\mathrm {PROP}}\)
+
+\(\newcommand {\PF }{\mathrm {S}}\)
+
+\(\newcommand {\proves }{\vdash }\)
+
+\(\newcommand {\tm }{\textrm {tm}}\)
+
+\(\newcommand {\ctm }{\textrm {ctm}}\)
+
+\(\newcommand {\Fml }{\textrm {Fml}}\)
+
+\(\newcommand {\Fr }{\textrm {Fr}}\)
+
+\(\newcommand {\Vbl }{\textrm {Vbl}}\)
+
+\(\newcommand {\cmpx }{\texttt {cmpx}}\)
+
+\(\newcommand {\supp }{\text {supp}}\)
+
+\(\newcommand {\conn }{\,\square \,}\)
+
+\(\newcommand {\con }{\,\diamond \,}\)
+
+\(\newcommand {\ct }{\texttt {c}}\)
+
+\(\newcommand {\T }{\mathbb {T}}\)
+
+\(\newcommand {\F }{\mathbb {F}}\)
+
+\(\newcommand {\mathlarger }[1]{#1}\)
+
+\(\newcommand {\mathsmaller }[1]{#1}\)
+
+\(\newcommand {\LWRmarginnote }[1][]{}\)
+
+\(\newcommand {\marginnote }[2][]{\qquad {\small \textrm {#2}}\LWRmarginnote }\)
+
+</div>
+
+<!--
+...... subsection Truth ......
+-->
+<h5 id="autosec-95"><span class="sectionnumber">2.2&#x2003;</span>Truth</h5>
+<a id="Logic-autopage-95"></a>
+<a id="Logic-autofile-3"></a>
+
+<a id="truth"></a>
+
+<p>
+The truth of the statement “\(5\) is an odd number and \(7\) is prime” does not really depend on exactly the statements “\(5\) is an odd number” and “\(7\) is prime”. What is important is that both “\(5\) is an odd number” and is true “\(7\) is prime” are
+true statements.
+</p>
+
+<p>
+The truth of a propositional formula should only depend on the truth of the propositional variables it is made up from. Although we have not formally assigned any meaning to connectives, the names we have given indicate what meaning we might want them to
+have.
+</p>
+
+<p>
+In the following definition the symbol \(\T \) represents “true” and \(\F \) represents “false”. We think of the valuation \(v\) as telling us which propositional formulas are true and which are false according to \(v\).
+</p>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-96"></a>
+<span class="amsthmnameplain">Definition</span><span class="amsthmnumberplain"> <span class="textup">2.16</span></span>. </span> A <b>valuation</b> is a function \(v:\PF \mcal {L}\rightarrow \{\T ,\F \}\) which satisfies the
+following properties for all \(s,t\in \PF \mcal {L}\):
+</p>
+<ul class="enumerate" style="list-style-type:none">
+
+
+<li>
+<p>
+<span class="listmarker">1.</span> \(v(\bot )=\F \)
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">2.</span> \(v((\neg s))=\left \{ \begin {array}{ll} \F , &amp; \hbox {if $v(s)=\T $;} \\ \T , &amp; \hbox {otherwise.} \end {array} \right .                                           \)
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">3.</span> \(v((t\wedge s))=\left \{ \begin {array}{ll} \T , &amp; \hbox {if $v(t)=\T $ and $v(s)=\T $;} \\ \F , &amp; \hbox {otherwise.} \end {array} \right .                                                  \)
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">4.</span> \(v((t\vee s))=\left \{ \begin {array}{ll} \F , &amp; \hbox {if $v(s)=\F $ and $v(t)=\F $;} \\ \T , &amp; \hbox {otherwise.} \end {array} \right .                                               \)
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">5.</span> \(v((s\rightarrow t))=\left \{ \begin {array}{ll} \F , &amp; \hbox {$v(s)=\T $ and $v(t)=\F $;} \\ \T , &amp; \hbox {otherwise.} \end {array} \right .                                                     \)
+</p>
+<p>
+
+
+</p>
+</li>
+</ul>
+
+<p>
+We say that a propositional formula \(s\in \PF \mcal {L}\) is <b>true (respectively false) under the valuation</b> \(v\) if \(v(s)=\T \) (respectively if \(v(s)=\F \)).
+</p>
+
+</li>
+
+</ul>
+
+</div>
+
+<p>
+The least controversial parts of this definition are for the connectives are \(\wedge \) (and) and \(\neg \) (not). We have already discussed \(\wedge \) (and). I hope you agree that if a statement is true then its negation should be false and conversely if a
+statement is false then its negation should be true. For example the statement “All mathematicians are female” is false and so its negation “Not all mathematicians are female” is true.
+</p>
+
+<p>
+We now discuss “\(\vee \)” (or). In everyday life “or” is often treated a exclusive. However, in mathematics, “or” is usually meant non-exclusively. This give rise to the following (not funny) mathematician’s/logician’s joke:
+</p>
+
+<ul class="list" style="list-style-type:none">
+
+<li>
+<p>
+<span class="listmarker">unsuspecting member of the non-mathematical population:</span> Would you like a cup of coffee or a cup of tea?
+</p>
+
+</li>
+<li>
+
+<p>
+<span class="listmarker">mathematician/logician:</span> Yes, please.
+</p>
+</li>
+</ul>
+
+<p>
+The most controversial part of this definition is the condition for \(\rightarrow \) (implies). As with “or” we could just say this is our convention, get used to it. Since our intention is to give a formal definition of truth, this would be a bit unsatisfactory. First
+note that this definition does not match up with informal speech even amongst mathematicians. For instance, if I claimed that
+</p>
+<div class="center">
+
+<p>
+“The first isomorphism theorem for groups implies the intermediate value theorem (for continuous functions).”
+</p>
+</div>
+
+<p>
+many of my colleagues and your lecturers would reasonably disagree. On the other hand, most of us would accept that
+</p>
+<div class="center">
+
+<p>
+“If \(n=1\) then \((n-1)(n-2)=0\)”
+</p>
+</div>
+
+<p>
+is true for all \(n\in \N \). Although we are not yet studying a logic with quantifiers, it becomes clear that the rule for implication must be as we have defined it when we consider statements involving universal quantification (i.e. “for all” statements) like the
+following.
+</p>
+
+<p>
+\[\forall \, x ((x&gt;3)\rightarrow (x^2&gt;3))\]
+</p>
+
+<p>
+This statement is true if for each \(r\in \R \), the statement “\(((r&gt;3)\rightarrow (r^2&gt;3))\)” is true. If we set \(r=1\) then \((r&gt;3)\) is false and \(r^2&gt;3\) is false. If we set \(r=2\) then \(r&gt;3\) is false and \(r^2&gt;3\) is true. If
+we set \(r=4\) then \(r&gt;3\) is true and \(r^2&gt;3\) is also true.
+</p>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-99"></a>
+<span class="amsthmnameplain">Proposition</span><span class="amsthmnumberplain"> <span class="textup">2.17</span></span>. </span> Let \(\mcal {L}\) be a propositional language.
+</p>
+<ul class="enumerate" style="list-style-type:none">
+
+
+<li>
+<p>
+<span class="listmarker">(i)</span> If \(w:\PROP (\mcal {L})\rightarrow \{\T ,\F \}\) is any function then there is a unique valuation \(\PF \mcal {L}\rightarrow \{\T ,\F \}\) such that \(v(p)=w(p)\) for all \(p\in \PROP (\mcal
+{L})\).
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">(ii)</span> If \(t\in \PF \mcal {L}\) and \(v,w\) are valuations which agree on all of the propositional variables occurring in \(t\) then \(v(t)=w(t)\).
+</p>
+</li>
+</ul>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmproof">
+
+<a id="Logic-autopage-100"></a>
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"> <span class="amsthmproofname">Sketch proof.</span></span> (i) Let \(w:\PROP (\mcal {L})\rightarrow \{\T ,\F \}\). For each \(i\in \N _0\), we define \(v_i:\PF _i\mcal {L}\rightarrow \{\T ,\F \}\), by
+induction on \(i\), which satisfies properties \(1\)-\(5\) of the definition of a valuation and such that \(v_i(p)=w(p)\) for all \(p\in \PROP (\mcal {L})\). For each \(i\in \N _0\), \(v_{i+1}\) will be the unique such function extending \(v_i\).
+</p>
+
+<p>
+We define \(v_0\) by setting \(v_0(p)=w(p)\) for all \(p\in \PROP (\mcal {L})\). In order that \(v_0\) satisfies \(1\)-\(5\), we must define \(v_0(\bot )=\F \).
+</p>
+
+<p>
+Suppose we have already defined \(v_i:\PF _i\mcal {L}\rightarrow \{\T ,\F \}\). Each element of \(\PF _{i+1}\mcal {L}\) is either in \(\PF _i\mcal {L}\) or is of the form \((\neg s)\) or \((s_1\conn s_2)\) for some \(s, s_1,s_2\in
+\PF _i\mcal {L}\) and connective \(\conn \) of arity \(2\). For each connective extend \(v_i\) according to the rules for that connective given in the definition of a valuation. For instance, if \(t=(\neg s)\) then define \(v_{i+1}(t)=\F \) if
+\(v_i(s)=\T \) and define \(v_{i+1}(t)=\T \) if \(v_i(s)=\F \). The function \(v_{i+1}\) is well-defined thanks to the Unique Construction Theorem. Moreover \(v_{i+1}\) is the unique function defined on \(\PF _{i+1}\mcal {L}\) satisfying
+\(1\)-\(5\) of the definition of a valuation. Let \(v:\PF \mcal {L}\rightarrow \{\T ,\F \}\) be defined by \(v(s)=v_i(s)\) for each \(s\in \PF _i\mcal {L}\). Then \(v\) satisfies \(1\)-\(5\) of the definition of a valuation because each
+\(v_i\) does. Moreover it is the unique valuation extending \(w\) because each \(v_i\) is the unique function defined on \(\PF _i\mcal {L}\) which satisfies \(1\)-\(5\) and extends \(w\).
+</p>
+
+<p>
+(ii) This is left as an exercise. <span class="theoremendmark">&#x25A1;</span>
+</p>
+
+</li>
+
+</ul>
+
+</div>
+
+<p>
+The rules for valuations are displayed in the following two (truth) tables:
+</p>
+<div class="center">
+<table>
+
+<tr style="display:none"><th>.</th></tr>
+
+<tr class="hline">
+<td class="tdc tvertbarl tvertbarrdouble" style="border-left: 1px solid black; border-right:   4px double black">\(p\)</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">\((\neg p)\)</td>
+</tr>
+
+<tr class="hline">
+<td class="tdc tvertbarl tvertbarrdouble" style="border-left: 1px solid black; border-right:   4px double black">\(\T \)</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">\(\F \)</td>
+</tr>
+
+<tr>
+<td class="tdc tvertbarl tvertbarrdouble" style="border-left: 1px solid black; border-right:   4px double black">\(\F \)</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">\(\T \)</td>
+</tr>
+
+<tr class="hline" aria-hidden="true">
+<td class="tdc"></td>
+<td class="tdc"></td>
+</tr>
+</table>
+
+<p>
+&#x2003;&#x2003;&#x2003;&#x2003;
+</p>
+<table>
+
+<tr style="display:none"><th>.</th></tr>
+
+<tr class="hline">
+<td class="tdc tvertbarl tvertbarr" style="border-left: 1px solid black; border-right: 1px solid black">\(p\)</td>
+<td class="tdc tvertbarrdouble" style="border-right: 4px double black">\(q\)</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">\(p\wedge q\)</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">\(p\vee q\)</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">\(p\rightarrow q\)</td>
+</tr>
+
+<tr class="hline">
+<td class="tdc tvertbarl tvertbarr" style="border-left: 1px solid black; border-right:                   1px solid black">\(\T \)</td>
+<td class="tdc tvertbarrdouble" style="border-right: 4px double black">\(\T \)</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">\(\T \)</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">\(\T \)</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">\(\T \)</td>
+</tr>
+
+<tr>
+<td class="tdc tvertbarl tvertbarr" style="border-left: 1px solid black; border-right:                   1px solid black">\(\T \)</td>
+<td class="tdc tvertbarrdouble" style="border-right: 4px double black">\(\F \)</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">\(\F \)</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">\(\T \)</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">\(\F \)</td>
+</tr>
+
+<tr>
+<td class="tdc tvertbarl tvertbarr" style="border-left: 1px solid black; border-right:                   1px solid black">\(\F \)</td>
+<td class="tdc tvertbarrdouble" style="border-right: 4px double black">\(\T \)</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">\(\F \)</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">\(\T \)</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">\(\T \)</td>
+</tr>
+
+<tr>
+<td class="tdc tvertbarl tvertbarr" style="border-left: 1px solid black; border-right:                   1px solid black">\(\F \)</td>
+<td class="tdc tvertbarrdouble" style="border-right: 4px double black">\(\F \)</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">\(\F \)</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">\(\F \)</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">\(\T \)</td>
+</tr>
+
+<tr class="hline" aria-hidden="true">
+<td class="tdc"></td>
+<td class="tdc"></td>
+<td class="tdc"></td>
+<td class="tdc"></td>
+<td class="tdc"></td>
+</tr>
+</table>
+
+</div>
+
+<p>
+We have seen that if \(s\in \PF \mcal {L}\) and \(v\) is a valuation on \(\PF \mcal {L}\) then the value of \(v(s)\) only depends on the value of \(v(p)\) for propositional variables which occur in \(s\) (i.e. are letters of \(s\)).
+</p>
+
+<p>
+Suppose that the propositional variables which occur in \(s\in \PF \mcal {L}\) are \(p_1,\ldots ,p_n\). A <b>truth table</b> for \(s\) is a table with columns headed \(p_1, p_2,\ldots ,p_n, s\). If we ignore the column headed \(s\) then the rows
+of the table display all possible configurations of \(\T \) and \(\F \). The entry of each row of the column labelled \(s\) displays the value of \(v(s)\) for a valuation with \(v(p_i)\) equal to the \(i\)th entry of that row.
+</p>
+
+<p>
+Here is an example of a truth table.
+</p>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-104"></a>
+<span class="amsthmnameplain">Example</span><span class="amsthmnumberplain"> <span class="textup">2.18</span></span>. </span>
+</p>
+<table>
+
+<tr style="display:none"><th>.</th></tr>
+
+
+<tr class="hline">
+<td class="tdc tvertbarl tvertbarr" style="border-left:   1px solid black; border-right:   1px solid black">\(p_1\)</td>
+<td class="tdc tvertbarr" style="border-right:   1px solid black">\(p_2\)</td>
+<td class="tdc tvertbarrdouble" style="border-right:   4px double black">\(p_3\)</td>
+<td class="tdc tvertbarr" style="border-right:   1px solid black">\((p_1\rightarrow (p_2\wedge p_3))\)</td>
+</tr>
+
+
+<tr class="hline">
+<td class="tdc tvertbarl tvertbarr" style="border-left:   1px solid black; border-right:   1px solid black">\(\T \)</td>
+<td class="tdc tvertbarr" style="border-right:   1px solid black">\(\T \)</td>
+<td class="tdc tvertbarrdouble" style="border-right:   4px double black">\(\T \)</td>
+<td class="tdc tvertbarr" style="border-right:   1px solid black">\(\T \)</td>
+</tr>
+
+
+<tr>
+<td class="tdc tvertbarl tvertbarr" style="border-left:   1px solid black; border-right:   1px solid black">\(\T \)</td>
+<td class="tdc tvertbarr" style="border-right:   1px solid black">\(\T \)</td>
+<td class="tdc tvertbarrdouble" style="border-right:   4px double black">\(\F \)</td>
+<td class="tdc tvertbarr" style="border-right:   1px solid black">\(\F \)</td>
+</tr>
+
+
+<tr>
+<td class="tdc tvertbarl tvertbarr" style="border-left:   1px solid black; border-right:   1px solid black">\(\T \)</td>
+<td class="tdc tvertbarr" style="border-right:   1px solid black">\(\F \)</td>
+<td class="tdc tvertbarrdouble" style="border-right:   4px double black">\(\T \)</td>
+<td class="tdc tvertbarr" style="border-right:   1px solid black">\(\T \)</td>
+</tr>
+
+
+<tr>
+<td class="tdc tvertbarl tvertbarr" style="border-left:   1px solid black; border-right:   1px solid black">\(\T \)</td>
+<td class="tdc tvertbarr" style="border-right:   1px solid black">\(\F \)</td>
+<td class="tdc tvertbarrdouble" style="border-right:   4px double black">\(\F \)</td>
+<td class="tdc tvertbarr" style="border-right:   1px solid black">\(\F \)</td>
+</tr>
+
+
+<tr>
+<td class="tdc tvertbarl tvertbarr" style="border-left:   1px solid black; border-right:   1px solid black">\(\F \)</td>
+<td class="tdc tvertbarr" style="border-right:   1px solid black">\(\T \)</td>
+<td class="tdc tvertbarrdouble" style="border-right:   4px double black">\(\T \)</td>
+<td class="tdc tvertbarr" style="border-right:   1px solid black">\(\T \)</td>
+</tr>
+
+
+<tr>
+<td class="tdc tvertbarl tvertbarr" style="border-left:   1px solid black; border-right:   1px solid black">\(\F \)</td>
+<td class="tdc tvertbarr" style="border-right:   1px solid black">\(\T \)</td>
+<td class="tdc tvertbarrdouble" style="border-right:   4px double black">\(\F \)</td>
+<td class="tdc tvertbarr" style="border-right:   1px solid black">\(\T \)</td>
+</tr>
+
+
+<tr>
+<td class="tdc tvertbarl tvertbarr" style="border-left:   1px solid black; border-right:   1px solid black">\(\F \)</td>
+<td class="tdc tvertbarr" style="border-right:   1px solid black">\(\F \)</td>
+<td class="tdc tvertbarrdouble" style="border-right:   4px double black">\(\T \)</td>
+<td class="tdc tvertbarr" style="border-right:   1px solid black">\(\T \)</td>
+</tr>
+
+
+<tr>
+<td class="tdc tvertbarl tvertbarr" style="border-left:   1px solid black; border-right:   1px solid black">\(\F \)</td>
+<td class="tdc tvertbarr" style="border-right:   1px solid black">\(\F \)</td>
+<td class="tdc tvertbarrdouble" style="border-right:   4px double black">\(\F \)</td>
+<td class="tdc tvertbarr" style="border-right:   1px solid black">\(\T \)</td>
+</tr>
+
+
+<tr class="hline" aria-hidden="true">
+<td class="tdc"></td>
+<td class="tdc"></td>
+<td class="tdc"></td>
+<td class="tdc"></td>
+</tr>
+</table>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-106"></a>
+<span class="amsthmnameplain">Definition</span><span class="amsthmnumberplain"> <span class="textup">2.19</span></span>. </span> A propositional formula \(t\) is called a <b>tautology</b> if \(v(t)=\T \) for all valuations \(v\)
+and <b>unsatisfiable</b> if \(v(t)=\F \) for all valuations \(v\).
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-107"></a>
+<span class="amsthmnameplain">Remark</span><span class="amsthmnumberplain"> <span class="textup">2.20</span></span>. </span> To check if a propositional formula \(t\) is a tautology we just need to check that \(v(t)=\T \) for
+valuations on the language with propositional variables occurring in \(t\).
+</p>
+
+<p>
+For examples, to check if \(((p_1\vee (\neg p_1))\vee p_2)\) is a tautology, we only need to consider valuations on \(\PF \mcal {L}&apos;\) where \(\mcal {L}&apos;\) is the propositional language with \(\PROP (\mcal
+{L}&apos;)=\{p_1,p_2\}\).
+</p>
+
+</li>
+
+</ul>
+
+</div>
+
+<p>
+<span role="note" class="marginpar">End of L5&amp;L6</span>
+</p>
+
+<p>
+A propositional formula \(s\) is a tautology if the column in its truth table headed \(s\) has all entries \(\T \). We give a few tautologies which will be important for the proof system we will introduce in the next section.
+</p>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-108"></a>
+<span class="amsthmnameplain">Proposition</span><span class="amsthmnumberplain"> <span class="textup">2.21</span></span>. </span> <a id="axiomsaretaut"></a> For all propositional formulas \(r, s\) and \(t\), the following
+propositional formulas are tautologies.
+</p>
+<ul class="enumerate" style="list-style-type:none">
+
+
+<li>
+<p>
+<span class="listmarker">(i)</span> \((s\rightarrow (t\rightarrow s))\)
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">(ii)</span> \(((s\rightarrow (t\rightarrow r))\rightarrow ((s\rightarrow t)\rightarrow (s\rightarrow r)))\)
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">(iii)</span> \(((\neg (\neg s))\rightarrow s)\)
+</p>
+</li>
+</ul>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmproof">
+
+<a id="Logic-autopage-109"></a>
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"> <span class="amsthmproofname">Proof.</span></span> (i) The following truth table shows that the propositional formula \((s\rightarrow (t\rightarrow s))\) is a tautology for any propositional formulas \(s\)
+and \(t\).
+</p>
+<table>
+
+<tr style="display:none"><th>.</th></tr>
+
+
+<tr class="hline">
+<td class="tdc tvertbarl tvertbarr" style="border-left:         1px solid black; border-right:   1px solid black">\(s\)</td>
+<td class="tdc tvertbarrdouble" style="border-right:         4px double black">\(t\)</td>
+<td class="tdc tvertbarr" style="border-right:        1px solid black">\((t\rightarrow s)\)</td>
+<td class="tdc tvertbarr" style="border-right:        1px solid black">\((s\rightarrow (t\rightarrow s))\)</td>
+</tr>
+
+
+<tr class="hline">
+<td class="tdc tvertbarl tvertbarr" style="border-left:         1px solid black; border-right:   1px solid black">\(\T \)</td>
+<td class="tdc tvertbarrdouble" style="border-right:         4px double black">\(\T \)</td>
+<td class="tdc tvertbarr" style="border-right:        1px solid black">\(\T \)</td>
+<td class="tdc tvertbarr" style="border-right:        1px solid black">\(\T \)</td>
+</tr>
+
+
+<tr>
+<td class="tdc tvertbarl tvertbarr" style="border-left:         1px solid black; border-right:   1px solid black">\(\T \)</td>
+<td class="tdc tvertbarrdouble" style="border-right:         4px double black">\(\F \)</td>
+<td class="tdc tvertbarr" style="border-right:        1px solid black">\(\T \)</td>
+<td class="tdc tvertbarr" style="border-right:        1px solid black">\(\T \)</td>
+</tr>
+
+
+<tr>
+<td class="tdc tvertbarl tvertbarr" style="border-left:         1px solid black; border-right:   1px solid black">\(\F \)</td>
+<td class="tdc tvertbarrdouble" style="border-right:         4px double black">\(\T \)</td>
+<td class="tdc tvertbarr" style="border-right:        1px solid black">\(\F \)</td>
+<td class="tdc tvertbarr" style="border-right:        1px solid black">\(\T \)</td>
+</tr>
+
+
+<tr>
+<td class="tdc tvertbarl tvertbarr" style="border-left:         1px solid black; border-right:   1px solid black">\(\F \)</td>
+<td class="tdc tvertbarrdouble" style="border-right:         4px double black">\(\F \)</td>
+<td class="tdc tvertbarr" style="border-right:        1px solid black">\(\T \)</td>
+<td class="tdc tvertbarr" style="border-right:        1px solid black">\(\T \)</td>
+</tr>
+
+
+<tr class="hline" aria-hidden="true">
+<td class="tdc"></td>
+<td class="tdc"></td>
+<td class="tdc"></td>
+<td class="tdc"></td>
+</tr>
+</table>
+
+<p>
+(ii) This is on your exercise sheet.
+</p>
+
+<p>
+(iii) The following truth table shows that \(((\neg (\neg s))\rightarrow s)\) is a tautology.
+</p>
+<table>
+
+<tr style="display:none"><th>.</th></tr>
+
+
+<tr class="hline">
+<td class="tdc tvertbarl tvertbarrdouble" style="border-left:   1px solid black; border-right:   4px double black">\(s\)</td>
+<td class="tdc tvertbarr" style="border-right:   1px solid black">\((\neg s)\)</td>
+<td class="tdc tvertbarr" style="border-right:   1px solid black">\((\neg (\neg s))\)</td>
+<td class="tdc tvertbarr" style="border-right:   1px solid black">\(((\neg (\neg s))\rightarrow s)\)</td>
+</tr>
+
+
+<tr class="hline">
+<td class="tdc tvertbarl tvertbarrdouble" style="border-left:   1px solid black; border-right:   4px double black">\(\T \)</td>
+<td class="tdc tvertbarr" style="border-right:   1px solid black">\(\F \)</td>
+<td class="tdc tvertbarr" style="border-right:   1px solid black">\(\T \)</td>
+<td class="tdc tvertbarr" style="border-right:   1px solid black">\(\T \)</td>
+</tr>
+
+
+<tr>
+<td class="tdc tvertbarl tvertbarrdouble" style="border-left:   1px solid black; border-right:   4px double black">\(\F \)</td>
+<td class="tdc tvertbarr" style="border-right:   1px solid black">\(\T \)</td>
+<td class="tdc tvertbarr" style="border-right:   1px solid black">\(\F \)</td>
+<td class="tdc tvertbarr" style="border-right:   1px solid black">\(\T \)</td>
+</tr>
+
+
+<tr class="hline" aria-hidden="true">
+<td class="tdc"></td>
+<td class="tdc"></td>
+<td class="tdc"></td>
+<td class="tdc"></td>
+</tr>
+</table>
+
+<p>
+<span class="theoremendmark">&#x25A1;</span>
+</p>
+
+</li>
+
+</ul>
+
+</div>
+
+<p>
+We introduce a useful abbreviation.
+</p>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-112"></a>
+<span class="amsthmnameplain">Definition</span><span class="amsthmnumberplain"> <span class="textup">2.22</span></span>. </span> For all propositional formulas \(t\) and \(s\), define \((t\leftrightarrow s)\) to be the
+propositional formula \(((t\rightarrow s)\wedge (s\rightarrow t))\). We call the symbol \(\leftrightarrow \) biimplication.
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-113"></a>
+<span class="amsthmnameplain">Remark</span><span class="amsthmnumberplain"> <span class="textup">2.23</span></span>. </span>
+</p>
+
+<ul class="itemize" style="list-style-type:none">
+
+
+<li>
+<p>
+<span class="listmarker">•</span> For all propositional formulas \(t\) and \(s\),
+</p>
+<p>
+\(v((t\leftrightarrow s))=\left \{ \begin {array}{ll} \T , &amp; \hbox {if $v(t)=v(s)$;} \\ \F , &amp; \hbox {otherwise.} \end {array} \right .                 \)
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">•</span> If \(s,t\) are propositional formulas of complexity \(l\) and \(m\) respectively then the complexity of \((t\leftrightarrow s)\) is \(\max \{l,m\}+2\).
+</p>
+</li>
+</ul>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-114"></a>
+<span class="amsthmnameplain">Definition</span><span class="amsthmnumberplain"> <span class="textup">2.24</span></span>. </span> Let \(\mcal {L}\) be a propositional language, let \(t\in \PF \mcal {L}\) and let \(S\subseteq \PF
+\mcal {L}\). We write \(S\models t\) and say \(S\) <b>logically implies</b> \(t\) (or \(t\) <b>is a logical consequence of</b> \(S\)) if \(v(t)=\T \) for all valuations \(v\) such that \(v(s)=\T \) for all \(s\in S\).
+</p>
+
+</li>
+
+</ul>
+
+</div>
+
+<p>
+If \(S\subseteq \PF \mcal {L}\) and \(t_1,\ldots ,t_n,u\in \PF \mcal {L}\) then we, abuse notation and, write \(S,t_1,\ldots ,t_n\models u\) instead of \(S\cup \{t_1,\ldots ,t_n\}\models u\) and \(t_1,\ldots ,t_n\models u\)
+instead of \(\{t_1,\ldots ,t_n\}\models u\). Under this convention, \(\models u\) means \(u\) is a tautology.
+</p>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-115"></a>
+<span class="amsthmnameplain">Example</span><span class="amsthmnumberplain"> <span class="textup">2.25</span></span>. </span> For a set of propositional formulas \(S\), \(S\models \bot \) means that there are no valuations for
+which \(v(s)=\T \) for all \(s\in S\).
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-116"></a>
+<span class="amsthmnameplain">Remark</span><span class="amsthmnumberplain"> <span class="textup">2.26</span></span>. </span> <a id="modimp"></a> If \(S\models t\) and \(S\models (t\rightarrow u)\) then \(S\models u\).
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmproof">
+
+<a id="Logic-autopage-117"></a>
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"> <span class="amsthmproofname">Proof.</span></span> Suppose \(S\models t\) and \(S\models (t\rightarrow u)\). Let \(v\) be a valuation such that \(v(s)=\T \) for all \(s\in S\). So \(v(t)=\T \) and
+\(v(t\rightarrow u)=\T \). If \(v(u)=\F \) then, since \(v(t)=\T \), \(v(t\rightarrow u)=\F \) which contradicts our assumptions. Therefore \(v(u)=\T \). <span class="theoremendmark">&#x25A1;</span>
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-118"></a>
+<span class="amsthmnameplain">Definition</span><span class="amsthmnumberplain"> <span class="textup">2.27</span></span>. </span> We say propositional formulas \(s\) and \(t\) are <b>logically equivalent</b>, and write \(s\equiv
+t\), if \(v(s)=v(t)\) for all valuations \(v\).
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-119"></a>
+<span class="amsthmnameplain">Remark</span><span class="amsthmnumberplain"> <span class="textup">2.28</span></span>. </span> For a propositional language \(\mcal {L}\), the relation \(\equiv \) is an equivalence relation on \(\PF
+\mcal {L}\).
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-120"></a>
+<span class="amsthmnameplain">Lemma</span><span class="amsthmnumberplain"> <span class="textup">2.29</span></span>. </span> For propositional formulas \(r,s,t\), the following logical equivalences hold.
+</p>
+<ul class="enumerate" style="list-style-type:none">
+
+
+<li>
+<p>
+<span class="listmarker">1.</span> \((\neg s)\equiv (s\rightarrow \bot )\)
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">2.</span> \((s\vee t)\equiv ((\neg s)\rightarrow t)\equiv ((s\rightarrow \bot )\rightarrow t)\)
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">3.</span> \((s\wedge t)\equiv (\neg (s\rightarrow (\neg t)))\)
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">4.</span> \((s\wedge t)\equiv (t\wedge s)\)
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">5.</span> \((s\vee t)\equiv (t\vee s)\)
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">6.</span> \((\neg (s\wedge t))\equiv ((\neg s)\vee (\neg t))\)
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">7.</span> \((s\wedge t)\equiv (\neg ((\neg s)\vee (\neg t)))\)
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">8.</span> \(((r\wedge s)\wedge t)\equiv (r\wedge (s\wedge t))\)
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">9.</span> \(((r\vee s)\vee t)\equiv (r\vee (s\vee t))\)
+</p>
+</li>
+</ul>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmproof">
+
+<a id="Logic-autopage-121"></a>
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"> <span class="amsthmproofname">Proof.</span></span> These equivalences can be checked using truth tables. Here is an example.
+</p>
+<table>
+
+<tr style="display:none"><th>.</th></tr>
+
+
+<tr class="hline">
+<td class="tdc tvertbarl tvertbarr" style="border-left:      1px solid black; border-right:    1px solid black">\(s\)</td>
+<td class="tdc tvertbarrdouble" style="border-right:     4px double black">\(t\)</td>
+<td class="tdc tvertbarr" style="border-right:     1px solid black">\((s\vee t)\)</td>
+<td class="tdc tvertbarr" style="border-right:     1px solid black">\((t\vee s)\)</td>
+</tr>
+
+
+<tr class="hline">
+<td class="tdc tvertbarl tvertbarr" style="border-top:      4px double; border-left:    1px solid black; border-right:    1px solid black">\(\T \)</td>
+<td class="tdc tvertbarrdouble" style="border-top:     4px double; border-right:    4px double black">\(\T \)</td>
+<td class="tdc tvertbarr" style="border-top:     4px double; border-right:    1px solid black">\(\T \)</td>
+<td class="tdc tvertbarr" style="border-top:     4px double; border-right:    1px solid black">\(\T \)</td>
+</tr>
+
+
+<tr class="hline">
+<td class="tdc tvertbarl tvertbarr" style="border-left:      1px solid black; border-right:    1px solid black">\(\T \)</td>
+<td class="tdc tvertbarrdouble" style="border-right:     4px double black">\(\F \)</td>
+<td class="tdc tvertbarr" style="border-right:     1px solid black">\(\T \)</td>
+<td class="tdc tvertbarr" style="border-right:     1px solid black">\(\T \)</td>
+</tr>
+
+
+<tr class="hline">
+<td class="tdc tvertbarl tvertbarr" style="border-left:      1px solid black; border-right:    1px solid black">\(\F \)</td>
+<td class="tdc tvertbarrdouble" style="border-right:     4px double black">\(\T \)</td>
+<td class="tdc tvertbarr" style="border-right:     1px solid black">\(\T \)</td>
+<td class="tdc tvertbarr" style="border-right:     1px solid black">\(\T \)</td>
+</tr>
+
+
+<tr class="hline">
+<td class="tdc tvertbarl tvertbarr" style="border-left:      1px solid black; border-right:    1px solid black">\(\F \)</td>
+<td class="tdc tvertbarrdouble" style="border-right:     4px double black">\(\F \)</td>
+<td class="tdc tvertbarr" style="border-right:     1px solid black">\(\F \)</td>
+<td class="tdc tvertbarr" style="border-right:     1px solid black">\(\F \)</td>
+</tr>
+
+
+<tr class="hline" aria-hidden="true">
+<td class="tdc"></td>
+<td class="tdc"></td>
+<td class="tdc"></td>
+<td class="tdc"></td>
+</tr>
+</table>
+
+<p>
+We see that \((s\vee t)\equiv (t\vee s)\) because the column headed \((s\vee t)\) and the column headed \((t\vee s)\) are equal.
+</p>
+
+<p>
+<span class="theoremendmark">&#x25A1;</span>
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-123"></a>
+<span class="amsthmnameplain">Lemma</span><span class="amsthmnumberplain"> <span class="textup">2.30</span></span>. </span> Suppose that \(s,t\in \PF \mcal {L}\). The following are equivalent.
+</p>
+<ul class="enumerate" style="list-style-type:none">
+
+
+<li>
+<p>
+<span class="listmarker">1.</span> \(s\equiv t\);
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">2.</span> \(s\models t\) and \(t\models s\);
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">3.</span> \(\models s\leftrightarrow t\); and
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">4.</span> \(s\leftrightarrow t\) is a tautology.
+</p>
+</li>
+</ul>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmproof">
+
+<a id="Logic-autopage-124"></a>
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"> <span class="amsthmproofname">Proof.</span></span> Exercise (mainly in remembering definitions). <span class="theoremendmark">&#x25A1;</span>
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<!--
+...... subsection Normal Forms ......
+-->
+<h5 id="autosec-125">Normal Forms</h5>
+<a id="Logic-autopage-125"></a>
+
+
+<p>
+We introduce some useful notation defined by induction. Define \(\bigwedge _{i=1}^1 s_1\) to be \(s_1\) and \(\bigvee _{i=1}^1s_1\) to be \(s_1\). For \(k\in \N \), we define
+</p>
+
+<p>
+\[\bigwedge _{i=1}^{k+1}s_i \quad \text { to be }\quad (\left (\bigwedge _{i=1}^{k}s_i\right )\wedge s_{k+1}) \qquad \text { and }\qquad \bigvee _{i=1}^{k+1}s_i \quad \text { to be }\quad (\left (\bigvee
+_{i=1}^{k}s_i\right )\vee s_{k+1}).\]
+</p>
+
+<p>
+We record how these new symbols behave with respect to valuations and logical equivalence.
+</p>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-126"></a>
+<span class="amsthmnameplain">Lemma</span><span class="amsthmnumberplain"> <span class="textup">2.31</span></span>. </span> Let \(s_1,\ldots , s_n\in \PF \mcal {L}\) and let \(v:\PF \mcal {L}\rightarrow \{\T ,\F \}\)
+be a valuation. Then
+</p>
+<ul class="enumerate" style="list-style-type:none">
+
+
+<li>
+<p>
+<span class="listmarker">1.</span> \(v(\bigwedge _{i=1}^ns_i)=\T \) if and only if \(v(s_i)=\T \) for all \(i=1,\ldots ,n\);
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">2.</span> \(v(\bigvee _{i=1}^ns_i)=\T \) if and only if \(v(s_i)=\T \) for some \(i=1,\ldots ,n\);
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">3.</span> \(\bigwedge _{i=1}^ns_i\equiv (\neg \bigvee _{i=1}^n (\neg s_i))\); and
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">4.</span> \(\bigvee _{i=1}^ns_i\equiv (\neg \bigwedge _{i=1}^n (\neg s_i))\).
+</p>
+</li>
+</ul>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmproof">
+
+<a id="Logic-autopage-127"></a>
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"> <span class="amsthmproofname">Proof.</span></span> Each statement is proved by induction on \(n\). I will prove the first statement. For \(n=1\) the statement is trivial since \(\bigwedge _{i=1}^1s_i\) is
+\(s_1\). Suppose the statement is true for \(n\). Then \(\bigwedge _{i=1}^{n+1}s_i\) is \(((\bigwedge _{i=1}^ns_i)\wedge s_{n+1})\). So \(v(\bigwedge _{i=1}^{n+1}s_i)=\T \) if and only if \(v(\bigwedge _{i=1}^ns_i)=\T \) and
+\(v(s_{i+1})=\T \). By the induction hypothesis, this holds if and only if \(v(s_i)=\T \) for all \(1\leq i\leq n\) and \(v(s_{n+1})=\T \) as required. <span class="theoremendmark">&#x25A1;</span>
+</p>
+
+</li>
+
+</ul>
+
+</div>
+
+<p>
+This gives a corollary.
+</p>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-128"></a>
+<span class="amsthmnameplain">Corollary</span><span class="amsthmnumberplain"> <span class="textup">2.32</span></span>. </span> If \(s_1,\ldots , s_n\in \PF \mcal {L}\) and \(t_1,\ldots ,t_m\in \PF \mcal {L}\) are such
+that \(\{s_1,\ldots ,s_n\}=\{t_1,\ldots ,t_m\}\) then
+</p>
+
+<p>
+\[\bigwedge _{i=1}^ns_i\equiv \bigwedge _{i=1}^mt_i\]
+</p>
+
+<p>
+and
+</p>
+
+<p>
+\[\bigvee _{i=1}^ns_i\equiv \bigvee _{i=1}^mt_i\]
+</p>
+
+<p>
+
+
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-129"></a>
+<span class="amsthmnameplain">Definition</span><span class="amsthmnumberplain"> <span class="textup">2.33</span></span>. </span> A propositional formula is in <b>disjunctive normal form (DNF)</b> if it is of the form \(\bot
+\), \((\neg \bot )\) or
+</p>
+
+<p>
+\[\bigvee _{i=1}^l\bigwedge _{j=1}^{m_i} g_{ij}\]
+</p>
+
+<p>
+where each \(g_{ij}\) is either a propositional variable or the negation of a propositional variable.
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-130"></a>
+<span class="amsthmnameplain">Theorem</span><span class="amsthmnumberplain"> <span class="textup">2.34</span></span><span class="amsthmnoteplain"> (The disjunctive normal form theorem)</span>. </span> If \(t\) is a
+propositional formula then there exists a propositional formula \(s\) in DNF such that \(t\equiv s\). Moreover, assuming some propositional variables occur in \(t\), if \(\{p_1,\ldots ,p_n\}\) are the propositional variables occurring in \(t\)
+then we can pick \(s\) of the form
+</p>
+
+<p>
+\[\bigvee _{i=1}^l\bigwedge _{j=1}^{m_i} g_{ij}\]
+</p>
+
+<p>
+where \(l\leq 2^n\), \(m_i\leq n+1\) and each \(g_{ij}\) is of the form \(p_k\) or \((\neg p_k)\) for \(1\leq k\leq n\).
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmproof">
+
+<a id="Logic-autopage-131"></a>
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"> <span class="amsthmproofname">Proof.</span></span> If there are no propositional variables occurring in \(t\) then either \(t\equiv \bot \) or \(t\equiv (\neg \bot )\).
+</p>
+
+<p>
+Suppose the propositional variables occurring in \(t\) are \(\{p_1,\ldots ,p_n\}\). If \(t\) is unsatisfiable then \(t\equiv (p_1\wedge (\neg p_1))\). Suppose \(t\) is not unsatisfiable. Let \(v_1,\ldots , v_l\) be the valuations on \(\PF
+\mcal {L}\) where \(\PROP (\mcal {L})=\{p_1,\ldots p_n\}\) such that \(v_i(t)=\T \). For each \(i=1,\ldots ,l\) and \(j=1,\ldots , n\), define
+</p>
+
+<p>
+\[g_{ij}=\left \{ \begin {array}{ll} p_j, &amp; \hbox {if $v_i(p_j)=\T $;} \\ (\neg p_j), &amp; \hbox {if $v_i(p_j)=\F $.} \end {array} \right .                                \]
+</p>
+
+<p>
+<span role="note" class="marginpar">End of L7 &amp; L8</span> Let \(v\) be any valuation on \(\PF \mcal {L}\). Then \(v(\bigwedge _{j=1}^{n} g_{ij})=\T \) if and only if \(v=v_i\). Therefore \(v(\bigvee _{i=1}^l\bigwedge
+_{j=1}^{n} g_{ij})=\T \) if and only if \(v=v_i\) for some \(1\leq i\leq l\). Thus \(\bigvee _{i=1}^l\bigwedge _{j=1}^{n} g_{ij}\) is of the required form and logically equivalent to \(t\). We see that \(l\leq 2^n\) because the number
+of valuations on \(\PF \mcal {L}\) is \(2^n\). <span class="theoremendmark">&#x25A1;</span>
+</p>
+
+</li>
+
+</ul>
+
+</div>
+
+<p>
+This proof gives a method to find a propositional formula in DNF which is equivalent to a given formula. There is an exercise on your exercise sheet which asks you to do this in a few examples.
+</p>
+<!--
+...... subsubsection Adequate sets of connectives ......
+-->
+<h6 id="autosec-132">Adequate sets of connectives</h6>
+<a id="Logic-autopage-132"></a>
+
+
+<p>
+In this subsection we need to expand our definition of a connective. Initially, in <a href="Propositional-Logic.html#propflas">2.1</a>, they were a set of \(5\) symbols \(\{\bot , \neg , \wedge , \vee , \rightarrow \}\) each of which has an
+associated number in \(\{0,1,2\}\) called the arity of the connective which determined how they could be used to form propositional formulas. At this point, apart from what they look like as symbols and what we called them, there was no real difference
+between \(\wedge , \vee \) and \(\rightarrow \). In <a href="Truth.html#truth">2.2</a>, we differentiated our \(5\) connectives by defining how they behave with valuations i.e. how they behaved with respect to truth. Later in <a
+href="Truth.html#truth">2.2</a>, we introduced a new connective \(\leftrightarrow \) as an abbreviation. In this section a connective will be a symbol with an arity in the set \(\{0,1,2\}\) together with rules for how it interacts with valuations. We
+will usually present this final data as a truth table. For example, let \(\star \) be a connective of arity \(2\) defined by the truth table
+</p>
+<table>
+
+<tr style="display:none"><th>.</th></tr>
+
+<tr class="hline">
+<td class="tdc tvertbarl tvertbarr" style="border-left: 1px solid black; border-right:                1px solid black">\(s\)</td>
+<td class="tdc tvertbarrdouble" style="border-right: 4px double black">\(t\)</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">\((s\star t)\)</td>
+</tr>
+
+<tr class="hline">
+<td class="tdc tvertbarl tvertbarr" style="border-left: 1px solid black; border-right:                1px solid black">\(\T \)</td>
+<td class="tdc tvertbarrdouble" style="border-right: 4px double black">\(\T \)</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">\(\T \)</td>
+</tr>
+
+<tr>
+<td class="tdc tvertbarl tvertbarr" style="border-left: 1px solid black; border-right:                1px solid black">\(\T \)</td>
+<td class="tdc tvertbarrdouble" style="border-right: 4px double black">\(\F \)</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">\(\F \)</td>
+</tr>
+
+<tr>
+<td class="tdc tvertbarl tvertbarr" style="border-left: 1px solid black; border-right:                1px solid black">\(\F \)</td>
+<td class="tdc tvertbarrdouble" style="border-right: 4px double black">\(\T \)</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">\(\F \)</td>
+</tr>
+
+<tr>
+<td class="tdc tvertbarl tvertbarr" style="border-left: 1px solid black; border-right:                1px solid black">\(\F \)</td>
+<td class="tdc tvertbarrdouble" style="border-right: 4px double black">\(\F \)</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">\(\T \)</td>
+</tr>
+
+<tr class="hline" aria-hidden="true">
+<td class="tdc"></td>
+<td class="tdc"></td>
+<td class="tdc"></td>
+</tr>
+</table>
+
+<p>
+Most of the time we will only be interested in the connectives defined in the previous subsections.
+</p>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-134"></a>
+<span class="amsthmnameplain">Definition</span><span class="amsthmnumberplain"> <span class="textup">2.35</span></span>. </span> Let \(\textrm {Val}_n\) be the set of valuations on the propositional language \(\mcal {L}\) with
+\(\PROP (\mcal {L}):=\{p_1,\ldots ,p_n\}\). Each propositional formula \(t\) in \(\PF \mcal {L}\) defines a <b>truth function</b> \(f_t:\textrm {Val}_n\rightarrow \{\T ,\F \}\) defined by \(f_t(v):=v(t)\).
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-135"></a>
+<span class="amsthmnameplain">Definition</span><span class="amsthmnumberplain"> <span class="textup">2.36</span></span>. </span> A set of connectives \(Y\) is <b>adequate</b> if for each \(n\in \N \) and every function
+\(f:\textrm {Val}_n\rightarrow \{\T ,\F \}\) there exists a propositional formula \(t\) with propositional variables in \(\{p_1,\ldots ,p_n\}\) in which only the connectives from \(Y\) occur such that \(f=f_t\).
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-136"></a>
+<span class="amsthmnameplain">Proposition</span><span class="amsthmnumberplain"> <span class="textup">2.37</span></span>. </span> <a id="DNFadequate"></a> The set \(\{\wedge , \vee , \neg \}\) is an adequate set of
+connectives.
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmproof">
+
+<a id="Logic-autopage-137"></a>
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"> <span class="amsthmproofname">Proof.</span></span> This follows from the proof of the Disjunctive Normal Form Theorem. <span class="theoremendmark">&#x25A1;</span>
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-138"></a>
+<span class="amsthmnameplain">Corollary</span><span class="amsthmnumberplain"> <span class="textup">2.38</span></span>. </span> A set of connectives \(Y\) is adequate if and only if for each \(n\in \N \) and propositional formula
+\(s\) with propositional variables in \(\{p_1,\ldots ,p_n\}\), there exists a propositional formula \(t\) with propositional variables in \(\{p_1,\ldots ,p_n\}\) in which only the connectives from \(Y\) occur such that \(s\equiv t\).
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-139"></a>
+<span class="amsthmnameplain">Lemma</span><span class="amsthmnumberplain"> <span class="textup">2.39</span></span>. </span> <a id="negoradequate"></a> The set of connectives \(\{\neg , \vee \}\) is adequate.
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmproof">
+
+<a id="Logic-autopage-140"></a>
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"> <span class="amsthmproofname">Proof.</span></span> For any propositional formulas \(s,t\), \((s\wedge t)\equiv (\neg ((\neg s)\vee (\neg t)))\). It now follows from <a
+href="Truth.html#DNFadequate">2.37</a> that \(\{\neg , \vee \}\) is adequate. <span class="theoremendmark">&#x25A1;</span>
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-141"></a>
+<span class="amsthmnameplain">Lemma</span><span class="amsthmnumberplain"> <span class="textup">2.40</span></span>. </span> The set of connectives \(\{\rightarrow ,\bot \}\) is adequate.
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmproof">
+
+<a id="Logic-autopage-142"></a>
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"> <span class="amsthmproofname">Proof.</span></span> For any propositional formula \(s\), \((s\rightarrow \bot )\equiv (\neg s)\). For any propositional formulas \(s,t\), \((s\vee t)\equiv ((s\rightarrow
+\bot )\rightarrow t)\). It now follows from <a href="Truth.html#negoradequate">2.39</a> that \(\{\rightarrow , \bot \}\) is adequate. <span class="theoremendmark">&#x25A1;</span>
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-143"></a>
+<span class="amsthmnameplain">Example</span><span class="amsthmnumberplain"> <span class="textup">2.41</span></span>. </span> The Sheffer stroke \(|\) is an arity \(2\) connective with truth table:
+</p>
+
+<p>
+
+
+</p>
+<table>
+
+<tr style="display:none"><th>.</th></tr>
+
+
+<tr class="hline">
+<td class="tdc tvertbarl tvertbarr" style="border-left:           1px solid black; border-right:   1px solid black">\(p\)</td>
+<td class="tdc tvertbarrdouble" style="border-right:           4px double black">\(q\)</td>
+<td class="tdc tvertbarr" style="border-right:          1px solid black">\((p | q)\)</td>
+</tr>
+
+
+<tr class="hline">
+<td class="tdc tvertbarl tvertbarr" style="border-left:           1px solid black; border-right:   1px solid black">\(\T \)</td>
+<td class="tdc tvertbarrdouble" style="border-right:           4px double black">\(\T \)</td>
+<td class="tdc tvertbarr" style="border-right:          1px solid black">\(\F \)</td>
+</tr>
+
+
+<tr>
+<td class="tdc tvertbarl tvertbarr" style="border-left:           1px solid black; border-right:   1px solid black">\(\T \)</td>
+<td class="tdc tvertbarrdouble" style="border-right:           4px double black">\(\F \)</td>
+<td class="tdc tvertbarr" style="border-right:          1px solid black">\(\T \)</td>
+</tr>
+
+
+<tr>
+<td class="tdc tvertbarl tvertbarr" style="border-left:           1px solid black; border-right:   1px solid black">\(\F \)</td>
+<td class="tdc tvertbarrdouble" style="border-right:           4px double black">\(\T \)</td>
+<td class="tdc tvertbarr" style="border-right:          1px solid black">\(\T \)</td>
+</tr>
+
+
+<tr>
+<td class="tdc tvertbarl tvertbarr" style="border-left:           1px solid black; border-right:   1px solid black">\(\F \)</td>
+<td class="tdc tvertbarrdouble" style="border-right:           4px double black">\(\F \)</td>
+<td class="tdc tvertbarr" style="border-right:          1px solid black">\(\T \)</td>
+</tr>
+
+
+<tr class="hline" aria-hidden="true">
+<td class="tdc"></td>
+<td class="tdc"></td>
+<td class="tdc"></td>
+</tr>
+</table>
+
+<p>
+You will show on an exercise sheet that \(\{|\}\) is an adequate set of connectives.
+</p>
+
+</li>
+
+</ul>
+
+</div>
+
+</section>
+
+</main>
+
+</div>
+
+
+<nav class="botnavigation"><a href="Logic.html" class="linkhome" >
+Home</a></nav>
+
+</body>
+</html>

@@ -1,0 +1,10 @@
+\documentclass[tikz,border=10pt]{standalone}
+\usepackage{synttree}
+\usepackage{xcolor}
+\usepackage{bm}
+
+\usepackage{tikz}
+\usetikzlibrary{trees}
+\begin{document}
+\synttree[$(((p_4\rightarrow (\neg p_1))\wedge p_2)\bm{{\color{red}\vee}}((\neg p_3)\wedge (p_2\rightarrow \bot)))$[$((p_4\rightarrow (\neg p_1))\bm{{\color{red}\wedge}} p_2)$[$(p_4\bm{{\color{red}\rightarrow}} (\neg p_1))$[$p_4$][$(\bm{{\color{red}\neg }}p_1)$[$p_1$]]][$p_2$]][$((\neg p_3)\bm{{\color{red}\wedge }}(p_2\rightarrow \bot))$[$(\bm{{\color{red}\neg}} p_3)$[$p_3$]][$(p_2\bm{{\color{red}\rightarrow}} \bot)$[$p_2$][$\bot$]]]]
+\end{document} 

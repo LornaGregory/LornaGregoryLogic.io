@@ -1,0 +1,1936 @@
+
+<!DOCTYPE html>
+<html lang="en-UK">
+<head>
+<meta charset="UTF-8" />
+<meta name="author" content="Lorna Gregory" />
+<meta name="generator" content="LaTeX Lwarp package" />
+<meta name="description" content="A description." />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Logic — Propositional Logic</title>
+<link rel="stylesheet" type="text/css" href="lwarpLorna.css" />
+
+<script>
+// Lwarp MathJax emulation code
+//
+// Based on code by Davide P. Cervone.
+// Equation numbering: https://github.com/mathjax/MathJax/issues/2427
+// Starred and ifnextchar macros: https://github.com/mathjax/MathJax/issues/2428
+// \left, \right delimiters: https://github.com/mathjax/MathJax/issues/2535
+//
+// Modified by Brian Dunn to adjust equation numbering and add subequations.
+//
+// LaTeX can use \seteqnumber{subequations?}{section}{number} before each equation.
+// subequations? is 0 usually, 1 if inside subequations.
+// section is a string printed as-is, or empty.
+// number is auto-incremented by MathJax between equations.
+//
+MathJax = {
+     subequations: "0",
+     section: "",
+     loader: {
+          load: ['[tex]/tagformat', '[tex]/textmacros'],
+     },
+     startup: {
+          ready() {
+              //       These would be replaced by import commands if you wanted to make
+              //       a proper extension.
+              const Configuration = MathJax._.input.tex.Configuration.Configuration;
+              const CommandMap = MathJax._.input.tex.SymbolMap.CommandMap;
+              const Macro = MathJax._.input.tex.Symbol.Macro;
+              const TexError = MathJax._.input.tex.TexError.default;
+              const ParseUtil = MathJax._.input.tex.ParseUtil.default;
+              const expandable = MathJax._.util.Options.expandable;
+
+
+              //       Insert the replacement string into the TeX string, and check
+              //       that there haven't been too many maxro substitutions (prevents
+              //       infinite loops).
+              const useArgument = (parser, text) => {
+                   parser.string = ParseUtil.addArgs(parser, text, parser.string.slice(parser.i));
+                   parser.i = 0;
+                   if (++parser.macroCount > parser.configuration.options.maxMacros) {
+                        throw new TexError('MaxMacroSub1',
+                        'MathJax maximum macro substitution count exceeded; ' +
+                        'is there a recursive macro call?');
+                   }
+              }
+
+
+              //       Create the command map for:
+              //            \ifstar, \ifnextchar, \ifblank, \ifstrequal, \gsub, \seteqnumber
+              new CommandMap('Lwarp-macros', {
+                   ifstar: 'IfstarFunction',
+                   ifnextchar: 'IfnextcharFunction',
+                   ifblank: 'IfblankFunction',
+                   ifstrequal: 'IfstrequalFunction',
+                   gsubstitute: 'GsubstituteFunction',
+                   seteqnumber: 'SeteqnumberFunction'
+              }, {
+                   //       This function implements an ifstar macro.
+                   IfstarFunction(parser, name) {
+                        const resultstar = parser.GetArgument(name);
+                        const resultnostar = parser.GetArgument(name);
+                        const star = parser.GetStar();                        // true if there is a *
+                        useArgument(parser, star ? resultstar : resultnostar);
+                   },
+
+
+                   //       This function implements an ifnextchar macro.
+                   IfnextcharFunction(parser, name) {
+                        let whichchar = parser.GetArgument(name);
+                        if (whichchar.match(/^(?:0x[0-9A-F]+|[0-9]+)$/i)) {
+                            // $ syntax highlighting
+                            whichchar = String.fromCodePoint(parseInt(whichchar));
+                        }
+                        const resultnextchar = parser.GetArgument(name);
+                        const resultnotnextchar = parser.GetArgument(name);
+                        const gotchar = (parser.GetNext() === whichchar);
+                        useArgument(parser, gotchar ? resultnextchar : resultnotnextchar);
+                   },
+
+
+                   // This function implements an ifblank macro.
+                   IfblankFunction(parser, name) {
+                        const blankarg = parser.GetArgument(name);
+                        const resultblank = parser.GetArgument(name);
+                        const resultnotblank = parser.GetArgument(name);
+                        const isblank = (blankarg.trim() == "");
+                        useArgument(parser, isblank ? resultblank : resultnotblank);
+                   },
+
+
+                   // This function implements an ifstrequal macro.
+                   IfstrequalFunction(parser, name) {
+                        const strequalfirst = parser.GetArgument(name);
+                        const strequalsecond = parser.GetArgument(name);
+                        const resultequal = parser.GetArgument(name);
+                        const resultnotequal = parser.GetArgument(name);
+                        const isequal = (strequalfirst == strequalsecond);
+                        useArgument(parser, isequal ? resultequal : resultnotequal);
+                   },
+
+
+                   // This function implements a gsub macro.
+                   GsubstituteFunction(parser, name) {
+                        const gsubfirst = parser.GetArgument(name);
+                        const gsubsecond = parser.GetArgument(name);
+                        const gsubthird = parser.GetArgument(name);
+                        let gsubresult=gsubfirst.replace(gsubsecond, gsubthird);
+                        useArgument(parser, gsubresult);
+                   },
+
+
+                   //       This function modifies the equation numbers.
+                   SeteqnumberFunction(parser, name) {
+                            //   Get the macro parameters
+                            const star = parser.GetStar();                      // true if there is a *
+                            const optBrackets = parser.GetBrackets(name);        // contents of optional brackets
+                            const newsubequations = parser.GetArgument(name);      // the subequations argument
+                            const neweqsection = parser.GetArgument(name);      // the eq section argument
+                            const neweqnumber = parser.GetArgument(name);        // the eq number argument
+                            MathJax.config.subequations=newsubequations ;       // a string with boolean meaning
+                            MathJax.config.section=neweqsection ;               // a string with numeric meaning
+                            parser.tags.counter = parser.tags.allCounter = neweqnumber ;
+                   }
+
+
+              });
+
+
+              //       Create the Lwarp-macros package
+              Configuration.create('Lwarp-macros', {
+                   handler: {macro: ['Lwarp-macros']}
+              });
+
+
+              MathJax.startup.defaultReady();
+
+
+              // For forward references:
+              MathJax.startup.input[0].preFilters.add(({math}) => {
+                   if (math.inputData.recompile){
+                            MathJax.config.subequations = math.inputData.recompile.subequations;
+                            MathJax.config.section = math.inputData.recompile.section;
+                   }
+              });
+              MathJax.startup.input[0].postFilters.add(({math}) => {
+                   if (math.inputData.recompile){
+                            math.inputData.recompile.subequations = MathJax.config.subequations;
+                            math.inputData.recompile.section = MathJax.config.section;
+                   }
+              });
+
+
+                   // For \left, \right with unicode-math:
+                   const {DelimiterMap} = MathJax._.input.tex.SymbolMap;
+                   const {Symbol} = MathJax._.input.tex.Symbol;
+                   const {MapHandler} = MathJax._.input.tex.MapHandler;
+                   const delimiter = MapHandler.getMap('delimiter');
+                   delimiter.add('\\lBrack', new Symbol('\\lBrack', '\u27E6'));
+                   delimiter.add('\\rBrack', new Symbol('\\rBrack', '\u27E7'));
+                   delimiter.add('\\lAngle', new Symbol('\\lAngle', '\u27EA'));
+                   delimiter.add('\\rAngle', new Symbol('\\rAngle', '\u27EB'));
+                   delimiter.add('\\lbrbrak', new Symbol('\\lbrbrak', '\u2772'));
+                   delimiter.add('\\rbrbrak', new Symbol('\\rbrbrak', '\u2773'));
+                   delimiter.add('\\lbag', new Symbol('\\lbag', '\u27C5'));
+                   delimiter.add('\\rbag', new Symbol('\\rbag', '\u27C6'));
+                   delimiter.add('\\llparenthesis', new Symbol('\\llparenthesis', '\u2987'));
+                   delimiter.add('\\rrparenthesis', new Symbol('\\rrparenthesis', '\u2988'));
+                   delimiter.add('\\llangle', new Symbol('\\llangle', '\u2989'));
+                   delimiter.add('\\rrangle', new Symbol('\\rrangle', '\u298A'));
+                   delimiter.add('\\Lbrbrak', new Symbol('\\Lbrbrak', '\u27EC'));
+                   delimiter.add('\\Rbrbrak', new Symbol('\\Rbrbrak', '\u27ED'));
+                   delimiter.add('\\lBrace', new Symbol('\\lBrace', '\u2983'));
+                   delimiter.add('\\rBrace', new Symbol('\\rBrace', '\u2984'));
+                   delimiter.add('\\lParen', new Symbol('\\lParen', '\u2985'));
+                   delimiter.add('\\rParen', new Symbol('\\rParen', '\u2986'));
+                   delimiter.add('\\lbrackubar', new Symbol('\\lbrackubar', '\u298B'));
+                   delimiter.add('\\rbrackubar', new Symbol('\\rbrackubar', '\u298C'));
+                   delimiter.add('\\lbrackultick', new Symbol('\\lbrackultick', '\u298D'));
+                   delimiter.add('\\rbracklrtick', new Symbol('\\rbracklrtick', '\u298E'));
+                   delimiter.add('\\lbracklltick', new Symbol('\\lbracklltick', '\u298F'));
+                   delimiter.add('\\rbrackurtick', new Symbol('\\rbrackurtick', '\u2990'));
+                   delimiter.add('\\langledot', new Symbol('\\langledot', '\u2991'));
+                   delimiter.add('\\rangledot', new Symbol('\\rangledot', '\u2992'));
+                   delimiter.add('\\lparenless', new Symbol('\\lparenless', '\u2993'));
+                   delimiter.add('\\rparengtr', new Symbol('\\rparengtr', '\u2994'));
+                   delimiter.add('\\Lparengtr', new Symbol('\\Lparengtr', '\u2995'));
+                   delimiter.add('\\Rparenless', new Symbol('\\Rparenless', '\u2996'));
+                   delimiter.add('\\lblkbrbrak', new Symbol('\\lblkbrbrak', '\u2997'));
+                   delimiter.add('\\rblkbrbrak', new Symbol('\\rblkbrbrak', '\u2998'));
+                   delimiter.add('\\lvzigzag', new Symbol('\\lvzigzag', '\u29D8'));
+                   delimiter.add('\\rvzigzag', new Symbol('\\rvzigzag', '\u29D9'));
+                   delimiter.add('\\Lvzigzag', new Symbol('\\Lvzigzag', '\u29DA'));
+                   delimiter.add('\\Rvzigzag', new Symbol('\\Rvzigzag', '\u29DB'));
+                   delimiter.add('\\lcurvyangle', new Symbol('\\lcurvyangle', '\u29FC'));
+                   delimiter.add('\\rcurvyangle', new Symbol('\\rcurvyangle', '\u29FD'));
+                   delimiter.add('\\Vvert', new Symbol('\\Vvert', '\u2980'));
+          }       // ready
+     },           // startup
+
+
+     tex: {
+          packages: {'[+]': ['tagformat', 'Lwarp-macros', 'textmacros']},
+          tags: "ams",
+                   tagformat: {
+                            number: function (n) {
+                                 if(MathJax.config.subequations==0)
+                                        return(MathJax.config.section + n);
+                                 else
+                                        return(MathJax.config.section + String.fromCharCode(96+n));
+                            },
+                   },
+     }
+}
+</script>
+
+
+<script
+          id="MathJax-script"
+          src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"
+></script>
+
+</head>
+<body>
+
+
+<a id="Logic-autopage-15"></a>
+<nav class="topnavigation"><a href="Logic.html" class="linkhome" >
+Home</a></nav>
+
+
+<div class="bodyandsidetoc">
+<div class="sidetoccontainer">
+
+
+<nav class="sidetoc">
+
+
+<div class="sidetoctitle">
+
+<p>
+<span class="sidetocthetitle">Mathematical Logic</span>
+</p>
+
+<p>
+Contents
+</p>
+</div>
+
+
+<div class="sidetoccontents">
+
+<p>
+<a href="Logic.html" class="linkhome" >
+Home</a>
+</p>
+
+<p>
+<a href="Introduction.html#autosec-5" class="tocsection" >
+<span class="sectionnumber">1</span>&#x2003;Introduction</a>
+</p>
+
+
+<p>
+<a href="Propositional-Logic.html#autosec-16" class="tocsection" >
+<span class="sectionnumber">2</span>&#x2003;Propositional Logic</a>
+</p>
+
+
+<p>
+<a href="Propositional-Logic.html#autosec-17" class="tocsubsection" >
+<span class="sectionnumber">2.1</span>&#x2003;Propositional formulas</a>
+</p>
+
+
+<p>
+<a href="Truth.html#autosec-95" class="tocsubsection" >
+<span class="sectionnumber">2.2</span>&#x2003;Truth</a>
+</p>
+
+
+<p>
+<a href="Proofs.html#autosec-146" class="tocsubsection" >
+<span class="sectionnumber">2.3</span>&#x2003;Proofs</a>
+</p>
+
+
+<p>
+<a href="Completeness.html#autosec-157" class="tocsubsection" >
+<span class="sectionnumber">2.4</span>&#x2003;Completeness</a>
+</p>
+
+
+<p>
+<a href="Predicate-Logic.html#autosec-168" class="tocsection" >
+<span class="sectionnumber">3</span>&#x2003;Predicate Logic</a>
+</p>
+
+
+<p>
+<a href="Predicate-Logic.html#autosec-169" class="tocsubsection" >
+<span class="sectionnumber">3.1</span>&#x2003;Languages and Structures</a>
+</p>
+
+
+<p>
+<a href="Formulas.html#autosec-174" class="tocsubsection" >
+<span class="sectionnumber">3.2</span>&#x2003;Formulas</a>
+</p>
+
+
+<p>
+<a href="Tarski-Truth-Definition.html#autosec-199" class="tocsubsection" >
+<span class="sectionnumber">3.3</span>&#x2003;Tarski’s Truth Definition</a>
+</p>
+
+
+<p>
+<a href="Proofs-9.html#autosec-245" class="tocsubsection" >
+<span class="sectionnumber">3.4</span>&#x2003;Proofs</a>
+</p>
+
+
+<p>
+<a href="Completeness-10.html#autosec-258" class="tocsubsection" >
+<span class="sectionnumber">3.5</span>&#x2003;Completeness</a>
+</p>
+
+
+<p>
+<a href="Proof-Completeness-Theorem-Predicate-Logic-4th-year-material.html#autosec-272" class="tocsection" >
+<span class="sectionnumber">4</span>&#x2003;Proof of the Completeness Theorem for Predicate Logic (4th year material)</a>
+</p>
+
+
+<p>
+<a href="Application-Compactness-Theorem-Extension-Constants.html#autosec-310" class="tocsection" >
+<span class="sectionnumber">5</span>&#x2003;Application of the Compactness Theorem and Extension by Constants</a>
+</p>
+
+
+<p>
+<a href="Universal-Algebra-Substructures-Homomorphisms.html#autosec-336" class="tocsection" >
+<span class="sectionnumber">6</span>&#x2003;Universal Algebra: Substructures and Homomorphisms</a>
+</p>
+
+
+<p>
+<a href="Further-Model-Theory-4th-year-material.html#autosec-346" class="tocsection" >
+<span class="sectionnumber">7</span>&#x2003;Further Model Theory (4th year material)</a>
+</p>
+
+
+<p>
+<a href="Further-Model-Theory-4th-year-material.html#autosec-347" class="tocsubsection" >
+<span class="sectionnumber">7.1</span>&#x2003;Definable Sets</a>
+</p>
+
+
+<p>
+<a href="Elementary-Substructures.html#autosec-354" class="tocsubsection" >
+<span class="sectionnumber">7.2</span>&#x2003;Elementary Substructures</a>
+</p>
+
+
+<p>
+<a href="Downwards-Lowenheim-Skolem-Theorem.html#autosec-364" class="tocsubsection" >
+<span class="sectionnumber">7.3</span>&#x2003;Downwards Lo&#x0308;wenheim-Skolem Theorem</a>
+</p>
+
+
+<p>
+<a href="Upwards-Lowenheim-Skolem-Theorem.html#autosec-368" class="tocsubsection" >
+<span class="sectionnumber">7.4</span>&#x2003;Upwards Lo&#x0308;wenheim-Skolem Theorem</a>
+</p>
+
+
+<p>
+<a href="Categoricity.html#autosec-371" class="tocsubsection" >
+<span class="sectionnumber">7.5</span>&#x2003;Categoricity</a>
+</p>
+
+
+</div>
+
+</nav>
+
+</div>
+
+
+<main class="bodycontainer">
+
+
+<section class="textbody">
+
+<h1>Mathematical Logic</h1>
+
+<!--MathJax customizations:-->
+<div data-nosnippet
+    style="display:none"
+>
+
+\(\newcommand{\footnotename}{footnote}\)
+
+\(\def \LWRfootnote {1}\)
+
+\(\newcommand {\footnote }[2][\LWRfootnote ]{{}^{\mathrm {#1}}}\)
+
+\(\newcommand {\footnotemark }[1][\LWRfootnote ]{{}^{\mathrm {#1}}}\)
+
+\(\let \LWRorighspace \hspace \)
+
+\(\renewcommand {\hspace }{\ifstar \LWRorighspace \LWRorighspace }\)
+
+\(\newcommand {\TextOrMath }[2]{#2}\)
+
+\(\newcommand {\mathnormal }[1]{{#1}}\)
+
+\(\newcommand \ensuremath [1]{#1}\)
+
+\(\newcommand {\LWRframebox }[2][]{\fbox {#2}} \newcommand {\framebox }[1][]{\LWRframebox } \)
+
+\(\newcommand {\setlength }[2]{}\)
+
+\(\newcommand {\addtolength }[2]{}\)
+
+\(\newcommand {\setcounter }[2]{}\)
+
+\(\newcommand {\addtocounter }[2]{}\)
+
+\(\newcommand {\arabic }[1]{}\)
+
+\(\newcommand {\number }[1]{}\)
+
+\(\newcommand {\noalign }[1]{\text {#1}\notag \\}\)
+
+\(\newcommand {\cline }[1]{}\)
+
+\(\newcommand {\directlua }[1]{\text {(directlua)}}\)
+
+\(\newcommand {\luatexdirectlua }[1]{\text {(directlua)}}\)
+
+\(\newcommand {\protect }{}\)
+
+\(\def \LWRabsorbnumber #1 {}\)
+
+\(\def \LWRabsorbquotenumber &quot;#1 {}\)
+
+\(\newcommand {\LWRabsorboption }[1][]{}\)
+
+\(\newcommand {\LWRabsorbtwooptions }[1][]{\LWRabsorboption }\)
+
+\(\def \mathchar {\ifnextchar &quot;\LWRabsorbquotenumber \LWRabsorbnumber }\)
+
+\(\def \mathcode #1={\mathchar }\)
+
+\(\let \delcode \mathcode \)
+
+\(\let \delimiter \mathchar \)
+
+\(\def \oe {\unicode {x0153}}\)
+
+\(\def \OE {\unicode {x0152}}\)
+
+\(\def \ae {\unicode {x00E6}}\)
+
+\(\def \AE {\unicode {x00C6}}\)
+
+\(\def \aa {\unicode {x00E5}}\)
+
+\(\def \AA {\unicode {x00C5}}\)
+
+\(\def \o {\unicode {x00F8}}\)
+
+\(\def \O {\unicode {x00D8}}\)
+
+\(\def \l {\unicode {x0142}}\)
+
+\(\def \L {\unicode {x0141}}\)
+
+\(\def \ss {\unicode {x00DF}}\)
+
+\(\def \SS {\unicode {x1E9E}}\)
+
+\(\def \dag {\unicode {x2020}}\)
+
+\(\def \ddag {\unicode {x2021}}\)
+
+\(\def \P {\unicode {x00B6}}\)
+
+\(\def \copyright {\unicode {x00A9}}\)
+
+\(\def \pounds {\unicode {x00A3}}\)
+
+\(\let \LWRref \ref \)
+
+\(\renewcommand {\ref }{\ifstar \LWRref \LWRref }\)
+
+\( \newcommand {\multicolumn }[3]{#3}\)
+
+\(\require {textcomp}\)
+
+\(\newcommand {\intertext }[1]{\text {#1}\notag \\}\)
+
+\(\let \Hat \hat \)
+
+\(\let \Check \check \)
+
+\(\let \Tilde \tilde \)
+
+\(\let \Acute \acute \)
+
+\(\let \Grave \grave \)
+
+\(\let \Dot \dot \)
+
+\(\let \Ddot \ddot \)
+
+\(\let \Breve \breve \)
+
+\(\let \Bar \bar \)
+
+\(\let \Vec \vec \)
+
+\(\newcommand {\bm }[1]{\boldsymbol {#1}}\)
+
+\(\newcommand {\R }{\mathbb {R}}\)
+
+\(\newcommand {\C }{\mathbb {C}}\)
+
+\(\newcommand {\Z }{\mathbb {Z}}\)
+
+\(\newcommand {\N }{\mathbb {N}}\)
+
+\(\newcommand {\Q }{\mathbb {Q}}\)
+
+\(\newcommand {\st }{\ \vert \ }\)
+
+\(\newcommand {\mcal }[1]{\mathcal {#1}}\)
+
+\(\newcommand {\TmAlg }{\mathrm {TmAlg}}\)
+
+\(\newcommand {\PROP }{\mathrm {PROP}}\)
+
+\(\newcommand {\PF }{\mathrm {S}}\)
+
+\(\newcommand {\proves }{\vdash }\)
+
+\(\newcommand {\tm }{\textrm {tm}}\)
+
+\(\newcommand {\ctm }{\textrm {ctm}}\)
+
+\(\newcommand {\Fml }{\textrm {Fml}}\)
+
+\(\newcommand {\Fr }{\textrm {Fr}}\)
+
+\(\newcommand {\Vbl }{\textrm {Vbl}}\)
+
+\(\newcommand {\cmpx }{\texttt {cmpx}}\)
+
+\(\newcommand {\supp }{\text {supp}}\)
+
+\(\newcommand {\conn }{\,\square \,}\)
+
+\(\newcommand {\con }{\,\diamond \,}\)
+
+\(\newcommand {\ct }{\texttt {c}}\)
+
+\(\newcommand {\T }{\mathbb {T}}\)
+
+\(\newcommand {\F }{\mathbb {F}}\)
+
+\(\newcommand {\mathlarger }[1]{#1}\)
+
+\(\newcommand {\mathsmaller }[1]{#1}\)
+
+\(\newcommand {\LWRmarginnote }[1][]{}\)
+
+\(\newcommand {\marginnote }[2][]{\qquad {\small \textrm {#2}}\LWRmarginnote }\)
+
+</div>
+
+<!--
+...... section Propositional Logic ......
+-->
+<h4 id="autosec-16"><span class="sectionnumber">2&#x2003;</span>Propositional Logic</h4>
+<a id="Logic-autopage-16"></a>
+<a id="Logic-autofile-2"></a>
+<!--
+...... subsection Propositional formulas ......
+-->
+<h5 id="autosec-17"><span class="sectionnumber">2.1&#x2003;</span>Propositional formulas</h5>
+<a id="Logic-autopage-17"></a>
+
+
+<a id="propflas"></a>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-18"></a>
+<span class="amsthmnameplain">Definition</span><span class="amsthmnumberplain"> <span class="textup">2.1</span></span>. </span> An <b>alphabet</b> of a <b>propositional language</b> \(\mcal {L}\) consists of the following:
+</p>
+<ul class="itemize" style="list-style-type:none">
+
+
+<li>
+<p>
+<span class="listmarker">•</span> A set of <b>propositional variables</b> \(\PROP (\mcal {L})\). The elements will usually be denoted \(p,r,q\) or \(p_1,p_2,p_3,\ldots \).
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">•</span> A set of <b>connectives</b> \(\{\wedge , \vee , \neg , \rightarrow , \bot \}\).
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">•</span> An open bracket “ \((\) ” and a close bracket “ \()\) ” which will collectively be called brackets.
+</p>
+</li>
+</ul>
+
+<p>
+We will always assume that \(\PROP (\mcal {L})\) does not contain any connectives or brackets. Each of the connectives has an element of the set \(\{0,1,2\}\) assigned to it which we will call its <b>arity</b>. The connective \(\bot \) has arity
+\(0\), the connective \(\neg \) has arity \(1\) and all other connectives listed above have arity \(2\). Connectives with arity \(0\) are called <b>logical constants</b>.
+</p>
+
+</li>
+
+</ul>
+
+</div>
+
+<p>
+The table below shows useful information about each of the connectives.
+</p>
+<table>
+
+<tr style="display:none"><th>.</th></tr>
+
+<tr class="hline">
+<td class="tdc tvertbarl tvertbarr" style="border-left: 1px solid black; border-right:   1px solid black">Connective</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">Arity</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">Name</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">How to say it.</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">How to LaTeX it.</td>
+</tr>
+
+<tr class="hline">
+<td class="tdc tvertbarl tvertbarr" style="border-left: 1px solid black; border-right: 1px solid black">\(\wedge \)</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">\(2\)</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">conjunction</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">and</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black"><span class="verb">\wedge</span></td>
+</tr>
+
+<tr>
+<td class="tdc tvertbarl tvertbarr" style="border-left: 1px solid black; border-right: 1px solid black">\(\vee \)</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">\(2\)</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">disjunction</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">or</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black"><span class="verb">\vee</span></td>
+</tr>
+
+<tr>
+<td class="tdc tvertbarl tvertbarr" style="border-left: 1px solid black; border-right: 1px solid black">\(\neg \)</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">\(1\)</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">negation</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">not</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black"><span class="verb">\neg</span></td>
+</tr>
+
+<tr>
+<td class="tdc tvertbarl tvertbarr" style="border-left: 1px solid black; border-right: 1px solid black">\(\rightarrow \)</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">\(2\)</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">implication</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">implies</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black"><span class="verb">\rightarrow</span></td>
+</tr>
+
+<tr>
+<td class="tdc tvertbarl tvertbarr" style="border-left: 1px solid black; border-right: 1px solid black">\(\bot \)</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">\(0\)</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">falsity</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">false</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black"><span class="verb">\bot</span></td>
+</tr>
+
+<tr class="hline" aria-hidden="true">
+<td class="tdc"></td>
+<td class="tdc"></td>
+<td class="tdc"></td>
+<td class="tdc"></td>
+<td class="tdc"></td>
+</tr>
+</table>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-20"></a>
+<span class="amsthmnameplain">Definition</span><span class="amsthmnumberplain"> <span class="textup">2.2</span></span>. </span> A <b>word</b> in (an alphabet of ) a propositional language \(\mcal {L}\) is an \(n\)-tuple of
+elements of \(\mcal {L}\). Unusually, we will write the \(n\)-tuple with entries \(a_1,a_2,\ldots , a_n\) as \(a_1a_2\cdots a_n\) rather than \((a_1,\ldots ,a_n)\). The <b>length</b> of a word is simply the length of tuple i.e. the length of
+\(a_1a_2\ldots a_n\) is \(n\). We will call the entries of a word \(a=a_1a_2\ldots a_n\) the <b>letters</b> of \(a\).
+</p>
+
+</li>
+
+</ul>
+
+</div>
+
+<p>
+We define the set of propositional formulas inductively.
+</p>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-21"></a>
+<span class="amsthmnameplain">Definition</span><span class="amsthmnumberplain"> <span class="textup">2.3</span></span>. </span> Let \(\mcal {L}\) be a propositional language. Define \(\PF _0\mcal {L}\) to be the set of
+propositional variables of \(\mcal {L}\) together with the logical constants of \(\mcal {L}\). For each \(i\in \N \), we define \(\PF _i\mcal {L}\) by induction as follows:
+</p>
+
+<p>
+\[\PF _{i+1}\mcal {L}:= \PF _i\mcal {L}\cup \{(\neg t) \st t\in \PF _i\mcal {L}\} \cup \{(s_1\conn s_2) \st s_1,s_2\in \PF _i\mcal {L} \text { and } \square \text { is a connective of arity } 2\}.\]
+</p>
+
+<p>
+The set of <b>propositional formulas</b>, denoted \(\PF \mcal {L}\), is the union of the sets \(\PF _i\mcal {L}\) for \(i\in \N _0\). The <b>complexity</b> of a propositional formula \(t\) is the least \(i\in \N _0\) such that \(t\in \PF
+_i\mcal {L}\).
+</p>
+
+</li>
+
+</ul>
+
+</div>
+
+<p>
+Note that the arity of a connective determines how it is used to construct propositional formulas.
+</p>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-22"></a>
+<span class="amsthmnameplain">Example</span><span class="amsthmnumberplain"> <span class="textup">2.4</span></span>. </span> Let \(\mcal {L}\) be the propositional language with set of propositional variables \(\PROP (\mcal
+{L})=\{p\}\). The sets of propositional formulas of complexity \(0\) is
+</p>
+
+<p>
+\[\PF _0\mcal {L}:=\{p, \bot \}.\]
+</p>
+
+<p>
+There are \(16\) propositional formulas of complexity \(0\) and \(1\).
+</p>
+<span class="hidden"> \(\seteqnumber{0}{}{0}\)</span>
+
+
+
+<!--
+
+
+
+
+  S1 L := {p, ⊥, (¬p), (¬⊥), (p ∧ p), (p ∧ ⊥), (⊥ ∧ p), (⊥ ∧ ⊥),
+                                                                                                                                                                 (p ∨ p), (p ∨ ⊥), (⊥ ∨ p), (⊥ ∨ ⊥), (p → p), (p → ⊥), (⊥ → p), (⊥ → ⊥)}.
+
+
+
+-->
+
+
+
+<p>
+
+
+\begin{multline*}
+\PF _1\mcal {L}:= \{p, \bot , (\neg p), (\neg \bot ), (p\wedge p), (p\wedge \bot ), (\bot \wedge p), (\bot \wedge \bot ), \\ (p\vee p), (p\vee \bot ), (\bot \vee p), (\bot \vee \bot ), (p\rightarrow p),
+(p\rightarrow \bot ), (\bot \rightarrow p), (\bot \rightarrow \bot ) \}.
+\end{multline*}
+
+
+</p>
+
+<p>
+Here are a few propositional formulas of complexity \(2\):
+</p>
+
+<p>
+\[((p\wedge p)\rightarrow \bot ), \quad (\neg (\bot \rightarrow \bot )), \quad ((p\wedge p)\rightarrow (p\vee \bot )).         \]
+</p>
+
+<p>
+
+
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-23"></a>
+<span class="amsthmnameplain">Lemma</span><span class="amsthmnumberplain"> <span class="textup">2.5</span></span>. </span> The set of propositional formulas \(\PF \mcal {L}\) of a propositional language \(\mcal {L}\) is the
+smallest set \(X\) of words in the alphabet of \(\mcal {L}\) satisfying the following properties:
+</p>
+<ul class="enumerate" style="list-style-type:none">
+
+
+<li>
+<p>
+<span class="listmarker">(i)</span> All propositional variables and logical constants of \(\mcal {L}\) are members of \(X\).
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">(ii)</span> If \(s\in X\) then \((\neg s)\in X\).
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">(iii)</span> For all connectives \(\square \) of arity \(2\), if \(s_1,s_2\in X\) then \((s_1\square s_2)\in X\).
+</p>
+</li>
+</ul>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmproof">
+
+<a id="Logic-autopage-24"></a>
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"> <span class="amsthmproofname">Proof.</span></span> See Exercise Sheet \(1\). <span class="theoremendmark">&#x25A1;</span>
+</p>
+
+</li>
+
+</ul>
+
+</div>
+
+<p>
+For simple expressions like \((p\wedge q)\) and \((\neg (\bot \rightarrow p))\) it is easy argue that they are propositional formulas.
+</p>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-25"></a>
+<span class="amsthmnameplain">Example</span><span class="amsthmnumberplain"> <span class="textup">2.6</span></span>. </span> Let \(p,q\) be propositional variables of a propositional language \(\mcal {L}\).
+</p>
+<ul class="enumerate" style="list-style-type:none">
+
+
+<li>
+<p>
+<span class="listmarker">(i)</span> The expression \((p\wedge q)\) is a propositional formula because \(p,q\in \PF _0\mcal {L}\) (since they are propositional variables) and so \((p\wedge q)\in \PF _1\mcal {L}\).
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">(ii)</span> We argue that \((\neg (\bot \rightarrow p))\) is a propositional formula. Since \(p\) is a propositional variable and \(\bot \) is a logical constant, \(p,\bot \in \PF _0\mcal {L}\). Therefore \((\bot
+\rightarrow p)\in \PF _1\mcal {L}\). Hence \((\neg (\bot \rightarrow p))\in \PF _2\mcal {L}\).
+</p>
+</li>
+</ul>
+
+</li>
+
+</ul>
+
+</div>
+
+<p>
+Explaining why a complicated expression is a propositional formula as in the previous example can become tedious and difficult to follow. For this reason we introduce construction trees of propositional formulas.
+</p>
+<!--
+...... subsubsection Construction Trees ......
+-->
+<h6 id="autosec-26">Construction Trees</h6>
+<a id="Logic-autopage-26"></a>
+
+
+<p>
+Before explaining what a construction tree is, it is helpful to see some examples. The following is the construction tree of the propositional formula \((p\wedge q)\):
+</p>
+<div class="center">
+
+<p>
+<span
+    id="lateximage-Logic-1"
+    class="lateximagesource"
+><!--
+    p∧q
+
+
+p         q
+--><img
+    src="Logic-images\image-1.svg"
+    alt="(-tikz-&nbsp;diagram)"
+    style=""
+    class="lateximage"
+></span>
+</p>
+</div>
+
+<p>
+Here is the construction tree of \((\neg (\bot \rightarrow p))\):
+</p>
+<div class="center">
+
+<p>
+<span
+    id="lateximage-Logic-2"
+    class="lateximagesource"
+><!--
+(¬(⊥ → p))
+
+
+ (⊥→p)
+
+
+ ⊥     p
+--><img
+    src="Logic-images\image-2.svg"
+    alt="(-tikz-&nbsp;diagram)"
+    style=""
+    class="lateximage"
+></span>
+</p>
+</div>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-33"></a>
+<span class="amsthmnameplain">Definition</span><span class="amsthmnumberplain"> <span class="textup">2.7</span></span>. </span> The <b>construction tree</b> \(CT(t)\) of a propositional formula \(t\) is defined recursively based
+on the definition of a propositional formula. The construction tree of a propositional variable \(p\) is:
+</p>
+<div class="center">
+
+<p>
+<span
+      id="lateximage-Logic-3"
+      class="lateximagesource"
+><!--
+p
+--><img
+      src="Logic-images\image-3.svg"
+      alt="(-tikz-&nbsp;diagram)"
+      style=""
+      class="lateximage"
+></span>
+</p>
+</div>
+
+<p>
+The construction tree of the logical constant \(\bot \) is:
+</p>
+<div class="center">
+
+<p>
+<span
+      id="lateximage-Logic-4"
+      class="lateximagesource"
+><!--
+⊥
+--><img
+      src="Logic-images\image-4.svg"
+      alt="(-tikz-&nbsp;diagram)"
+      style=""
+      class="lateximage"
+></span>
+</p>
+</div>
+
+<p>
+If \(s\) is a propositional formula then \(CT((\neg s))\) is:
+</p>
+<div class="center">
+
+<p>
+<span
+      id="lateximage-Logic-5"
+      class="lateximagesource"
+><!--
+(¬s)
+
+
+CT (s)
+--><img
+      src="Logic-images\image-5.svg"
+      alt="(-tikz-&nbsp;diagram)"
+      style=""
+      class="lateximage"
+></span>
+</p>
+</div>
+
+<p>
+If \(s_1\) and \(s_2\) are propositional formulas and \(\square \) is a connective of arity \(2\) then \(CT((s_1\square s_2))\) is:
+</p>
+<div class="center">
+
+<p>
+<span
+      id="lateximage-Logic-6"
+      class="lateximagesource"
+><!--
+    (s1 □s2 )
+
+
+CT (s1 ) CT (s2 )
+--><img
+   src="Logic-images\image-6.svg"
+   alt="(-tikz-&nbsp;diagram)"
+   style=""
+   class="lateximage"
+></span>
+</p>
+</div>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-46"></a>
+<span class="amsthmnameplain">Example</span><span class="amsthmnumberplain"> <span class="textup">2.8</span></span>. </span> The following is the construction tree of the propositional formula \((((p_4\rightarrow (\neg
+p_1))\wedge p_2)\vee ((\neg p_3)\wedge (p_2\rightarrow \bot )))\).
+</p>
+<div class="center">
+
+<p>
+
+
+<a href="Tree1.jpg" target="_blank" ><img
+      src="Tree1.jpg"
+      class="inlineimage"
+      alt="(image)"
+></a>
+</p>
+</div>
+
+<p>
+To help you more easily see what is going on, the connective which is introduced at each node is in boldface red.
+</p>
+
+</li>
+
+</ul>
+
+</div>
+
+<p>
+We will later see an algorithm which given a propositional formula allows you to compute a construction tree for it.
+</p>
+
+<p>
+<span role="note" class="marginpar">End of L1&amp;L2</span>
+</p>
+<!--
+...... subsubsection Induction on the complexity of propositional formulas ......
+-->
+<h6 id="autosec-48">Induction on the complexity of propositional formulas</h6>
+<a id="Logic-autopage-48"></a>
+
+
+<p>
+We will frequently prove properties of propositional formulas by “induction on complexity”. To prove a statement about all propositional formulas, using this method of proof, we first prove the statement for \(\PF _0\mcal {L}\) (this is our base case) and then
+show that, for all \(n\in \N _0\), if the statement holds of \(\PF _n\mcal {L}\) then it also holds for \(\PF _{n+1}\mcal {L}\).
+</p>
+
+<p>
+Here is a simple first example. Before reading the proof of this lemma, look at the definition of a propositional formula and think about why it is true.
+</p>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-49"></a>
+<span class="amsthmnameplain">Lemma</span><span class="amsthmnumberplain"> <span class="textup">2.9</span></span>. </span> <a id="leftrightbrackets"></a> Let \(\mcal {L}\) be a propositional language. Suppose \(s\in \PF
+\mcal {L}\). The number of open brackets \((\) occuring in \(s\) is equal to the number of close brackets \()\) occuring in \(s\).
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmproof">
+
+<a id="Logic-autopage-50"></a>
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"> <span class="amsthmproofname">Proof.</span></span> For any propositional formula \(s\), define \(l[s]\) (respectively \(r[s]\)) to be the number of open brackets “ \((\) ” (respectively close brackets “ \()\) ”)
+occurring in \(s\). If \(s\in \PF _0\mcal {L}\) then \(s\) is either a propositional variable or \(\bot \). So \(l[s]=0=r[s]\). Hence the statement of the lemma is true for all \(s\in \PF _0\mcal {L}\). For the induction step, suppose that for
+all \(s\in \PF _n\mcal {L}\), \(l[s]=r[s]\). Let \(t\) be a propositional formula in \(\PF _{n+1}\mcal {L}\). Then, examining the definition of \(\PF _{n+1}\mcal {L}\), either \(t\in \PF _n\mcal {L}\), \(t\) is \((\neg s)\) for some
+\(s\in \PF _n\mcal {L}\) or \(t\) is \((s_1\square s_2)\) for some propositional formulas \(s_1,s_2\in \PF _n\mcal {L}\) and some connective \(\square \) of arity \(2\).
+</p>
+
+<p>
+If \(t\in \PF _n\mcal {L}\) then \(l[t]=r[t]\) by our induction hypothesis.
+</p>
+
+<p>
+If \(t\) is \((\neg s)\) then \(l[t]=l[(\neg s)]=l[s]+1\) and \(r[t]=r[(\neg s)]=r[s]+1\). By the induction hypothesis, \(l[s]=r[s]\). Therefore \(l[t]=r[t]\).
+</p>
+
+<p>
+If \(t\) is \((s_1\square s_2)\) for some propositional formulas \(s_1,s_2\in \PF _n\mcal {L}\) and some connective \(\square \) of arity \(2\) then \(l[(s_1\square s_2)]=l(s_1)+l(s_2)+1\) and \(r[(s_1\square
+s_2)]=r[s_1]+r[s_2]+1\). By the induction hypothesis \(l[s_1]=r[s_1]\) and \(l[s_2]=r[s_2]\). Therefore
+</p>
+
+<p>
+\[l[t]=l[(s_1\square s_2)]=l[s_1]+l[s_2]+1=r[s_1]+r[s_2]+1=r[(s_1\square s_2)]=r[t].\]
+</p>
+
+<p>
+Thus we have proved the inductive step. Hence the lemma holds by induction on the complexity of propositional formulas. <span class="theoremendmark">&#x25A1;</span>
+</p>
+
+</li>
+
+</ul>
+
+</div>
+
+<p>
+We now state a “meta” theorem. The reason it is “meta” is that we deliberately don’t define what we mean by “property”. It is intended to give a template for what needs to be shown in order to prove something by induction on complexity of formulas.
+</p>
+
+<p>
+For a property \(X\) of propositional formulas and, in this instance, a propositional formula \(t\), we will write \(X(t)\) to mean that property \(X\) holds for \(t\). For example, \(X\) could be the property that \(t\) has the same number of open brackets as
+close brackets as in the previous lemma.
+</p>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-51"></a>
+<span class="amsthmnameplain">Meta Theorem</span><span class="amsthmnumberplain"> <span class="textup">2.10</span></span>. </span> Let \(X\) be a property of propositional formulas and let \(\mcal {L}\) be a propositional
+language. Suppose that the following hold:
+</p>
+<ul class="enumerate" style="list-style-type:none">
+
+
+<li>
+<p>
+<span class="listmarker">1.</span> For all propositional variables \(p\), \(X(p)\) and \(X(\bot )\).
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">2.</span> For all \(s\in \PF \mcal {L}\), if \(X(s)\) then \(X((\neg s))\).
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">3.</span> For all \(s_1,s_2\in \PF \mcal {L}\), \(X(s_1)\) and \(X(s_2)\) implies \(X(s_1\wedge s_2)\).
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">4.</span> For all \(s_1,s_2\in \PF \mcal {L}\), \(X(s_1)\) and \(X(s_2)\) implies \(X(s_1\vee s_2)\).
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">5.</span> For all \(s_1,s_2\in \PF \mcal {L}\), \(X(s_1)\) and \(X(s_2)\) implies \(X(s_1\rightarrow s_2)\).
+</p>
+</li>
+</ul>
+
+<p>
+Then \(X(t)\) for all \(t\in \PF \mcal {L}\).
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<!--
+...... subsubsection Unique construction ......
+-->
+<h6 id="autosec-52">Unique construction</h6>
+<a id="Logic-autopage-52"></a>
+
+
+<p>
+The next theorem essentially says that every propositional formula has a unique construction tree.
+</p>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-53"></a>
+<span class="amsthmnameplain">Theorem</span><span class="amsthmnumberplain"> <span class="textup">2.11</span></span><span class="amsthmnoteplain"> (Unique Construction Theorem)</span>. </span> <a id="UCProp"></a> For
+any propositional formula \(t\), exactly one of the following is true:
+</p>
+<ul class="enumerate" style="list-style-type:none">
+
+
+<li>
+<p>
+<span class="listmarker">1.</span> \(t\) is a propositional variable.
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">2.</span> \(t\) is \(\bot \).
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">3.</span> \(t\) is of the form \((\neg s)\) for a unique propositional formula \(s\).
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">4.</span> \(t\) is of the form \((s_1\conn s_2)\) for a unique connective \(\conn \) of arity \(2\) and a unique pair of propositional formulas \((s_1,s_2)\).
+</p>
+</li>
+</ul>
+
+</li>
+
+</ul>
+
+</div>
+
+<p>
+Without the “exactly one” and “unique”, the theorem easily follows from the definition of a propositional formula. To deal with the uniqueness part, we need some definitions and a lemma.
+</p>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-54"></a>
+<span class="amsthmnameplain">Definition</span><span class="amsthmnumberplain"> <span class="textup">2.12</span></span>. </span> Let \(x\) be a word in a propositional language \(\mcal {L}\). If \(x\) is of the form \(yz\) for
+words \(y\) and \(z\) in \(\mcal {L}\) then we call \(y\) a <b>proper left subword</b> of \(x\). A word is a <b>left subword</b> of \(x\) if it is either equal to \(x\) or is a proper left subword of \(x\).
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-55"></a>
+<span class="amsthmnameplain">Lemma</span><span class="amsthmnumberplain"> <span class="textup">2.13</span></span>. </span> <a id="leftsubwords"></a> Let \(\mcal {L}\) be a propositional language and let \(t\in \PF \mcal
+{L}\). If \(w\) is a proper left subword of \(t\) then \(l(w)&lt;r(w)\) where \(l(w)\) denotes the number of open brackets occurring in \(w\) and \(r(w)\) denotes the number of close brackets occurring in \(w\).
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmproof">
+
+<a id="Logic-autopage-56"></a>
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"> <span class="amsthmproofname">Proof.</span></span> We prove the statement by induction on the complexity of \(t\). If \(t\in \PF _0\mcal {L}\) then \(t\) has no proper left subwords. So the statement is
+vacuously true. We now prove the induction step. Suppose that the statement is true for propositional formulas in \(\PF _i\mcal {L}\). Take \(t\in \PF _{i+1}\mcal {L}\backslash \PF _i\mcal {L}\). We now have \(2\) cases to consider. If
+\(t\) is \((\neg s)\) for some \(s\in \PF _i\mcal {L}\) and \(w\) is a proper left subword of \(t\) then either \(w\) is \((\), \((\neg \) or \((\neg y\) where \(y\) is a left subword of \(s\). It’s clear that \(l(w)&gt;r(w)\) in the first \(2\)
+cases. So suppose that \(t\) is \((\neg y\) for \(y\) a left subword of \(s\). By the induction hypothesis and <a href="Propositional-Logic.html#leftrightbrackets">2.9</a>, \(l(y)\geq r(y)\). Therefore \(l((\neg y)=1+l(y)\geq
+1+r(y)&gt;r(y)=r((\neg y)\) as required.
+</p>
+
+<p>
+If \(t\) is of the form \((s_1\square s_2)\) for \(s_1,s_2\in \PF _i\mcal {L}\) and \(w\) is a proper left subword of \(t\) then either \(w\) is \((\), \((y\) where \(y\) is a left subword of \(s_1\), \((s_1\square \) or \((s_1\square z\) where
+\(z\) is a left subword of \(s_2\). If \(w\) is \((\) then \(l(w)=1&gt;0=r(w)\). If \(y\) is a left subword of \(s_1\) then by the induction hypothesis and <a href="Propositional-Logic.html#leftrightbrackets">2.9</a>, we know that
+\(l(y)\geq r(y)\). Therefore \(l((y)=l(y)+1&gt;r(y)=r((y)\) and \(l((y\square )=l(y)+1&gt;r(y)=r((y\square )\) as required. We now suppose that \(z\) is a subword of \(s_2\). Then \(l(z)\leq r(z)\) by <a
+href="Propositional-Logic.html#leftrightbrackets">2.9</a> and the induction hypothesis. So
+</p>
+
+<span class="hidden"> \(\seteqnumber{0}{}{0}\)</span>
+
+<p>
+
+
+\begin{eqnarray*}
+l((s_1\square z) &amp;=&amp; 1+l(s_1)+l(z) \\ &amp;=&amp; 1+ r(s_1)+l(z) \qquad \text {(by \ref {leftrightbrackets})}\\ &amp;\geq &amp; 1 + r(s_1)+r(z) \\ &amp;=&amp; 1+ r((s_1\square z) \\ &amp;&gt;&amp;
+r((s_1\square z)
+\end{eqnarray*}
+
+
+</p>
+
+<p>
+as required. <span class="theoremendmark">&#x25A1;</span>
+</p>
+
+</li>
+
+</ul>
+
+</div>
+
+<p>
+For future use we record the following remark.
+</p>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-57"></a>
+<span class="amsthmnameplain">Remark</span><span class="amsthmnumberplain"> <span class="textup">2.14</span></span>. </span> <a id="startofpropfla"></a>
+</p>
+<ul class="enumerate" style="list-style-type:none">
+
+
+<li>
+<p>
+<span class="listmarker">(a)</span> The first letter of any propositional formula is either “\((\)”, a propositional variable or \(\bot \).
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">(b)</span> All propositional formulas of length \(\geq 2\), start as \((\neg \), \(((\), \((p\) or \((\bot \) where \(p\) is a propositional variable.
+</p>
+</li>
+</ul>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmproof">
+
+<a id="Logic-autopage-58"></a>
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"> <span class="amsthmproofname">Proof.</span></span> (a) Let \(t\in \PF \mcal {L}\). If \(t\in \PF _0\mcal {L}\) then the first and only letter of \(t\) is a propositional variable or \(\bot \). Otherwise, it
+follows directly from the definition of a propositional formula that the first letter of \(t\) is \((\).
+</p>
+
+<p>
+(b) All propositional formulas not in \(\PF _0\mcal {L}\) are of the form \((\neg s)\) or \((s_1\conn s_2)\) where \(s_1\) and \(s_2\) are propositional formulas and \(\conn \) is a connective of arity \(2\). Formulas of the form \((\neg s)\)
+are as described by the statement of the lemma, so we just need to consider those of the form \((s_1\conn s_2)\). The second letter of \((s_1\conn s_2)\) is the first letter of \(s_1\). The statement now follows from (a). <span
+class="theoremendmark">&#x25A1;</span>
+</p>
+
+</li>
+
+</ul>
+
+</div>
+
+<p>
+We are now ready to prove the Unique Construction Theorem.
+</p>
+<div class="amsthmproof">
+
+<a id="Logic-autopage-59"></a>
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"> <span class="amsthmproofname">Proof of the Unique Construction Theorem. </span></span> It follows from the definition of a propositional formula that each propositional formula is of one of the required forms.
+</p>
+
+<p>
+Clearly a propositional formula which satisfies \(1\) or \(2\) does not satisfy any of the other cases. If a propositional formula satisfies \(3\) then its first \(2\) letters are \((\neg \). If a propositional formula satisfies \(4\) then its first \(2\) letters
+are either \(((\), \((p\) or \((\bot \) for \(p\in \PROP (\mcal {L})\). Thus no propositional formula can satisfy \(3\) and \(4\).
+</p>
+
+<p>
+We now just need to show the uniqueness in \(3\) and \(4\). If \(t\) is \((\neg s)\) and \((\neg s&apos;)\) for propositional formulas \(s\) and \(s&apos;\). Then clearly \(s=s&apos;\). So we consider the case where \(t\) is \((s_1\square
+s_2)\) and \((s_1&apos;\square &apos;s_2&apos;)\). Then either \(s_1\) is a left subword of \(s_1&apos;\) or \(s_1&apos;\) is a left subword of \(s_1\). Without loss of generality, suppose \(s_1\) is a left subword of \(s_1&apos;\). If \(s_1\)
+is a proper left subword then the number of open brackets of \(s_1\) is strictly greater than the number of close brackets of \(s_1\). But since \(s_1\) is a propositional formula, its number of open brackets is equal to its number of close brackets.
+Therefore \(s_1=s_1&apos;\). It now follows that \(\square =\square &apos;\) and then that \(s_2=s_2&apos;\) as required. <span class="theoremendmark">&#x25A1;</span>
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<!--
+...... subsubsection An algorithm to compute the construction tree of a propositional formula ......
+-->
+<h6 id="autosec-60">An algorithm to compute the construction tree of a propositional formula</h6>
+<a id="Logic-autopage-60"></a>
+
+
+<p>
+When we introduced construction trees we saw the construction tree of the propositional formula \((((p_4\rightarrow (\neg p_1))\wedge p_2)\vee ((\neg p_3)\wedge (p_2\rightarrow \bot )))\). Given the construction tree it was reasonably easy
+to check it was correct and hence confirm that \((((p_4\rightarrow (\neg p_1))\wedge p_2)\vee ((\neg p_3)\wedge (p_2\rightarrow \bot )))\) is indeed a propositional formula. We will now see an algorithm to compute the construction tree of a
+propositional formula based on the proof of the Unique Construction Theorem.
+</p>
+
+<p>
+<b>Case 0:</b> If a propositional formula is in \(\PF _0\mcal {L}\) then we just write down the formula.
+</p>
+
+<p>
+For propositional formulas not in \(\PF _0\mcal {L}\), we split into \(3\) cases suggested by <a href="Propositional-Logic.html#startofpropfla">2.14</a>.
+</p>
+
+<p>
+<b>Case 1:</b> The first \(2\) letters of \(t\) are \((\neg \).
+</p>
+
+<p>
+In this case \(t\) is of the form \((\neg s)\) and the construction tree starts:
+</p>
+<div class="center">
+
+<p>
+<span
+    id="lateximage-Logic-7"
+    class="lateximagesource"
+><!--
+(¬s)
+
+
+ s
+--><img
+    src="Logic-images\image-7.svg"
+    alt="(-tikz-&nbsp;diagram)"
+    style=""
+    class="lateximage"
+></span>
+</p>
+</div>
+
+<p>
+To continue, we now just need to find the construction tree of \(s\).
+</p>
+
+<p>
+<b>Case 2:</b> The first \(2\) letters of \(t\) are “\((p\)” or “\((\bot \)” for some propositional variable \(p\).
+</p>
+
+<p>
+In this case \(t\) is of the form \((p\conn s)\) or \((\bot \conn s)\) for some propositional formula \(s\) and connective \(\square \) of arity \(2\). So the construction tree starts respectively:
+</p>
+<div class="center">
+
+<p>
+<span
+    id="lateximage-Logic-8"
+    class="lateximagesource"
+><!--
+(p □ s)
+
+
+p     s
+--><img
+    src="Logic-images\image-8.svg"
+    alt="(-tikz-&nbsp;diagram)"
+    style=""
+    class="lateximage"
+></span> &#x2003;&#x2003;&#x2003;&#x2003;<span
+    id="lateximage-Logic-9"
+    class="lateximagesource"
+><!--
+(⊥ □ s)
+
+
+⊥     s
+--><img
+    src="Logic-images\image-9.svg"
+    alt="(-tikz-&nbsp;diagram)"
+    style=""
+    class="lateximage"
+></span>
+</p>
+</div>
+
+<p>
+<b>Case 3:</b> The first \(2\) letters of \(t\) are “\(((\)”.
+</p>
+
+<p>
+In this case \(t\) is of the form \((s_1\conn s_2)\) and the first letter of \(s_1\) is \((\). So the construction tree of \(t\) starts:
+</p>
+<div class="center">
+
+<p>
+<span
+    id="lateximage-Logic-10"
+    class="lateximagesource"
+><!--
+(s1 □ s2 )
+
+
+s1      s2
+--><img
+    src="Logic-images\image-10.svg"
+    alt="(-tikz-&nbsp;diagram)"
+    style=""
+    class="lateximage"
+></span>
+</p>
+</div>
+
+<p>
+But how do we find \(s_1\), \(\conn \) and \(s_2\)?
+</p>
+
+<p>
+Since the first letter of \(s_1\) is \((\), \(s_1\) is not in \(\PF _0\mcal {L}\). By <a href="Propositional-Logic.html#leftsubwords">2.13</a>, for all proper left subwords \(y\) of \(s\), the number of open brackets in \(y\) is strictly less than the
+number of close brackets in \(y\). Thus \(s_1\) is the shortest left subword of \(s_1\square s_2)\) with equal number of open and close brackets.
+</p>
+
+<p>
+Hence, in order to find \(s_1\), we <i>just</i> need to count open and close brackets in \((s_1\conn s_2)\) to compute the last close bracket in \(s_1\).
+</p>
+
+<p>
+We number the first (open) bracket in \((s_1\conn s_2)\) with \(1\). We continue from left to right labelling each open bracket with \(i+1\) if the previous bracket was labelled \(i\) and each close bracket \(i-1\) if the previous bracket was labelled
+\(i-1\). We continue until we label a close bracket with a \(1\). Then \(s_1\) is the formula starting with the open bracket labelled \(2\) and ending with the close bracket labelled \(1\).
+</p>
+
+<p>
+This process is easier to understand once you have seen an example. Consider the propositional formula
+</p>
+
+<p>
+\[(((\neg p)\rightarrow ((p\rightarrow (\neg q))\rightarrow (\neg r)))\rightarrow (p\rightarrow r)).\]
+</p>
+
+<p>
+Assuming this is indeed a propositional formula, we know that it is the form \((s_1\conn s_2)\) and we want to find \(s_1\), \(\conn \) and \(s_2\). Here is the propositional formula with the brackets numbered:
+</p>
+
+<p>
+\[\underset {1}{(}\underset { 2}{(}\underset {3}{(}\neg p\underset { 2}{)}\rightarrow \underset {3}{(}\underset { 4}{(}p\rightarrow \underset { 5}{(}\neg q\underset {4}{)}\underset {3}{)}\rightarrow \underset
+{4}{(}\neg r\underset { 3}{)}\underset { 2}{)}\underset { 1}{)}\rightarrow (p\rightarrow r))\]
+</p>
+
+<p>
+Here it is with \(s_1\) and \(s_2\) labelled:
+</p>
+
+<p>
+\[\underset {1}{(}\overbrace {\underset { 2}{(}\underset {3}{(}\neg p\underset { 2}{)}\rightarrow \underset {3}{(}\underset { 4}{(}p\rightarrow \underset { 5}{(}\neg q\underset {4}{)}\underset {3}{)}\rightarrow
+\underset {4}{(}\neg r\underset { 3}{)}\underset { 2}{)}\underset { 1}{)}}^{s_1}\rightarrow \overbrace {(p\rightarrow r)}^{s_2})\]
+</p>
+
+<p>
+The last connective introduced in the construction of \((s_1\square s_2)\) is \(\rightarrow \) i.e. \(\square \) is \(\rightarrow \) and \(s_2\) is \((p\rightarrow r)\).
+</p>
+
+<p>
+So the start of the construction tree is
+</p>
+<div class="center">
+
+<p>
+<span
+    id="lateximage-Logic-11"
+    class="lateximagesource"
+><!--
+    (((¬p) → ((p → (¬q)) → (¬r))) → (p → r))
+
+
+((¬p) → ((p → (¬q)) → (¬r)))   (p → r)
+--><img
+    src="Logic-images\image-11.svg"
+    alt="(-tikz-&nbsp;diagram)"
+    style=""
+    class="lateximage"
+></span>
+</p>
+</div>
+
+<p>
+<span role="note" class="marginpar">End of L3&amp;L4</span>
+</p>
+
+<p>
+We will now see a(n almost) full worked example of applying the construction tree algorithm to the propositional formula \((((\neg p)\rightarrow ((p\rightarrow (\neg q))\rightarrow (\neg r)))\rightarrow (p\rightarrow r))\).
+</p>
+
+<p>
+REPLACE WITH PDF
+</p>
+<div class="center">
+
+<p>
+<span
+    id="lateximage-Logic-12"
+    class="lateximagesource"
+><!--
+p   (¬q)   r
+
+
+     q
+--><img
+    src="Logic-images\image-12.svg"
+    alt="(-tikz-&nbsp;diagram)"
+    style=""
+    class="lateximage"
+></span>
+</p>
+</div>
+
+<p>
+\(\bm {(1)}\) The propositional formula \((((\neg p)\rightarrow ((p\rightarrow (\neg q))\rightarrow (\neg r)))\rightarrow (p\rightarrow r))\) starts with \(((\) so we apply case \(3\) and count the brackets. We’ve already done this step
+when describing the algorithm.
+</p>
+
+<p>
+\(\bm {(2)}\) The propositional formula \(((\neg p)\rightarrow ((p\rightarrow (\neg q))\rightarrow (\neg r)))\) starts with \(((\) so we apply case \(3\) and count the brackets as follows:
+</p>
+
+<p>
+\[\underset {1}{(}\underset {2}{(}\neg p\underset {1}{)}\rightarrow ((p\rightarrow (\neg q))\rightarrow (\neg r)))\]
+</p>
+
+<p>
+So we get the construction tree
+</p>
+<div class="center">
+
+<p>
+<span
+    id="lateximage-Logic-13"
+    class="lateximagesource"
+><!--
+((¬p) → ((p → (¬q)) → (¬r)))
+
+
+ (¬p)          ((p → (¬q)) → (¬r))
+--><img
+    src="Logic-images\image-13.svg"
+    alt="(-tikz-&nbsp;diagram)"
+    style=""
+    class="lateximage"
+></span>
+</p>
+</div>
+
+<p>
+\(\bm {(3)}\) The propositional formula \((\neg p)\) starts with \((\neg \) so we apply case \(1\) and get the construction tree
+</p>
+<div class="center">
+
+<p>
+<span
+    id="lateximage-Logic-14"
+    class="lateximagesource"
+><!--
+(¬p)
+
+
+ p
+--><img
+    src="Logic-images\image-14.svg"
+    alt="(-tikz-&nbsp;diagram)"
+    style=""
+    class="lateximage"
+></span>
+</p>
+</div>
+
+<p>
+\(\bm {(4)}\) The propositional formula \(((p\rightarrow (\neg q))\rightarrow (\neg r))\) starts with \(((\) so we apply case \(3\) and count brackets as follows:
+</p>
+
+<p>
+\[\underset {1}{(}\underset {2}{(}p\rightarrow \underset {3}{(}\neg q\underset {2}{)}\underset {1}{)}\rightarrow (\neg r))\]
+</p>
+
+<p>
+So we get the construction tree
+</p>
+<div class="center">
+
+<p>
+<span
+    id="lateximage-Logic-15"
+    class="lateximagesource"
+><!--
+      ((p → (¬q)) → (¬r))
+
+
+(p → (¬q))              (¬r)
+--><img
+    src="Logic-images\image-15.svg"
+    alt="(-tikz-&nbsp;diagram)"
+    style=""
+    class="lateximage"
+></span>
+</p>
+</div>
+
+<p>
+\(\bm {(5)}\) The propositional formula \((p\rightarrow (\neg q))\) starts with \((p\) and \(p\) is a propositional variable so we apply case \(2\) and get the construction tree
+</p>
+<div class="center">
+
+<p>
+<span
+    id="lateximage-Logic-16"
+    class="lateximagesource"
+><!--
+    (p → (¬q))
+
+
+p                (¬q)
+--><img
+    src="Logic-images\image-16.svg"
+    alt="(-tikz-&nbsp;diagram)"
+    style=""
+    class="lateximage"
+></span>
+</p>
+</div>
+
+<p>
+\(\bm {(6)}\) and \(\bm {(7)}\) are like \(\bm {(3)}\).
+</p>
+
+<p>
+\(\bm {(8)}\) The propositional formula \((p\rightarrow r)\) starts with \((p\) and \(p\) is a propositional variable so we apply case \(2\) and get the construction tree
+</p>
+<div class="center">
+
+<p>
+<span
+    id="lateximage-Logic-17"
+    class="lateximagesource"
+><!--
+    (p → r)
+
+
+p             r
+--><img
+    src="Logic-images\image-17.svg"
+    alt="(-tikz-&nbsp;diagram)"
+    style=""
+    class="lateximage"
+></span>
+</p>
+</div>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-93"></a>
+<span class="amsthmnameplain">Remark</span><span class="amsthmnumberplain"> <span class="textup">2.15</span></span>. </span> Although I haven’t justified this, if the construction tree algorithm goes wrong at any point then the word
+we started with is not a propositional formula. This roughly follows from the proof of the unique readability theorem. This is important because it means a computer can not only compute construction trees but determine whether a word is a
+propositional formula or not.
+</p>
+
+</li>
+
+</ul>
+
+</div>
+
+</section>
+
+</main>
+
+</div>
+
+
+<nav class="botnavigation"><a href="Logic.html" class="linkhome" >
+Home</a></nav>
+
+</body>
+</html>

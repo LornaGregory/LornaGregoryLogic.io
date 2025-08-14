@@ -1,0 +1,1051 @@
+
+<!DOCTYPE html>
+<html lang="en-UK">
+<head>
+<meta charset="UTF-8" />
+<meta name="author" content="Lorna Gregory" />
+<meta name="generator" content="LaTeX Lwarp package" />
+<meta name="description" content="A description." />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Logic — Proofs</title>
+<link rel="stylesheet" type="text/css" href="lwarpLorna.css" />
+
+<script>
+// Lwarp MathJax emulation code
+//
+// Based on code by Davide P. Cervone.
+// Equation numbering: https://github.com/mathjax/MathJax/issues/2427
+// Starred and ifnextchar macros: https://github.com/mathjax/MathJax/issues/2428
+// \left, \right delimiters: https://github.com/mathjax/MathJax/issues/2535
+//
+// Modified by Brian Dunn to adjust equation numbering and add subequations.
+//
+// LaTeX can use \seteqnumber{subequations?}{section}{number} before each equation.
+// subequations? is 0 usually, 1 if inside subequations.
+// section is a string printed as-is, or empty.
+// number is auto-incremented by MathJax between equations.
+//
+MathJax = {
+     subequations: "0",
+     section: "",
+     loader: {
+          load: ['[tex]/tagformat', '[tex]/textmacros'],
+     },
+     startup: {
+          ready() {
+              //       These would be replaced by import commands if you wanted to make
+              //       a proper extension.
+              const Configuration = MathJax._.input.tex.Configuration.Configuration;
+              const CommandMap = MathJax._.input.tex.SymbolMap.CommandMap;
+              const Macro = MathJax._.input.tex.Symbol.Macro;
+              const TexError = MathJax._.input.tex.TexError.default;
+              const ParseUtil = MathJax._.input.tex.ParseUtil.default;
+              const expandable = MathJax._.util.Options.expandable;
+
+
+              //       Insert the replacement string into the TeX string, and check
+              //       that there haven't been too many maxro substitutions (prevents
+              //       infinite loops).
+              const useArgument = (parser, text) => {
+                   parser.string = ParseUtil.addArgs(parser, text, parser.string.slice(parser.i));
+                   parser.i = 0;
+                   if (++parser.macroCount > parser.configuration.options.maxMacros) {
+                        throw new TexError('MaxMacroSub1',
+                        'MathJax maximum macro substitution count exceeded; ' +
+                        'is there a recursive macro call?');
+                   }
+              }
+
+
+              //       Create the command map for:
+              //            \ifstar, \ifnextchar, \ifblank, \ifstrequal, \gsub, \seteqnumber
+              new CommandMap('Lwarp-macros', {
+                   ifstar: 'IfstarFunction',
+                   ifnextchar: 'IfnextcharFunction',
+                   ifblank: 'IfblankFunction',
+                   ifstrequal: 'IfstrequalFunction',
+                   gsubstitute: 'GsubstituteFunction',
+                   seteqnumber: 'SeteqnumberFunction'
+              }, {
+                   //       This function implements an ifstar macro.
+                   IfstarFunction(parser, name) {
+                        const resultstar = parser.GetArgument(name);
+                        const resultnostar = parser.GetArgument(name);
+                        const star = parser.GetStar();                        // true if there is a *
+                        useArgument(parser, star ? resultstar : resultnostar);
+                   },
+
+
+                   //       This function implements an ifnextchar macro.
+                   IfnextcharFunction(parser, name) {
+                        let whichchar = parser.GetArgument(name);
+                        if (whichchar.match(/^(?:0x[0-9A-F]+|[0-9]+)$/i)) {
+                            // $ syntax highlighting
+                            whichchar = String.fromCodePoint(parseInt(whichchar));
+                        }
+                        const resultnextchar = parser.GetArgument(name);
+                        const resultnotnextchar = parser.GetArgument(name);
+                        const gotchar = (parser.GetNext() === whichchar);
+                        useArgument(parser, gotchar ? resultnextchar : resultnotnextchar);
+                   },
+
+
+                   // This function implements an ifblank macro.
+                   IfblankFunction(parser, name) {
+                        const blankarg = parser.GetArgument(name);
+                        const resultblank = parser.GetArgument(name);
+                        const resultnotblank = parser.GetArgument(name);
+                        const isblank = (blankarg.trim() == "");
+                        useArgument(parser, isblank ? resultblank : resultnotblank);
+                   },
+
+
+                   // This function implements an ifstrequal macro.
+                   IfstrequalFunction(parser, name) {
+                        const strequalfirst = parser.GetArgument(name);
+                        const strequalsecond = parser.GetArgument(name);
+                        const resultequal = parser.GetArgument(name);
+                        const resultnotequal = parser.GetArgument(name);
+                        const isequal = (strequalfirst == strequalsecond);
+                        useArgument(parser, isequal ? resultequal : resultnotequal);
+                   },
+
+
+                   // This function implements a gsub macro.
+                   GsubstituteFunction(parser, name) {
+                        const gsubfirst = parser.GetArgument(name);
+                        const gsubsecond = parser.GetArgument(name);
+                        const gsubthird = parser.GetArgument(name);
+                        let gsubresult=gsubfirst.replace(gsubsecond, gsubthird);
+                        useArgument(parser, gsubresult);
+                   },
+
+
+                   //       This function modifies the equation numbers.
+                   SeteqnumberFunction(parser, name) {
+                            //   Get the macro parameters
+                            const star = parser.GetStar();                      // true if there is a *
+                            const optBrackets = parser.GetBrackets(name);        // contents of optional brackets
+                            const newsubequations = parser.GetArgument(name);      // the subequations argument
+                            const neweqsection = parser.GetArgument(name);      // the eq section argument
+                            const neweqnumber = parser.GetArgument(name);        // the eq number argument
+                            MathJax.config.subequations=newsubequations ;       // a string with boolean meaning
+                            MathJax.config.section=neweqsection ;               // a string with numeric meaning
+                            parser.tags.counter = parser.tags.allCounter = neweqnumber ;
+                   }
+
+
+              });
+
+
+              //       Create the Lwarp-macros package
+              Configuration.create('Lwarp-macros', {
+                   handler: {macro: ['Lwarp-macros']}
+              });
+
+
+              MathJax.startup.defaultReady();
+
+
+              // For forward references:
+              MathJax.startup.input[0].preFilters.add(({math}) => {
+                   if (math.inputData.recompile){
+                            MathJax.config.subequations = math.inputData.recompile.subequations;
+                            MathJax.config.section = math.inputData.recompile.section;
+                   }
+              });
+              MathJax.startup.input[0].postFilters.add(({math}) => {
+                   if (math.inputData.recompile){
+                            math.inputData.recompile.subequations = MathJax.config.subequations;
+                            math.inputData.recompile.section = MathJax.config.section;
+                   }
+              });
+
+
+                   // For \left, \right with unicode-math:
+                   const {DelimiterMap} = MathJax._.input.tex.SymbolMap;
+                   const {Symbol} = MathJax._.input.tex.Symbol;
+                   const {MapHandler} = MathJax._.input.tex.MapHandler;
+                   const delimiter = MapHandler.getMap('delimiter');
+                   delimiter.add('\\lBrack', new Symbol('\\lBrack', '\u27E6'));
+                   delimiter.add('\\rBrack', new Symbol('\\rBrack', '\u27E7'));
+                   delimiter.add('\\lAngle', new Symbol('\\lAngle', '\u27EA'));
+                   delimiter.add('\\rAngle', new Symbol('\\rAngle', '\u27EB'));
+                   delimiter.add('\\lbrbrak', new Symbol('\\lbrbrak', '\u2772'));
+                   delimiter.add('\\rbrbrak', new Symbol('\\rbrbrak', '\u2773'));
+                   delimiter.add('\\lbag', new Symbol('\\lbag', '\u27C5'));
+                   delimiter.add('\\rbag', new Symbol('\\rbag', '\u27C6'));
+                   delimiter.add('\\llparenthesis', new Symbol('\\llparenthesis', '\u2987'));
+                   delimiter.add('\\rrparenthesis', new Symbol('\\rrparenthesis', '\u2988'));
+                   delimiter.add('\\llangle', new Symbol('\\llangle', '\u2989'));
+                   delimiter.add('\\rrangle', new Symbol('\\rrangle', '\u298A'));
+                   delimiter.add('\\Lbrbrak', new Symbol('\\Lbrbrak', '\u27EC'));
+                   delimiter.add('\\Rbrbrak', new Symbol('\\Rbrbrak', '\u27ED'));
+                   delimiter.add('\\lBrace', new Symbol('\\lBrace', '\u2983'));
+                   delimiter.add('\\rBrace', new Symbol('\\rBrace', '\u2984'));
+                   delimiter.add('\\lParen', new Symbol('\\lParen', '\u2985'));
+                   delimiter.add('\\rParen', new Symbol('\\rParen', '\u2986'));
+                   delimiter.add('\\lbrackubar', new Symbol('\\lbrackubar', '\u298B'));
+                   delimiter.add('\\rbrackubar', new Symbol('\\rbrackubar', '\u298C'));
+                   delimiter.add('\\lbrackultick', new Symbol('\\lbrackultick', '\u298D'));
+                   delimiter.add('\\rbracklrtick', new Symbol('\\rbracklrtick', '\u298E'));
+                   delimiter.add('\\lbracklltick', new Symbol('\\lbracklltick', '\u298F'));
+                   delimiter.add('\\rbrackurtick', new Symbol('\\rbrackurtick', '\u2990'));
+                   delimiter.add('\\langledot', new Symbol('\\langledot', '\u2991'));
+                   delimiter.add('\\rangledot', new Symbol('\\rangledot', '\u2992'));
+                   delimiter.add('\\lparenless', new Symbol('\\lparenless', '\u2993'));
+                   delimiter.add('\\rparengtr', new Symbol('\\rparengtr', '\u2994'));
+                   delimiter.add('\\Lparengtr', new Symbol('\\Lparengtr', '\u2995'));
+                   delimiter.add('\\Rparenless', new Symbol('\\Rparenless', '\u2996'));
+                   delimiter.add('\\lblkbrbrak', new Symbol('\\lblkbrbrak', '\u2997'));
+                   delimiter.add('\\rblkbrbrak', new Symbol('\\rblkbrbrak', '\u2998'));
+                   delimiter.add('\\lvzigzag', new Symbol('\\lvzigzag', '\u29D8'));
+                   delimiter.add('\\rvzigzag', new Symbol('\\rvzigzag', '\u29D9'));
+                   delimiter.add('\\Lvzigzag', new Symbol('\\Lvzigzag', '\u29DA'));
+                   delimiter.add('\\Rvzigzag', new Symbol('\\Rvzigzag', '\u29DB'));
+                   delimiter.add('\\lcurvyangle', new Symbol('\\lcurvyangle', '\u29FC'));
+                   delimiter.add('\\rcurvyangle', new Symbol('\\rcurvyangle', '\u29FD'));
+                   delimiter.add('\\Vvert', new Symbol('\\Vvert', '\u2980'));
+          }       // ready
+     },           // startup
+
+
+     tex: {
+          packages: {'[+]': ['tagformat', 'Lwarp-macros', 'textmacros']},
+          tags: "ams",
+                   tagformat: {
+                            number: function (n) {
+                                 if(MathJax.config.subequations==0)
+                                        return(MathJax.config.section + n);
+                                 else
+                                        return(MathJax.config.section + String.fromCharCode(96+n));
+                            },
+                   },
+     }
+}
+</script>
+
+
+<script
+          id="MathJax-script"
+          src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"
+></script>
+
+</head>
+<body>
+
+
+<a id="Logic-autopage-145"></a>
+<nav class="topnavigation"><a href="Logic.html" class="linkhome" >
+Home</a></nav>
+
+
+<div class="bodyandsidetoc">
+<div class="sidetoccontainer">
+
+
+<nav class="sidetoc">
+
+
+<div class="sidetoctitle">
+
+<p>
+<span class="sidetocthetitle">Mathematical Logic</span>
+</p>
+
+<p>
+Contents
+</p>
+</div>
+
+
+<div class="sidetoccontents">
+
+<p>
+<a href="Logic.html" class="linkhome" >
+Home</a>
+</p>
+
+<p>
+<a href="Introduction.html#autosec-5" class="tocsection" >
+<span class="sectionnumber">1</span>&#x2003;Introduction</a>
+</p>
+
+
+<p>
+<a href="Propositional-Logic.html#autosec-16" class="tocsection" >
+<span class="sectionnumber">2</span>&#x2003;Propositional Logic</a>
+</p>
+
+
+<p>
+<a href="Propositional-Logic.html#autosec-17" class="tocsubsection" >
+<span class="sectionnumber">2.1</span>&#x2003;Propositional formulas</a>
+</p>
+
+
+<p>
+<a href="Truth.html#autosec-95" class="tocsubsection" >
+<span class="sectionnumber">2.2</span>&#x2003;Truth</a>
+</p>
+
+
+<p>
+<a href="Proofs.html#autosec-146" class="tocsubsection" >
+<span class="sectionnumber">2.3</span>&#x2003;Proofs</a>
+</p>
+
+
+<p>
+<a href="Completeness.html#autosec-157" class="tocsubsection" >
+<span class="sectionnumber">2.4</span>&#x2003;Completeness</a>
+</p>
+
+
+<p>
+<a href="Predicate-Logic.html#autosec-168" class="tocsection" >
+<span class="sectionnumber">3</span>&#x2003;Predicate Logic</a>
+</p>
+
+
+<p>
+<a href="Predicate-Logic.html#autosec-169" class="tocsubsection" >
+<span class="sectionnumber">3.1</span>&#x2003;Languages and Structures</a>
+</p>
+
+
+<p>
+<a href="Formulas.html#autosec-174" class="tocsubsection" >
+<span class="sectionnumber">3.2</span>&#x2003;Formulas</a>
+</p>
+
+
+<p>
+<a href="Tarski-Truth-Definition.html#autosec-199" class="tocsubsection" >
+<span class="sectionnumber">3.3</span>&#x2003;Tarski’s Truth Definition</a>
+</p>
+
+
+<p>
+<a href="Proofs-9.html#autosec-245" class="tocsubsection" >
+<span class="sectionnumber">3.4</span>&#x2003;Proofs</a>
+</p>
+
+
+<p>
+<a href="Completeness-10.html#autosec-258" class="tocsubsection" >
+<span class="sectionnumber">3.5</span>&#x2003;Completeness</a>
+</p>
+
+
+<p>
+<a href="Proof-Completeness-Theorem-Predicate-Logic-4th-year-material.html#autosec-272" class="tocsection" >
+<span class="sectionnumber">4</span>&#x2003;Proof of the Completeness Theorem for Predicate Logic (4th year material)</a>
+</p>
+
+
+<p>
+<a href="Application-Compactness-Theorem-Extension-Constants.html#autosec-310" class="tocsection" >
+<span class="sectionnumber">5</span>&#x2003;Application of the Compactness Theorem and Extension by Constants</a>
+</p>
+
+
+<p>
+<a href="Universal-Algebra-Substructures-Homomorphisms.html#autosec-336" class="tocsection" >
+<span class="sectionnumber">6</span>&#x2003;Universal Algebra: Substructures and Homomorphisms</a>
+</p>
+
+
+<p>
+<a href="Further-Model-Theory-4th-year-material.html#autosec-346" class="tocsection" >
+<span class="sectionnumber">7</span>&#x2003;Further Model Theory (4th year material)</a>
+</p>
+
+
+<p>
+<a href="Further-Model-Theory-4th-year-material.html#autosec-347" class="tocsubsection" >
+<span class="sectionnumber">7.1</span>&#x2003;Definable Sets</a>
+</p>
+
+
+<p>
+<a href="Elementary-Substructures.html#autosec-354" class="tocsubsection" >
+<span class="sectionnumber">7.2</span>&#x2003;Elementary Substructures</a>
+</p>
+
+
+<p>
+<a href="Downwards-Lowenheim-Skolem-Theorem.html#autosec-364" class="tocsubsection" >
+<span class="sectionnumber">7.3</span>&#x2003;Downwards Lo&#x0308;wenheim-Skolem Theorem</a>
+</p>
+
+
+<p>
+<a href="Upwards-Lowenheim-Skolem-Theorem.html#autosec-368" class="tocsubsection" >
+<span class="sectionnumber">7.4</span>&#x2003;Upwards Lo&#x0308;wenheim-Skolem Theorem</a>
+</p>
+
+
+<p>
+<a href="Categoricity.html#autosec-371" class="tocsubsection" >
+<span class="sectionnumber">7.5</span>&#x2003;Categoricity</a>
+</p>
+
+
+</div>
+
+</nav>
+
+</div>
+
+
+<main class="bodycontainer">
+
+
+<section class="textbody">
+
+<h1>Mathematical Logic</h1>
+
+<!--MathJax customizations:-->
+<div data-nosnippet
+    style="display:none"
+>
+
+\(\newcommand{\footnotename}{footnote}\)
+
+\(\def \LWRfootnote {1}\)
+
+\(\newcommand {\footnote }[2][\LWRfootnote ]{{}^{\mathrm {#1}}}\)
+
+\(\newcommand {\footnotemark }[1][\LWRfootnote ]{{}^{\mathrm {#1}}}\)
+
+\(\let \LWRorighspace \hspace \)
+
+\(\renewcommand {\hspace }{\ifstar \LWRorighspace \LWRorighspace }\)
+
+\(\newcommand {\TextOrMath }[2]{#2}\)
+
+\(\newcommand {\mathnormal }[1]{{#1}}\)
+
+\(\newcommand \ensuremath [1]{#1}\)
+
+\(\newcommand {\LWRframebox }[2][]{\fbox {#2}} \newcommand {\framebox }[1][]{\LWRframebox } \)
+
+\(\newcommand {\setlength }[2]{}\)
+
+\(\newcommand {\addtolength }[2]{}\)
+
+\(\newcommand {\setcounter }[2]{}\)
+
+\(\newcommand {\addtocounter }[2]{}\)
+
+\(\newcommand {\arabic }[1]{}\)
+
+\(\newcommand {\number }[1]{}\)
+
+\(\newcommand {\noalign }[1]{\text {#1}\notag \\}\)
+
+\(\newcommand {\cline }[1]{}\)
+
+\(\newcommand {\directlua }[1]{\text {(directlua)}}\)
+
+\(\newcommand {\luatexdirectlua }[1]{\text {(directlua)}}\)
+
+\(\newcommand {\protect }{}\)
+
+\(\def \LWRabsorbnumber #1 {}\)
+
+\(\def \LWRabsorbquotenumber &quot;#1 {}\)
+
+\(\newcommand {\LWRabsorboption }[1][]{}\)
+
+\(\newcommand {\LWRabsorbtwooptions }[1][]{\LWRabsorboption }\)
+
+\(\def \mathchar {\ifnextchar &quot;\LWRabsorbquotenumber \LWRabsorbnumber }\)
+
+\(\def \mathcode #1={\mathchar }\)
+
+\(\let \delcode \mathcode \)
+
+\(\let \delimiter \mathchar \)
+
+\(\def \oe {\unicode {x0153}}\)
+
+\(\def \OE {\unicode {x0152}}\)
+
+\(\def \ae {\unicode {x00E6}}\)
+
+\(\def \AE {\unicode {x00C6}}\)
+
+\(\def \aa {\unicode {x00E5}}\)
+
+\(\def \AA {\unicode {x00C5}}\)
+
+\(\def \o {\unicode {x00F8}}\)
+
+\(\def \O {\unicode {x00D8}}\)
+
+\(\def \l {\unicode {x0142}}\)
+
+\(\def \L {\unicode {x0141}}\)
+
+\(\def \ss {\unicode {x00DF}}\)
+
+\(\def \SS {\unicode {x1E9E}}\)
+
+\(\def \dag {\unicode {x2020}}\)
+
+\(\def \ddag {\unicode {x2021}}\)
+
+\(\def \P {\unicode {x00B6}}\)
+
+\(\def \copyright {\unicode {x00A9}}\)
+
+\(\def \pounds {\unicode {x00A3}}\)
+
+\(\let \LWRref \ref \)
+
+\(\renewcommand {\ref }{\ifstar \LWRref \LWRref }\)
+
+\( \newcommand {\multicolumn }[3]{#3}\)
+
+\(\require {textcomp}\)
+
+\(\newcommand {\intertext }[1]{\text {#1}\notag \\}\)
+
+\(\let \Hat \hat \)
+
+\(\let \Check \check \)
+
+\(\let \Tilde \tilde \)
+
+\(\let \Acute \acute \)
+
+\(\let \Grave \grave \)
+
+\(\let \Dot \dot \)
+
+\(\let \Ddot \ddot \)
+
+\(\let \Breve \breve \)
+
+\(\let \Bar \bar \)
+
+\(\let \Vec \vec \)
+
+\(\newcommand {\bm }[1]{\boldsymbol {#1}}\)
+
+\(\newcommand {\R }{\mathbb {R}}\)
+
+\(\newcommand {\C }{\mathbb {C}}\)
+
+\(\newcommand {\Z }{\mathbb {Z}}\)
+
+\(\newcommand {\N }{\mathbb {N}}\)
+
+\(\newcommand {\Q }{\mathbb {Q}}\)
+
+\(\newcommand {\st }{\ \vert \ }\)
+
+\(\newcommand {\mcal }[1]{\mathcal {#1}}\)
+
+\(\newcommand {\TmAlg }{\mathrm {TmAlg}}\)
+
+\(\newcommand {\PROP }{\mathrm {PROP}}\)
+
+\(\newcommand {\PF }{\mathrm {S}}\)
+
+\(\newcommand {\proves }{\vdash }\)
+
+\(\newcommand {\tm }{\textrm {tm}}\)
+
+\(\newcommand {\ctm }{\textrm {ctm}}\)
+
+\(\newcommand {\Fml }{\textrm {Fml}}\)
+
+\(\newcommand {\Fr }{\textrm {Fr}}\)
+
+\(\newcommand {\Vbl }{\textrm {Vbl}}\)
+
+\(\newcommand {\cmpx }{\texttt {cmpx}}\)
+
+\(\newcommand {\supp }{\text {supp}}\)
+
+\(\newcommand {\conn }{\,\square \,}\)
+
+\(\newcommand {\con }{\,\diamond \,}\)
+
+\(\newcommand {\ct }{\texttt {c}}\)
+
+\(\newcommand {\T }{\mathbb {T}}\)
+
+\(\newcommand {\F }{\mathbb {F}}\)
+
+\(\newcommand {\mathlarger }[1]{#1}\)
+
+\(\newcommand {\mathsmaller }[1]{#1}\)
+
+\(\newcommand {\LWRmarginnote }[1][]{}\)
+
+\(\newcommand {\marginnote }[2][]{\qquad {\small \textrm {#2}}\LWRmarginnote }\)
+
+</div>
+
+<!--
+...... subsection Proofs ......
+-->
+<h5 id="autosec-146"><span class="sectionnumber">2.3&#x2003;</span>Proofs</h5>
+<a id="Logic-autopage-146"></a>
+<a id="Logic-autofile-4"></a>
+
+<p>
+In the previous section we introduced the notion of logical implication. We wrote \(S\models t\) to mean if all \(s\in S\) are true then \(t\) is true. This is a semantic notion (i.e. relates to meaning). In this section we introduce formal proofs which we will
+call deductions. We will use the notation \(S\proves t\) to mean \(t\) can be deduced from \(S\). After introducing our formal proof system, the main aim of the section will be to prove that if \(S\proves t\) then \(S\models t\) and that if \(S\models
+t\) then \(S\proves t\). Informally, anything we can prove is true and anything that is true is provable. The first of these statements is a pretty minimal requirement for a proof system and is quite easy to prove. The second is much harder (and more
+impressive).
+</p>
+
+<p>
+There are many deduction systems. I have chosen Hilbert style deductions because they are the quickest to define and also allow shorter proofs of the most important theorems. However, it’s not very easy to come up with deductions in Hilbert style systems.
+</p>
+
+<p>
+Before defining what a deduction is we make a modification to our propositional language. We saw in the previous section that the set \(\{\rightarrow , \bot \}\) is an adequate set of connectives. This means that a propositional language just using those
+connectives is as expressive as any other propositional language. From this section onwards we will view
+</p>
+<ul class="itemize" style="list-style-type:none">
+
+<li>
+<p>
+<span class="listmarker">•</span> \((\neg s)\) as an abbreviation for \((s\rightarrow \bot )\);
+</p>
+
+</li>
+<li>
+
+<p>
+<span class="listmarker">•</span> \((s\vee t)\) as an abbreviation for \(((\neg s)\rightarrow t)\); and
+</p>
+
+</li>
+<li>
+
+<p>
+<span class="listmarker">•</span> \((s\wedge t)\) as an abbreviation for \((\neg (s\rightarrow (\neg t)))\).
+</p>
+</li>
+</ul>
+
+<p>
+The first thing we need in order to define our proof system are some axioms.
+</p>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-147"></a>
+<span class="amsthmnameplain">Definition</span><span class="amsthmnumberplain"> <span class="textup">2.42</span></span>. </span> The axioms of propositional logic are
+</p>
+<ul class="enumerate" style="list-style-type:none">
+
+
+<li>
+<p>
+<span class="listmarker">1.</span> \((s\rightarrow (t\rightarrow s))\);
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">2.</span> \(((s\rightarrow (t\rightarrow r))\rightarrow ((s\rightarrow t)\rightarrow (s\rightarrow r)))\); and
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">3.</span> \(((\neg (\neg s))\rightarrow s)\).
+</p>
+</li>
+</ul>
+
+<p>
+where \(s,t,r\) are any propositional formulas.
+</p>
+
+</li>
+
+</ul>
+
+</div>
+
+<p>
+What I’ve called axioms here are in fact axiom schemas. Each of \(1.\), \(2.\) and \(3.\) actually give infinitely many single axioms i.e. if \(p\) is a propositional variable then \(((\neg (\neg p))\rightarrow p)\) and \(((\neg (\neg (\bot
+\rightarrow p)))\rightarrow (\bot \rightarrow p))\) are (different) instances of axiom \(3.\). The most important thing about these axioms is that they are all tautologies. Any set of tautologies containing this set would work just as well (although if
+you take the set large enough then the results you prove become less impressive). Finally, without using abbreviations the final axiom can be written as \(((s\rightarrow (s\rightarrow \bot ))\rightarrow s)\).
+</p>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-148"></a>
+<span class="amsthmnameplain">Definition</span><span class="amsthmnumberplain"> <span class="textup">2.43</span></span>. </span> Let \(S\) be a set of propositional formulas. A <b>deduction</b> from \(S\) is a finite tuple
+\((t_1,t_2,\ldots ,t_n)\) of propositional formulas such that for each \(1\leq k\leq n\) one of the following is true:
+</p>
+<ul class="enumerate" style="list-style-type:none">
+
+
+<li>
+<p>
+<span class="listmarker">1.</span> \(t_k\) is an axiom;
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">2.</span> \(t_k\in S\); or
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">3.</span> there exist \(i,j&lt;k\) such that \(t_i\) is \((t_j\rightarrow t_k)\).
+</p>
+</li>
+</ul>
+
+<p>
+We will call a deduction \((t_1,\ldots ,t_n)\) from \(S\) with \(t_n=t\) <b>a deduction of \(t\) from \(S\)</b> and write \(S\vdash t\) to mean there is a deduction of \(t\) from \(S\).
+</p>
+
+</li>
+
+</ul>
+
+</div>
+
+<p>
+<span role="note" class="marginpar">End of L9 &amp; L10</span>
+</p>
+
+<p>
+We call \(S\) the set of <b>premisses</b> of the deduction. We call the final rule “<b>modus ponens</b>” which I will sometimes abbreviate MP.
+</p>
+
+<p>
+Presenting formal deductions as tuples of propositional formulas is mathematically concise but difficult for humans to read. Moreover, it doesn’t tell us why a tuple is a deduction. To display a deduction in a way that is readable for humans we write the entries of
+a deduction \((t_1,\ldots , t_n)\) as a numbered list and next to each line of the list we write the rule we are using to deduce that line i.e. is it a premise, an axiom or are we using modus ponens. Here is an example.
+</p>
+
+<p>
+Let \(p,q,r\) be propositional formulas. The following tuple of propositional formulas is a deduction of \((p\rightarrow r)\) from \(\{(p\rightarrow q),(q\rightarrow r)\}\).
+</p>
+<span class="hidden"> \(\seteqnumber{0}{}{0}\)</span>
+
+
+<!--
+
+
+
+  ((q → r), ((q → r) → (p → (q → r))), (p → (q → r)),
+                                                                                                                                                                                  ((p → (q → r)) → ((p → q) → (p → r))), ((p → q) → (p → r)), (p → q), (p → r))
+
+
+
+-->
+
+
+<p>
+
+\begin{multline*}
+((q\rightarrow r), ((q\rightarrow r)\rightarrow (p\rightarrow (q\rightarrow r))), (p\rightarrow (q\rightarrow r)), \\ ((p\rightarrow (q\rightarrow r))\rightarrow ((p\rightarrow q)\rightarrow (p\rightarrow r))),
+((p\rightarrow q)\rightarrow (p\rightarrow r)), (p\rightarrow q), (p\rightarrow r))
+\end{multline*}
+
+</p>
+
+<p>
+In human readable form this is written as follows. We will refer to the comments at the side like “premiss”, “instance of axiom 1” and “modus ponens using 5. and 6. as the justification of the step.
+</p>
+
+<p>
+\(\begin {array}{rcl} 1. &amp; (q\rightarrow r) &amp; \text {premiss} \\ 2. &amp; ((q\rightarrow r)\rightarrow (p\rightarrow (q\rightarrow r))) &amp; \text {instance of axiom 1.} \\ 3. &amp; (p\rightarrow
+(q\rightarrow r)) &amp; \text {modus ponens using $1.$ and $2.$} \\ 4. &amp; ((p\rightarrow (q\rightarrow r))\rightarrow ((p\rightarrow q)\rightarrow (p\rightarrow r))) &amp; \text {instance of axiom 2.} \\ 5.
+&amp; ((p\rightarrow q)\rightarrow (p\rightarrow r)) &amp; \text {modus ponens using $3.$ and $4.$} \\ 6. &amp; (p\rightarrow q) &amp; \text {premiss} \\ 7. &amp; (p\rightarrow r) &amp; \text {modus ponens using
+$5.$ and $6.$} \end {array} \)
+</p>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-149"></a>
+<span class="amsthmnameplain">Lemma</span><span class="amsthmnumberplain"> <span class="textup">2.44</span></span>. </span> <a id="simpliess"></a> For any propositional formula \(s\), \(\vdash (s\rightarrow s)\).
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmproof">
+
+<a id="Logic-autopage-150"></a>
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"> <span class="amsthmproofname">Proof.</span></span> We need to write down a formal deduction of \((s\rightarrow s)\).
+</p>
+
+<p>
+\(\begin {array}{rcl} 1.       &amp; (s\rightarrow ((s\rightarrow s)\rightarrow s)) &amp; \text {instance of axiom 1.} \\ 2.           &amp; (({\color {red}\underline {\underline {s}}}\rightarrow ({\color {blue}\underline
+{(s\rightarrow s)}}\rightarrow {\color {green}\uwave {s}}))\rightarrow (({\color {red}\underline {\underline {s}}}\rightarrow {\color {blue}\underline {(s\rightarrow s)}})\rightarrow ({\color {red}\underline
+{\underline {s}}}\rightarrow {\color {green}\uwave {s}}))) &amp; \text {instance of axiom 2.} \\ 3.              &amp; ((s\rightarrow (s\rightarrow s))\rightarrow (s\rightarrow s)) &amp; \text {modus ponens using $1.$ and
+$2.$} \\ 4.     &amp; (s\rightarrow (s\rightarrow s)) &amp; \text {instance of axiom 1.} \\ 5.          &amp; (s\rightarrow s) &amp; \text {modus ponens using $3.$ and $4.$} \end {array} \)
+</p>
+
+<p>
+The colours and underlining in the deduction are there purely to highlight the propositional formulas occurring in the instance of axiom 2. <span class="theoremendmark">&#x25A1;</span>
+</p>
+
+</li>
+
+</ul>
+
+</div>
+
+<p>
+We will freely use the contents of the following remark.
+</p>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-151"></a>
+<span class="amsthmnameplain">Remark</span><span class="amsthmnumberplain"> <span class="textup">2.45</span></span>. </span> <a id="deductionrem"></a> The following are immediate consequences of the definition of a deduction.
+</p>
+<ul class="enumerate" style="list-style-type:none">
+
+
+<li>
+<p>
+<span class="listmarker">(i)</span> If \((t_1,\ldots ,t_n)\) is a deduction from \(S\) then so is \((t_1,\ldots , t_m)\) for all \(m\leq n\). In particular, \(S\vdash t_m\).
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">(ii)</span> If \((t_1,\ldots , t_n)\) and \((s_1,\dots , s_m)\) are deductions from \(S\) then so is their concatenation, that is \((t_1,\ldots ,t_n,s_1,\ldots ,s_m)\).
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">(iii)</span> If \(t\in S\) then \(S\vdash t\).
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">(iv)</span> If \(t\) is an instance of an axiom of propositional logic then \(\proves t\).
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">(v)</span> If \(S&apos;\proves t\) and \(S&apos;\subseteq S\) then \(S\proves t\).
+</p>
+</li>
+</ul>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-152"></a>
+<span class="amsthmnameplain">Theorem</span><span class="amsthmnumberplain"> <span class="textup">2.46</span></span><span class="amsthmnoteplain"> (“Proofs are finite”)</span>. </span> Let \(\mcal {L}\) be a propositional
+language. For all \(S\subseteq \PF \mcal {L}\) and \(t\in \PF \mcal {L}\), the following are equivalent:
+</p>
+<ul class="enumerate" style="list-style-type:none">
+
+
+<li>
+<p>
+<span class="listmarker">(i)</span> \(S\proves t\).
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">(ii)</span> There is a finite subset \(S&apos;\subseteq S\) with \(S&apos;\proves t\).
+</p>
+</li>
+</ul>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmproof">
+
+<a id="Logic-autopage-153"></a>
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"> <span class="amsthmproofname">Proof.</span></span> Exercise - check all the details. <span class="theoremendmark">&#x25A1;</span>
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-154"></a>
+<span class="amsthmnameplain">Theorem</span><span class="amsthmnumberplain"> <span class="textup">2.47</span></span><span class="amsthmnoteplain"> (Deduction Theorem)</span>. </span> Let \(s,t\) be propositional formulas
+and let \(S\) be a set of propositional formulas. Then
+</p>
+
+<p>
+\[S\vdash (s\rightarrow t) \iff S\cup \{s\}\vdash t\]
+</p>
+
+<p>
+
+
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmproof">
+
+<a id="Logic-autopage-155"></a>
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"> <span class="amsthmproofname">Proof.</span></span> \((\Rightarrow )\): If \((t_1,\ldots ,t_n)\) is a deduction of \((s\rightarrow t)\) from \(S\) then \((t_1,\ldots ,t_n,s,t)\) is a deduction of \(t\)
+from \(S\cup \{s\}\). This is because if \((t_1,\ldots , t_n)\) is a deduction from \(S\) then it is also a deduction from \(S\cup \{s\}\). Therefore \((t_1,\ldots ,t_n,s)\) is a deduction from \(S\cup \{s\}\) because \(s\) is now a
+premiss. Since \(t_n\) is \((s\rightarrow t)\), using modus ponens applied to \(t_n=(s\rightarrow t)\) and \(s\), we see that \((t_1,\ldots ,t_n,s,t)\) is a deduction of \(t\) from \(S\cup \{s\}\).
+</p>
+
+<p>
+\((\Leftarrow )\): Let \((t_1,t_2,\ldots ,t_n)\) be a deduction from \(S\cup \{s\}\) where \(t_n=t\). We will show by induction on \(i\) that \(S\vdash (s\rightarrow t_i)\).
+</p>
+
+<p>
+Suppose \(i=1\). Then \(t_1\) is either a premiss, that is, \(t_1\in S\cup \{s\}\) or \(t_1\) is an axiom. If \(t_1\) is \(s\) then <a href="Proofs.html#simpliess">2.44</a> shows that \(S\vdash (s\rightarrow t_1)\). If \(t_1\in S\) or
+\(t_1\) is an axiom then the following is a deduction of \((s\rightarrow t_1)\) from \(S\).
+</p>
+
+<p>
+\(\begin {array}{rcl} 1.     &amp; t_1 &amp; \text {premiss/axiom} \\ 2.        &amp; (t_1\rightarrow (s\rightarrow t_1)) &amp; \text {instance of axiom 1.} \\ 3.          &amp; (s\rightarrow t_1) &amp; \text {modus ponens using
+$1.$ and $2.$} \end {array} \)
+</p>
+
+<p>
+Suppose that \(S\vdash (s\rightarrow t_l)\) for all \(l&lt;i\). We want to show that \(S\vdash (s\rightarrow t_{i})\). If \(t_{i}\) is an axiom or a member of \(S\cup \{s\}\) then we can prove \(S\vdash (s\rightarrow t_{i})\) as in
+the \(i=1\) case. So suppose that there are \(j,k&lt;i\) such that \(t_k\) is \((t_j\rightarrow t_{i})\). By the induction hypothesis \(S\vdash (s\rightarrow t_j)\) and \(S\vdash (s\rightarrow (t_j\rightarrow t_{i}))\). By <a
+href="Proofs.html#deductionrem">2.45</a>, the concatenation of a deduction of \((s\rightarrow t_j)\) from \(S\) and a deduction of \((s\rightarrow (t_j\rightarrow t_{i}))\) from \(S\) is a deduction from \(S\). Moreover this
+deduction has \((s\rightarrow t_j)\) (say entry \(n\)) and \((s\rightarrow (t_j\rightarrow t_{i}))\) (say entry \(m\)) as entries. Hence, we can then extend this deduction by adding the entries
+</p>
+
+<p>
+\(\begin {array}{rcl} m+1.     &amp; ((s\rightarrow (t_j\rightarrow t_i))\rightarrow ((s\rightarrow t_j)\rightarrow (s\rightarrow t_i))) &amp; \text {instance of axiom 2.} \\ m+2.                   &amp; ((s\rightarrow t_j)\rightarrow
+(s\rightarrow t_i)) &amp; \text {modus ponens with $m.$ and $m+1.$} \\ m+3.            &amp; (s\rightarrow t_i) &amp; \text {modus ponens with $n.$ and $m+2.$} \end {array} \)
+</p>
+
+<p>
+Therefore we have a deduction of \((s\rightarrow t_i)\) from \(S\). <span class="theoremendmark">&#x25A1;</span>
+</p>
+
+</li>
+
+</ul>
+
+</div>
+
+</section>
+
+</main>
+
+</div>
+
+
+<nav class="botnavigation"><a href="Logic.html" class="linkhome" >
+Home</a></nav>
+
+</body>
+</html>

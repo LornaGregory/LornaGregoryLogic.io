@@ -1,0 +1,1357 @@
+
+<!DOCTYPE html>
+<html lang="en-UK">
+<head>
+<meta charset="UTF-8" />
+<meta name="author" content="Lorna Gregory" />
+<meta name="generator" content="LaTeX Lwarp package" />
+<meta name="description" content="A description." />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Logic — Application of the Compactness Theorem and Extension by Constants</title>
+<link rel="stylesheet" type="text/css" href="lwarpLorna.css" />
+
+<script>
+// Lwarp MathJax emulation code
+//
+// Based on code by Davide P. Cervone.
+// Equation numbering: https://github.com/mathjax/MathJax/issues/2427
+// Starred and ifnextchar macros: https://github.com/mathjax/MathJax/issues/2428
+// \left, \right delimiters: https://github.com/mathjax/MathJax/issues/2535
+//
+// Modified by Brian Dunn to adjust equation numbering and add subequations.
+//
+// LaTeX can use \seteqnumber{subequations?}{section}{number} before each equation.
+// subequations? is 0 usually, 1 if inside subequations.
+// section is a string printed as-is, or empty.
+// number is auto-incremented by MathJax between equations.
+//
+MathJax = {
+     subequations: "0",
+     section: "",
+     loader: {
+          load: ['[tex]/tagformat', '[tex]/textmacros'],
+     },
+     startup: {
+          ready() {
+              //       These would be replaced by import commands if you wanted to make
+              //       a proper extension.
+              const Configuration = MathJax._.input.tex.Configuration.Configuration;
+              const CommandMap = MathJax._.input.tex.SymbolMap.CommandMap;
+              const Macro = MathJax._.input.tex.Symbol.Macro;
+              const TexError = MathJax._.input.tex.TexError.default;
+              const ParseUtil = MathJax._.input.tex.ParseUtil.default;
+              const expandable = MathJax._.util.Options.expandable;
+
+
+              //       Insert the replacement string into the TeX string, and check
+              //       that there haven't been too many maxro substitutions (prevents
+              //       infinite loops).
+              const useArgument = (parser, text) => {
+                   parser.string = ParseUtil.addArgs(parser, text, parser.string.slice(parser.i));
+                   parser.i = 0;
+                   if (++parser.macroCount > parser.configuration.options.maxMacros) {
+                        throw new TexError('MaxMacroSub1',
+                        'MathJax maximum macro substitution count exceeded; ' +
+                        'is there a recursive macro call?');
+                   }
+              }
+
+
+              //       Create the command map for:
+              //            \ifstar, \ifnextchar, \ifblank, \ifstrequal, \gsub, \seteqnumber
+              new CommandMap('Lwarp-macros', {
+                   ifstar: 'IfstarFunction',
+                   ifnextchar: 'IfnextcharFunction',
+                   ifblank: 'IfblankFunction',
+                   ifstrequal: 'IfstrequalFunction',
+                   gsubstitute: 'GsubstituteFunction',
+                   seteqnumber: 'SeteqnumberFunction'
+              }, {
+                   //       This function implements an ifstar macro.
+                   IfstarFunction(parser, name) {
+                        const resultstar = parser.GetArgument(name);
+                        const resultnostar = parser.GetArgument(name);
+                        const star = parser.GetStar();                        // true if there is a *
+                        useArgument(parser, star ? resultstar : resultnostar);
+                   },
+
+
+                   //       This function implements an ifnextchar macro.
+                   IfnextcharFunction(parser, name) {
+                        let whichchar = parser.GetArgument(name);
+                        if (whichchar.match(/^(?:0x[0-9A-F]+|[0-9]+)$/i)) {
+                            // $ syntax highlighting
+                            whichchar = String.fromCodePoint(parseInt(whichchar));
+                        }
+                        const resultnextchar = parser.GetArgument(name);
+                        const resultnotnextchar = parser.GetArgument(name);
+                        const gotchar = (parser.GetNext() === whichchar);
+                        useArgument(parser, gotchar ? resultnextchar : resultnotnextchar);
+                   },
+
+
+                   // This function implements an ifblank macro.
+                   IfblankFunction(parser, name) {
+                        const blankarg = parser.GetArgument(name);
+                        const resultblank = parser.GetArgument(name);
+                        const resultnotblank = parser.GetArgument(name);
+                        const isblank = (blankarg.trim() == "");
+                        useArgument(parser, isblank ? resultblank : resultnotblank);
+                   },
+
+
+                   // This function implements an ifstrequal macro.
+                   IfstrequalFunction(parser, name) {
+                        const strequalfirst = parser.GetArgument(name);
+                        const strequalsecond = parser.GetArgument(name);
+                        const resultequal = parser.GetArgument(name);
+                        const resultnotequal = parser.GetArgument(name);
+                        const isequal = (strequalfirst == strequalsecond);
+                        useArgument(parser, isequal ? resultequal : resultnotequal);
+                   },
+
+
+                   // This function implements a gsub macro.
+                   GsubstituteFunction(parser, name) {
+                        const gsubfirst = parser.GetArgument(name);
+                        const gsubsecond = parser.GetArgument(name);
+                        const gsubthird = parser.GetArgument(name);
+                        let gsubresult=gsubfirst.replace(gsubsecond, gsubthird);
+                        useArgument(parser, gsubresult);
+                   },
+
+
+                   //       This function modifies the equation numbers.
+                   SeteqnumberFunction(parser, name) {
+                            //   Get the macro parameters
+                            const star = parser.GetStar();                      // true if there is a *
+                            const optBrackets = parser.GetBrackets(name);        // contents of optional brackets
+                            const newsubequations = parser.GetArgument(name);      // the subequations argument
+                            const neweqsection = parser.GetArgument(name);      // the eq section argument
+                            const neweqnumber = parser.GetArgument(name);        // the eq number argument
+                            MathJax.config.subequations=newsubequations ;       // a string with boolean meaning
+                            MathJax.config.section=neweqsection ;               // a string with numeric meaning
+                            parser.tags.counter = parser.tags.allCounter = neweqnumber ;
+                   }
+
+
+              });
+
+
+              //       Create the Lwarp-macros package
+              Configuration.create('Lwarp-macros', {
+                   handler: {macro: ['Lwarp-macros']}
+              });
+
+
+              MathJax.startup.defaultReady();
+
+
+              // For forward references:
+              MathJax.startup.input[0].preFilters.add(({math}) => {
+                   if (math.inputData.recompile){
+                            MathJax.config.subequations = math.inputData.recompile.subequations;
+                            MathJax.config.section = math.inputData.recompile.section;
+                   }
+              });
+              MathJax.startup.input[0].postFilters.add(({math}) => {
+                   if (math.inputData.recompile){
+                            math.inputData.recompile.subequations = MathJax.config.subequations;
+                            math.inputData.recompile.section = MathJax.config.section;
+                   }
+              });
+
+
+                   // For \left, \right with unicode-math:
+                   const {DelimiterMap} = MathJax._.input.tex.SymbolMap;
+                   const {Symbol} = MathJax._.input.tex.Symbol;
+                   const {MapHandler} = MathJax._.input.tex.MapHandler;
+                   const delimiter = MapHandler.getMap('delimiter');
+                   delimiter.add('\\lBrack', new Symbol('\\lBrack', '\u27E6'));
+                   delimiter.add('\\rBrack', new Symbol('\\rBrack', '\u27E7'));
+                   delimiter.add('\\lAngle', new Symbol('\\lAngle', '\u27EA'));
+                   delimiter.add('\\rAngle', new Symbol('\\rAngle', '\u27EB'));
+                   delimiter.add('\\lbrbrak', new Symbol('\\lbrbrak', '\u2772'));
+                   delimiter.add('\\rbrbrak', new Symbol('\\rbrbrak', '\u2773'));
+                   delimiter.add('\\lbag', new Symbol('\\lbag', '\u27C5'));
+                   delimiter.add('\\rbag', new Symbol('\\rbag', '\u27C6'));
+                   delimiter.add('\\llparenthesis', new Symbol('\\llparenthesis', '\u2987'));
+                   delimiter.add('\\rrparenthesis', new Symbol('\\rrparenthesis', '\u2988'));
+                   delimiter.add('\\llangle', new Symbol('\\llangle', '\u2989'));
+                   delimiter.add('\\rrangle', new Symbol('\\rrangle', '\u298A'));
+                   delimiter.add('\\Lbrbrak', new Symbol('\\Lbrbrak', '\u27EC'));
+                   delimiter.add('\\Rbrbrak', new Symbol('\\Rbrbrak', '\u27ED'));
+                   delimiter.add('\\lBrace', new Symbol('\\lBrace', '\u2983'));
+                   delimiter.add('\\rBrace', new Symbol('\\rBrace', '\u2984'));
+                   delimiter.add('\\lParen', new Symbol('\\lParen', '\u2985'));
+                   delimiter.add('\\rParen', new Symbol('\\rParen', '\u2986'));
+                   delimiter.add('\\lbrackubar', new Symbol('\\lbrackubar', '\u298B'));
+                   delimiter.add('\\rbrackubar', new Symbol('\\rbrackubar', '\u298C'));
+                   delimiter.add('\\lbrackultick', new Symbol('\\lbrackultick', '\u298D'));
+                   delimiter.add('\\rbracklrtick', new Symbol('\\rbracklrtick', '\u298E'));
+                   delimiter.add('\\lbracklltick', new Symbol('\\lbracklltick', '\u298F'));
+                   delimiter.add('\\rbrackurtick', new Symbol('\\rbrackurtick', '\u2990'));
+                   delimiter.add('\\langledot', new Symbol('\\langledot', '\u2991'));
+                   delimiter.add('\\rangledot', new Symbol('\\rangledot', '\u2992'));
+                   delimiter.add('\\lparenless', new Symbol('\\lparenless', '\u2993'));
+                   delimiter.add('\\rparengtr', new Symbol('\\rparengtr', '\u2994'));
+                   delimiter.add('\\Lparengtr', new Symbol('\\Lparengtr', '\u2995'));
+                   delimiter.add('\\Rparenless', new Symbol('\\Rparenless', '\u2996'));
+                   delimiter.add('\\lblkbrbrak', new Symbol('\\lblkbrbrak', '\u2997'));
+                   delimiter.add('\\rblkbrbrak', new Symbol('\\rblkbrbrak', '\u2998'));
+                   delimiter.add('\\lvzigzag', new Symbol('\\lvzigzag', '\u29D8'));
+                   delimiter.add('\\rvzigzag', new Symbol('\\rvzigzag', '\u29D9'));
+                   delimiter.add('\\Lvzigzag', new Symbol('\\Lvzigzag', '\u29DA'));
+                   delimiter.add('\\Rvzigzag', new Symbol('\\Rvzigzag', '\u29DB'));
+                   delimiter.add('\\lcurvyangle', new Symbol('\\lcurvyangle', '\u29FC'));
+                   delimiter.add('\\rcurvyangle', new Symbol('\\rcurvyangle', '\u29FD'));
+                   delimiter.add('\\Vvert', new Symbol('\\Vvert', '\u2980'));
+          }       // ready
+     },           // startup
+
+
+     tex: {
+          packages: {'[+]': ['tagformat', 'Lwarp-macros', 'textmacros']},
+          tags: "ams",
+                   tagformat: {
+                            number: function (n) {
+                                 if(MathJax.config.subequations==0)
+                                        return(MathJax.config.section + n);
+                                 else
+                                        return(MathJax.config.section + String.fromCharCode(96+n));
+                            },
+                   },
+     }
+}
+</script>
+
+
+<script
+          id="MathJax-script"
+          src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"
+></script>
+
+</head>
+<body>
+
+
+<a id="Logic-autopage-309"></a>
+<nav class="topnavigation"><a href="Logic.html" class="linkhome" >
+Home</a></nav>
+
+
+<div class="bodyandsidetoc">
+<div class="sidetoccontainer">
+
+
+<nav class="sidetoc">
+
+
+<div class="sidetoctitle">
+
+<p>
+<span class="sidetocthetitle">Mathematical Logic</span>
+</p>
+
+<p>
+Contents
+</p>
+</div>
+
+
+<div class="sidetoccontents">
+
+<p>
+<a href="Logic.html" class="linkhome" >
+Home</a>
+</p>
+
+<p>
+<a href="Introduction.html#autosec-5" class="tocsection" >
+<span class="sectionnumber">1</span>&#x2003;Introduction</a>
+</p>
+
+
+<p>
+<a href="Propositional-Logic.html#autosec-16" class="tocsection" >
+<span class="sectionnumber">2</span>&#x2003;Propositional Logic</a>
+</p>
+
+
+<p>
+<a href="Propositional-Logic.html#autosec-17" class="tocsubsection" >
+<span class="sectionnumber">2.1</span>&#x2003;Propositional formulas</a>
+</p>
+
+
+<p>
+<a href="Truth.html#autosec-95" class="tocsubsection" >
+<span class="sectionnumber">2.2</span>&#x2003;Truth</a>
+</p>
+
+
+<p>
+<a href="Proofs.html#autosec-146" class="tocsubsection" >
+<span class="sectionnumber">2.3</span>&#x2003;Proofs</a>
+</p>
+
+
+<p>
+<a href="Completeness.html#autosec-157" class="tocsubsection" >
+<span class="sectionnumber">2.4</span>&#x2003;Completeness</a>
+</p>
+
+
+<p>
+<a href="Predicate-Logic.html#autosec-168" class="tocsection" >
+<span class="sectionnumber">3</span>&#x2003;Predicate Logic</a>
+</p>
+
+
+<p>
+<a href="Predicate-Logic.html#autosec-169" class="tocsubsection" >
+<span class="sectionnumber">3.1</span>&#x2003;Languages and Structures</a>
+</p>
+
+
+<p>
+<a href="Formulas.html#autosec-174" class="tocsubsection" >
+<span class="sectionnumber">3.2</span>&#x2003;Formulas</a>
+</p>
+
+
+<p>
+<a href="Tarski-Truth-Definition.html#autosec-199" class="tocsubsection" >
+<span class="sectionnumber">3.3</span>&#x2003;Tarski’s Truth Definition</a>
+</p>
+
+
+<p>
+<a href="Proofs-9.html#autosec-245" class="tocsubsection" >
+<span class="sectionnumber">3.4</span>&#x2003;Proofs</a>
+</p>
+
+
+<p>
+<a href="Completeness-10.html#autosec-258" class="tocsubsection" >
+<span class="sectionnumber">3.5</span>&#x2003;Completeness</a>
+</p>
+
+
+<p>
+<a href="Proof-Completeness-Theorem-Predicate-Logic-4th-year-material.html#autosec-272" class="tocsection" >
+<span class="sectionnumber">4</span>&#x2003;Proof of the Completeness Theorem for Predicate Logic (4th year material)</a>
+</p>
+
+
+<p>
+<a href="Application-Compactness-Theorem-Extension-Constants.html#autosec-310" class="tocsection" >
+<span class="sectionnumber">5</span>&#x2003;Application of the Compactness Theorem and Extension by Constants</a>
+</p>
+
+
+<p>
+<a href="Universal-Algebra-Substructures-Homomorphisms.html#autosec-336" class="tocsection" >
+<span class="sectionnumber">6</span>&#x2003;Universal Algebra: Substructures and Homomorphisms</a>
+</p>
+
+
+<p>
+<a href="Further-Model-Theory-4th-year-material.html#autosec-346" class="tocsection" >
+<span class="sectionnumber">7</span>&#x2003;Further Model Theory (4th year material)</a>
+</p>
+
+
+<p>
+<a href="Further-Model-Theory-4th-year-material.html#autosec-347" class="tocsubsection" >
+<span class="sectionnumber">7.1</span>&#x2003;Definable Sets</a>
+</p>
+
+
+<p>
+<a href="Elementary-Substructures.html#autosec-354" class="tocsubsection" >
+<span class="sectionnumber">7.2</span>&#x2003;Elementary Substructures</a>
+</p>
+
+
+<p>
+<a href="Downwards-Lowenheim-Skolem-Theorem.html#autosec-364" class="tocsubsection" >
+<span class="sectionnumber">7.3</span>&#x2003;Downwards Lo&#x0308;wenheim-Skolem Theorem</a>
+</p>
+
+
+<p>
+<a href="Upwards-Lowenheim-Skolem-Theorem.html#autosec-368" class="tocsubsection" >
+<span class="sectionnumber">7.4</span>&#x2003;Upwards Lo&#x0308;wenheim-Skolem Theorem</a>
+</p>
+
+
+<p>
+<a href="Categoricity.html#autosec-371" class="tocsubsection" >
+<span class="sectionnumber">7.5</span>&#x2003;Categoricity</a>
+</p>
+
+
+</div>
+
+</nav>
+
+</div>
+
+
+<main class="bodycontainer">
+
+
+<section class="textbody">
+
+<h1>Mathematical Logic</h1>
+
+<!--MathJax customizations:-->
+<div data-nosnippet
+    style="display:none"
+>
+
+\(\newcommand{\footnotename}{footnote}\)
+
+\(\def \LWRfootnote {1}\)
+
+\(\newcommand {\footnote }[2][\LWRfootnote ]{{}^{\mathrm {#1}}}\)
+
+\(\newcommand {\footnotemark }[1][\LWRfootnote ]{{}^{\mathrm {#1}}}\)
+
+\(\let \LWRorighspace \hspace \)
+
+\(\renewcommand {\hspace }{\ifstar \LWRorighspace \LWRorighspace }\)
+
+\(\newcommand {\TextOrMath }[2]{#2}\)
+
+\(\newcommand {\mathnormal }[1]{{#1}}\)
+
+\(\newcommand \ensuremath [1]{#1}\)
+
+\(\newcommand {\LWRframebox }[2][]{\fbox {#2}} \newcommand {\framebox }[1][]{\LWRframebox } \)
+
+\(\newcommand {\setlength }[2]{}\)
+
+\(\newcommand {\addtolength }[2]{}\)
+
+\(\newcommand {\setcounter }[2]{}\)
+
+\(\newcommand {\addtocounter }[2]{}\)
+
+\(\newcommand {\arabic }[1]{}\)
+
+\(\newcommand {\number }[1]{}\)
+
+\(\newcommand {\noalign }[1]{\text {#1}\notag \\}\)
+
+\(\newcommand {\cline }[1]{}\)
+
+\(\newcommand {\directlua }[1]{\text {(directlua)}}\)
+
+\(\newcommand {\luatexdirectlua }[1]{\text {(directlua)}}\)
+
+\(\newcommand {\protect }{}\)
+
+\(\def \LWRabsorbnumber #1 {}\)
+
+\(\def \LWRabsorbquotenumber &quot;#1 {}\)
+
+\(\newcommand {\LWRabsorboption }[1][]{}\)
+
+\(\newcommand {\LWRabsorbtwooptions }[1][]{\LWRabsorboption }\)
+
+\(\def \mathchar {\ifnextchar &quot;\LWRabsorbquotenumber \LWRabsorbnumber }\)
+
+\(\def \mathcode #1={\mathchar }\)
+
+\(\let \delcode \mathcode \)
+
+\(\let \delimiter \mathchar \)
+
+\(\def \oe {\unicode {x0153}}\)
+
+\(\def \OE {\unicode {x0152}}\)
+
+\(\def \ae {\unicode {x00E6}}\)
+
+\(\def \AE {\unicode {x00C6}}\)
+
+\(\def \aa {\unicode {x00E5}}\)
+
+\(\def \AA {\unicode {x00C5}}\)
+
+\(\def \o {\unicode {x00F8}}\)
+
+\(\def \O {\unicode {x00D8}}\)
+
+\(\def \l {\unicode {x0142}}\)
+
+\(\def \L {\unicode {x0141}}\)
+
+\(\def \ss {\unicode {x00DF}}\)
+
+\(\def \SS {\unicode {x1E9E}}\)
+
+\(\def \dag {\unicode {x2020}}\)
+
+\(\def \ddag {\unicode {x2021}}\)
+
+\(\def \P {\unicode {x00B6}}\)
+
+\(\def \copyright {\unicode {x00A9}}\)
+
+\(\def \pounds {\unicode {x00A3}}\)
+
+\(\let \LWRref \ref \)
+
+\(\renewcommand {\ref }{\ifstar \LWRref \LWRref }\)
+
+\( \newcommand {\multicolumn }[3]{#3}\)
+
+\(\require {textcomp}\)
+
+\(\newcommand {\intertext }[1]{\text {#1}\notag \\}\)
+
+\(\let \Hat \hat \)
+
+\(\let \Check \check \)
+
+\(\let \Tilde \tilde \)
+
+\(\let \Acute \acute \)
+
+\(\let \Grave \grave \)
+
+\(\let \Dot \dot \)
+
+\(\let \Ddot \ddot \)
+
+\(\let \Breve \breve \)
+
+\(\let \Bar \bar \)
+
+\(\let \Vec \vec \)
+
+\(\newcommand {\bm }[1]{\boldsymbol {#1}}\)
+
+\(\newcommand {\R }{\mathbb {R}}\)
+
+\(\newcommand {\C }{\mathbb {C}}\)
+
+\(\newcommand {\Z }{\mathbb {Z}}\)
+
+\(\newcommand {\N }{\mathbb {N}}\)
+
+\(\newcommand {\Q }{\mathbb {Q}}\)
+
+\(\newcommand {\st }{\ \vert \ }\)
+
+\(\newcommand {\mcal }[1]{\mathcal {#1}}\)
+
+\(\newcommand {\TmAlg }{\mathrm {TmAlg}}\)
+
+\(\newcommand {\PROP }{\mathrm {PROP}}\)
+
+\(\newcommand {\PF }{\mathrm {S}}\)
+
+\(\newcommand {\proves }{\vdash }\)
+
+\(\newcommand {\tm }{\textrm {tm}}\)
+
+\(\newcommand {\ctm }{\textrm {ctm}}\)
+
+\(\newcommand {\Fml }{\textrm {Fml}}\)
+
+\(\newcommand {\Fr }{\textrm {Fr}}\)
+
+\(\newcommand {\Vbl }{\textrm {Vbl}}\)
+
+\(\newcommand {\cmpx }{\texttt {cmpx}}\)
+
+\(\newcommand {\supp }{\text {supp}}\)
+
+\(\newcommand {\conn }{\,\square \,}\)
+
+\(\newcommand {\con }{\,\diamond \,}\)
+
+\(\newcommand {\ct }{\texttt {c}}\)
+
+\(\newcommand {\T }{\mathbb {T}}\)
+
+\(\newcommand {\F }{\mathbb {F}}\)
+
+\(\newcommand {\mathlarger }[1]{#1}\)
+
+\(\newcommand {\mathsmaller }[1]{#1}\)
+
+\(\newcommand {\LWRmarginnote }[1][]{}\)
+
+\(\newcommand {\marginnote }[2][]{\qquad {\small \textrm {#2}}\LWRmarginnote }\)
+
+</div>
+
+<!--
+...... section Application of the Compactness Theorem and Extension by Constants ......
+-->
+<h4 id="autosec-310"><span class="sectionnumber">5&#x2003;</span>Application of the Compactness Theorem and Extension by Constants</h4>
+<a id="Logic-autopage-310"></a>
+<a id="Logic-autofile-12"></a>
+
+<a id="appcomp"></a>
+
+<p>
+We saw a few applications of the Compactness Theorem for propositional logic but these were really just exercises in how to use the Compactness Theorem. The Compactness Theorem for predicate logic is the first theorem in Model Theory. Model Theory is a
+branch of mathematical logic with close ties and strong applications to the rest of pure mathematics. In particular, there are applied model theorists studying the model theory of most other parts of pure mathematics. There is an alternative model theoretic proof
+of the compactness theorem.
+</p>
+
+<p>
+We start with some consequences of the Compactness Theorem, some of which might be viewed as negative or showing the limits of first order logic.
+</p>
+
+<p>
+On Exercise Sheet \(7\), we introduced the following definition.
+</p>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-311"></a>
+<span class="amsthmnameplain">Definition</span><span class="amsthmnumberplain"> <span class="textup">5.1</span></span>. </span> We say that a class \(X\) of \(\mcal {L}\)-structures is <b>axiomatisable</b> if there exists a set of
+\(\mcal {L}\)-sentences \(\Sigma \) such that for all \(\mcal {L}\)-structures \(\mcal {M}\),
+</p>
+<div class="center">
+
+<p>
+\(\mcal {M}\models \phi \) for all \(\phi \in \Sigma \) if and only if \(\mcal {M}\in X\).
+</p>
+</div>
+
+<p>
+We call \(\Sigma \) an <b>axiomatisation</b> of \(X\) or that \(\Sigma \) <b>axiomatises</b> \(X\).
+</p>
+
+</li>
+
+</ul>
+
+</div>
+
+<p>
+We say an \(\mcal {L}\)-structure is finite/infinite if its domain is finite/infinite. The size (or cardinality) of an \(\mcal {L}\)-structure is the size of its domain.
+</p>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-313"></a>
+<span class="amsthmnameplain">Remark</span><span class="amsthmnumberplain"> <span class="textup">5.2</span></span>. </span> Let \(\mcal {L}\) be a language.
+</p>
+<ul class="enumerate" style="list-style-type:none">
+
+
+<li>
+<p>
+<span class="listmarker">(i)</span> For each \(n\in \N \), there is an \(\mcal {L}\)-sentence \(\sigma _n\) such that \(\mcal {M}\models \sigma _n\) if and only if \(\mcal {M}\) has size \(n\).
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">(ii)</span> There is a set of \(\mcal {L}\)-sentences which axiomatise the class of infinite \(\mcal {L}\)-structures.
+</p>
+</li>
+</ul>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmproof">
+
+<a id="Logic-autopage-314"></a>
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"> <span class="amsthmproofname">Proof.</span></span> Exercise Sheets \(7\) and \(8\). <span class="theoremendmark">&#x25A1;</span>
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-315"></a>
+<span class="amsthmnameplain">Proposition</span><span class="amsthmnumberplain"> <span class="textup">5.3</span></span>. </span> <a id="finiteunbounded"></a> Let \(X\) be an axiomatisable class of \(\mcal {L}\)-structures such
+that for every \(n\in \N \) there is an \(\mcal {L}\)-structure \(\mcal {M}\in X\) such that the domain of \(\mcal {M}\) has more than \(n\) elements. Then \(X\) contains an infinite \(\mcal {L}\)-structure.
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmproof">
+
+<a id="Logic-autopage-316"></a>
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"> <span class="amsthmproofname">Proof.</span></span> Let \(\Sigma \) be the set of \(\mcal {L}\)-sentences which axiomatise \(X\). For each \(n\in \N \), let \(\sigma _n\) be an \(\mcal {L}\)-sentence such
+that \(\mcal {M}\models \sigma _n\) if and only if \(\mcal {M}\) has size \(n\). We will show that \(\Sigma \cup \{\neg \sigma _n\st n\in \N \}\) is satisfiable using the Compactness Theorem. Let \(\Sigma &apos;\subseteq \Sigma \cup
+\{\neg \sigma _n\st n\in \N \}\) be finite. Since \(\Sigma &apos;\) is finite, there exists \(l\in \N \) such that if \(\neg \sigma _n\in \Sigma &apos;\) then \(n\leq l\). Take \(\mcal {M}\in X\) such that the size of \(\mcal {M}\) has at
+least \(l+1\) elements. Then \(\mcal {M}\) is a model of \(\Sigma \) and \(\mcal {M}\models \neg \sigma _n\) for all \(n\leq l\). Therefore \(\mcal {M}\) is a model of \(\Sigma &apos;\). So, we have shown that all finite subsets of \(\Sigma
+\cup \{\neg \sigma _n\st n\in \N \}\) have a model. Therefore, by the Compactness Theorem, \(\Sigma \cup \{\neg \sigma _n\st n\in \N \}\) has a model \(\mcal {M}^*\). Since \(\mcal {M}^*\) satisfies \(\Sigma \), \(\mcal {M}^*\in
+X\). For each \(n\in \N \), \(\mcal {M}^*\models \neg \sigma _n\). So \(\mcal {M}^*\) is not size \(n\) for any \(n\in \N \). Therefore \(\mcal {M}^*\) is infinite.
+</p>
+
+<p>
+<span class="theoremendmark">&#x25A1;</span>
+</p>
+
+</li>
+
+</ul>
+
+</div>
+
+<p>
+<span role="note" class="marginpar">20.11.23</span>
+</p>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-317"></a>
+<span class="amsthmnameplain">Corollary</span><span class="amsthmnumberplain"> <span class="textup">5.4</span></span>. </span> There is an infinite group \(G\) which satisfies all sentences \(\phi \) in \(\mcal {L}_{gp}:=\langle
+\cdot , (-)^{-1}, e\rangle \) that are true in all finite groups. We call such a group a <b>psuedofinite group</b>.
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmproof">
+
+<a id="Logic-autopage-318"></a>
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"> <span class="amsthmproofname">Proof.</span></span> Let \(\Sigma \) be the set of \(\mcal {L}_{gp}\)-sentences \(\phi \) such that \(\phi \) is satisfied by all finite groups. By definition, all finite groups are
+models of \(\Sigma \). For each natural number \(n\), the group \((\Z /n\Z ,+)\) has size \(n\). Thus, by reffiniteunbounded, \(\Sigma \) has an infinite model. <span class="theoremendmark">&#x25A1;</span>
+</p>
+
+</li>
+
+</ul>
+
+</div>
+
+<p>
+This might be viewed as a negative consequence of the Compactness Theorem.
+</p>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-319"></a>
+<span class="amsthmnameplain">Corollary</span><span class="amsthmnumberplain"> <span class="textup">5.5</span></span>. </span> The class of finite groups, graphs, rings, fields, etc are not axiomatisable (in the appropriate first order
+language).
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmproof">
+
+<a id="Logic-autopage-320"></a>
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"> <span class="amsthmproofname">Proof.</span></span> Each of the classes has members of unbounded finite size. So, by <a
+href="Application-Compactness-Theorem-Extension-Constants.html#finiteunbounded">5.3</a>, if \(\Sigma \) is a set of sentences satisfied by all members of the class then \(\Sigma \) has an infinite model. <span
+class="theoremendmark">&#x25A1;</span>
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-321"></a>
+<span class="amsthmnameplain">Proposition</span><span class="amsthmnumberplain"> <span class="textup">5.6</span></span>. </span> Let \(\mcal {L}\) be a language. There does not exist an \(\mcal {L}\)-sentence which axiomatises
+the class of infinite \(\mcal {L}\)-structures.
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmproof">
+
+<a id="Logic-autopage-322"></a>
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"> <span class="amsthmproofname">Proof.</span></span> Suppose for a contradiction that \(\phi \) is an \(\mcal {L}\)-sentence which axiomatises the class of infinite \(\mcal {L}\)-structures. Then, \(\neg \phi \)
+axiomatises the class of finite \(\mcal {L}\)-structures. So it is enough to show that the class of finite \(\mcal {L}\)-structures is not axiomatisable. For each \(n\in \N \), let \(\mcal {M}_n\) be the \(\mcal {L}\)-structure with domain
+\(\{1,\ldots ,n\}\), for every relation symbol \(R\) of \(\mcal {L}\), let \(R^{\mcal {M}_n}=\emptyset \), for every function symbol \(F\) of \(\mcal {L}\), let \(F^{\mcal {M}_n}\) be the function defined by \(F^\mcal {M}(m_1,\ldots
+,m_l):=m_1\), and for every constant symbol \(c\) of \(\mcal {L}\), let \(c^{\mcal {M}_n}=1\). The class of \(\mcal {L}\)-structures is axiomatised by the empty set of \(\mcal {L}\)-sentences. So by <a
+href="Application-Compactness-Theorem-Extension-Constants.html#finiteunbounded">5.3</a>, the set of finite \(\mcal {L}\)-structures is not axiomatisable. This gives a contradiction. Therefore \(\phi \) does not axiomatise the class of
+infinite \(\mcal {L}\)-structures. <span class="theoremendmark">&#x25A1;</span>
+</p>
+
+</li>
+
+</ul>
+
+</div>
+
+<p>
+<b>Warning</b>: For some languages \(\mcal {L}\), there exist consistent \(\mcal {L}\)-sentences which only have infinite models. Such sentences often use the fact that every injective function from a finite set to itself is surjective (or that every surjective
+function from a finite set to itself is injective). See Exercise Sheet \(8\).
+</p>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-323"></a>
+<span class="amsthmnameplain">Remark</span><span class="amsthmnumberplain"> <span class="textup">5.7</span></span>. </span> The previous proposition is part of a general pattern of results. Let \(X\) be a class of \(\mcal
+{L}\)-structures and let \(Y\) be the class of all \(\mcal {L}\)-structures not in \(X\). If \(X\) is axiomatised by a single \(\mcal {L}\)-sentence \(\phi \) then \(Y\) is axiomatised by \(\neg \phi \). So to show that \(X\) is not axiomatised by
+a single sentence, we can show that \(Y\) is axiomatisable. For reasons beyond the scope of this course, this will always work.
+</p>
+
+</li>
+
+</ul>
+
+</div>
+
+<p>
+Here is a simple consequence of the Compactness Theorem that doesn’t involve not being able to axiomatise classes of structures with finite unbounded size.
+</p>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-324"></a>
+<span class="amsthmnameplain">Exercise</span><span class="amsthmnumberplain"> <span class="textup">5.8</span></span>. </span> Let \(\mcal {L}_{gp}:=\langle \cdot , (-)^{-1}, e \rangle \) be the language of groups. We say a
+group \(G\) is <b>torsion</b> if all its elements have finite order. You should know from \(1\)st year group theory that all finite groups are torsion. There exist (interesting) infinite torsion groups. For instance, let \(U(\mathbb {C})\) be the
+multiplicative group of complex roots \(1\), i.e., the set of \(z\in \C \) such that \(z^n=1\) for some \(n\in \N \). Show that the class of torsion groups is not axiomatisable.
+</p>
+
+</li>
+
+</ul>
+
+</div>
+
+<p>
+For more sophisticated applications of the Compactness Theorem, we need to use the method of “extensions by constants”. For completeness, I give the general definition of the extension of a language.
+</p>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-325"></a>
+<span class="amsthmnameplain">Definition</span><span class="amsthmnumberplain"> <span class="textup">5.9</span></span>. </span> Let \(\mcal {L}:=\langle \mcal {R},\mcal {F},\mcal {C}\rangle \) and \(\mcal {L}^+:=\langle
+\mcal {R}^+,\mcal {F}^+,\mcal {C}^+\rangle \) be languages where \(\mcal {R}, \mcal {R}^+\) are relation symbols, \(\mcal {F},\mcal {F}^+\) are function symbols and \(\mcal {C}, \mcal {C}^+\) are constant symbols.
+</p>
+
+<p>
+We say that \(\mcal {L}^+\) is an <b>extension</b> of \(\mcal {L}\) and \(\mcal {L}\) is a <b>sublanguage</b> of \(\mcal {L}^+\) if \(\mcal {R}\subseteq \mcal {R}^+\), \(\mcal {F}\subseteq \mcal {F}^+\) and \(\mcal
+{C}\subseteq \mcal {C}^+\) (note, any relation/function symbol of both \(\mcal {L}\) and \(\mcal {L}^+\) should have the same arity).
+</p>
+
+<p>
+If \(\mcal {L}^+\) is an extension of \(\mcal {L}\) with \(\mcal {R}^+=\mcal {R}\) and \(\mcal {F}^+=\mcal {F}\) then we call \(\mcal {L}^+\) an <b>extension by constants</b> of \(\mcal {L}\). In this case we write \(\mcal
+{L}^+=\mcal {L}(\mcal {D})\) where \(\mcal {D}=\mcal {C}^+\backslash \mcal {C}\).
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-326"></a>
+<span class="amsthmnameplain">Definition</span><span class="amsthmnumberplain"> <span class="textup">5.10</span></span>. </span> If \(\mcal {M} ^+\) is an \(\mcal {L} ^+\)-structure then there is a unique \(\mcal {L}\)-structure
+\(\mcal {M}^+ \) with the same domain as \(\mcal {M}\) and with \(R^\mcal {M} =R^{\mcal {M} ^+}\) for all relation symbols \(R\) of \(\mcal {L}\), \(F^\mcal {M} =F^{\mcal {M} ^+}\) for all function symbol \(F\) of \(\mcal {L}\) and
+\(c^\mcal {M} =c^{\mcal {M} ^+}\) for all constant symbol \(c\) of \(\mcal {L}\). The structure \(\mcal {M} \) is called the <b>restriction of \(\mcal {M}^+\) to \(\mcal {L}\)</b> and \(\mcal {M} ^+\) is called an <b>expansion of
+\(\mcal {M} \) to \(\mcal {L} ^+\)</b>. The structure \(\mcal {M} \) is also called a <b>reduct of \(\mcal {M}^+\)</b>.
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-327"></a>
+<span class="amsthmnameplain">Remark</span><span class="amsthmnumberplain"> <span class="textup">5.11</span></span>. </span> Let \(\mcal {L}^+\) be an extension of \(\mcal {L}\). All \(\mcal {L}\)-terms (resp. \(\mcal
+{L}\)-formulas) are \(\mcal {L}^+\)-terms (resp. \(\mcal {L}^+\)-formulas) in which only elements of the alphabet of \(\mcal {L}\) occur.
+</p>
+
+</li>
+
+</ul>
+
+</div>
+
+<p>
+This proposition could be proved by induction on the complexity of terms and formulas.
+</p>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-328"></a>
+<span class="amsthmnameplain">Proposition</span><span class="amsthmnumberplain"> <span class="textup">5.12</span></span>. </span> Let \(\mcal {L} ^+\) be an extension of the language \(\mcal {L} \). If \(\mcal {M} \) is the
+restriction of the \(\mcal {L} ^+\)-structure \(\mcal {M} ^+\) to \(\mcal {L}\), \(t\in \tm (\mcal {L}) \), \(\phi \in \Fml (\mcal {L}) \) and \(h:\Vbl \rightarrow M\) where \(M\) is the domain of \(\mcal {M}\) (hence \(h\) is an
+assignment of \(\mcal {M} \) and of \(\mcal {M} ^+\)), then
+</p>
+<ul class="enumerate" style="list-style-type:none">
+
+
+<li>
+<p>
+<span class="listmarker">(i)</span> \(t^\mcal {M} [h]=t^{\mcal {M} ^+}[h]\) and
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">(ii)</span> \(\mcal {M} \models \phi [h]\iff \mcal {M} ^+\models \phi [h].\)
+</p>
+</li>
+</ul>
+
+</li>
+
+</ul>
+
+</div>
+
+<p>
+We now give some examples of using extensions by constants in applications of the Compactness Theorem.
+</p>
+
+<p>
+For our first applications we need an important definition.
+</p>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-329"></a>
+<span class="amsthmnameplain">Definition</span><span class="amsthmnumberplain"> <span class="textup">5.13</span></span>. </span> Let \(\mcal {L}\) be a language and let \(\mcal {M}_1,\mcal {M}_2\) be \(\mcal {L}\)-structures.
+We say that \(\mcal {M}_1\) and \(\mcal {M}_2\) are <b>elementary equivalent</b> and write \(\mcal {M}_1\equiv \mcal {M}_2\) if for all \(\mcal {L}\)-sentences \(\phi \), \(\mcal {M}_1\models \phi \) if and only if \(\mcal
+{M}_2\models \phi \).
+</p>
+
+</li>
+
+</ul>
+
+</div>
+
+<p>
+This is a very weak version of the Upwards Lo&#x0308;wenheim-Skolem Theorem which will be covered in the 4th year material.
+</p>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-330"></a>
+<span class="amsthmnameplain">Proposition</span><span class="amsthmnumberplain"> <span class="textup">5.14</span></span>. </span> Let \(\mcal {L}\) be a language and \(\mcal {M}\) be an infinite \(\mcal {L}\)-structure. For all
+cardinalities \(\kappa \), there is an \(\mcal {L}\)-structure \(\mcal {M}&apos;\) such that the domain of \(\mcal {M}&apos;\) has cardinality greater than \(\kappa \) and \(\mcal {M}\equiv \mcal {M}&apos;\).
+</p>
+
+<p>
+<b>Alternative formulation:</b> Let \(\mcal {L}\) be a language and \(\mcal {M}\) be an infinite \(\mcal {L}\)-structure. For all sets \(\kappa \), there is an \(\mcal {L}\)-structure \(\mcal {M}&apos;\) such that the domain of \(\mcal
+{M}&apos;\) has size greater than \(\kappa \) and \(\mcal {M}\equiv \mcal {M}&apos;\).
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmproof">
+
+<a id="Logic-autopage-331"></a>
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"> <span class="amsthmproofname">Proof.</span></span> Let \(\mcal {L}^+\) be an extension of \(\mcal {L}\) with a constant symbol \(c_i\) for every \(i\in \kappa \). Let \(\Sigma \) be the set of \(\mcal
+{L}\)-sentences satisfied by \(\mcal {M}\). We show that
+</p>
+
+<p>
+\[\Sigma \cup \{c_i\neq c_j \st i\neq j\}\]
+</p>
+
+<p>
+has a model.
+</p>
+
+<p>
+For each \(X\subseteq \kappa \), define \(\mcal {M}_X\) to be an expansion of \(\mcal {M}\) to an \(\mcal {L}^+\)-structure by picking \(c_i^{\mcal {M}_X}\in \mcal {M}\) so that \(c_i^{\mcal {M}_X}\neq c_j^{\mcal {M}_X}\) for all
+\(i,j\in X\) with \(i\neq j\) and picking \(c_i^{\mcal {M}_X}\in \mcal {M}\) for \(i\in \kappa \backslash X\) arbitrarily.
+</p>
+
+<p>
+Then \(\mcal {M}_X\) is a model of
+</p>
+
+<p>
+\[\Sigma \cup \{c_i\neq c_j \st i,j\in X \text { and } i\neq j\}.\]
+</p>
+
+<p>
+It follows that every finite subset of \(\Sigma \cup \{c_i\neq c_j \st i\neq j\}\) has a model. So, by the Compactness Theorem \(\Sigma \cup \{c_i\neq c_j \st i\neq j\}\) has a model \(\mcal {M}_\kappa \). Since \(c_i^{\mcal
+{M}_\kappa }\neq c_j^{\mcal {M}_\kappa }\) for all \(i\neq j\) in \(\kappa \), \(\mcal {M}_\kappa \) has size at least \(\kappa \). <span class="theoremendmark">&#x25A1;</span>
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-332"></a>
+<span class="amsthmnameplain">Definition</span><span class="amsthmnumberplain"> <span class="textup">5.15</span></span>. </span>
+</p>
+<ul class="enumerate" style="list-style-type:none">
+
+
+<li>
+<p>
+<span class="listmarker">1.</span> A set \(X\) together with a binary relation \(\leq \) is a total order if for all \(a,b,c\in X\),
+</p>
+<ul class="enumerate" style="list-style-type:none">
+
+
+<li>
+<p>
+<span class="listmarker">(i)</span> \(a\leq b\) and \(b\leq c\) implies \(a\leq c\);
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">(ii)</span> \(a\leq a\);
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">(iii)</span> \(a\leq b\) and \(b\leq a\) implies \(a=b\); and
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">(iv)</span> \(a\leq b\) or \(b\leq a\).
+</p>
+</li>
+</ul>
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">2.</span> An <b>ordered ring</b> is a ring \(R\) together with a total order \(\leq \) which satisfies the following properties:
+</p>
+<ul class="enumerate" style="list-style-type:none">
+
+
+<li>
+<p>
+<span class="listmarker">(i)</span> For all \(a,b,c\in R\), if \(b\leq c\) then \(a+b\leq a+c\).
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">(ii)</span> For all \(a,b,c\in R\), if \(0\leq a\) and \(b\leq c\) then \(ab\leq ac\).
+</p>
+</li>
+</ul>
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">3.</span> The language of ordered rings is \(\mcal {L}_{\text {o-ring}}:=\langle \geq , +,\cdot ,-,0,1\rangle \). where \(\geq \) is a binary relation symbol, \(+\) and \(\cdot \) are binary function
+symbols, \(-\) is a unary function symbol and \(0\) and \(1\) are constant symbols.
+</p>
+</li>
+</ul>
+
+</li>
+
+</ul>
+
+</div>
+
+<p>
+Note that the class of ordered rings is axiomatisable in \(\mcal {L}_{\text {o-ring}}\).
+</p>
+
+<p>
+You already know lots of examples of ordered rings. For example, \(\Z \), \(\R \) and \(\Q \) are all ordered rings when equipped with their usual order. Any ordered ring can be viewed as an \(\mcal {L}_{\text {o-ring}}\)-structure in the obvious way. If
+\(R\) is an ordered ring then for all \(n\in \N \),
+</p>
+
+<p>
+\[\underbrace {1+\ldots +1}_{\text {n times}}\neq 0.\]
+</p>
+
+<p>
+A (positive) <b>infinitesimal element</b> of an ordered ring \(R\) is an element \(\epsilon \in R\) such that for all \(n\in \N \), \(0&lt;n\epsilon \leq 1\). If \(R\) is a field then we may rewrite this as \(0&lt;\epsilon \leq 1/n\) for all \(n\in
+\N \).
+</p>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-333"></a>
+<span class="amsthmnameplain">Example</span><span class="amsthmnumberplain"> <span class="textup">5.16</span></span>. </span> Let \(\mcal {L}_{\text {o-ring}}:=\langle \geq , +,\cdot ,-,0,1\rangle \). There exists an
+ordered ring which has infinitesimal elements and is elementary equivalent to \(\R \) as an ordered ring.
+</p>
+
+<p>
+Let \(\mcal {L}_{\text {o-ring}}(\epsilon )\) be the extension of \(\mcal {L}_{\text {o-ring}}\) by the constant symbol \(\epsilon \). We want to write down a \(\mcal {L}_{\text {o-ring}}(\epsilon )\)-sentence which, for \(n\in
+\N \), says that \(0&lt;n\epsilon \leq 1\). Technically “\(n\)” is not part of our language. For each \(n\in \N \), we define an \(\mcal {L}_{\text {o-ring}}\)-term \(t_n\) by induction. Let \(t_1:=1\). For all \(n\in \N \), let
+\(t_{n+1}:=(t_n+1)\). Note that this means that for all \(\mcal {L}_{\text {o-ring}}\)-structures \(\mcal {A}\),
+</p>
+
+<p>
+\[t_n^{\mcal {A}}=\underbrace {1^{\mcal {A}}+\ldots +1^{\mcal {A}}}_{n\text { times}}.\]
+</p>
+
+<p>
+For each \(n\in \N \), let \(\phi _n\) be the \(\mcal {L}_{\text {o-ring}}(\epsilon )\)-sentence
+</p>
+
+<p>
+\[0&lt; \epsilon \wedge t_n\cdot \epsilon \leq 1.             \]
+</p>
+
+<p>
+Let \(T\) be the set of \(\mcal {L}_{\text {o-ring}}\)-sentences satisfied by \(\R \). We will show that the set of \(\mcal {L}_{\text {o-ring}}(\epsilon )\)-sentences \(T\cup \{\phi _n\st n\in \N \}\) has a model. Let \(X\subseteq
+T\cup \{\phi _n\st n\in \N \}\) be finite. Let \(m\in \N \) be greatest such that \(\phi _m\in X\). Let \(\mcal {M}_X\) be the \(\mcal {L}_{\text {o-ring}}(\epsilon )\)-structure which is an expansion of \(\R \) as an \(\mcal
+{L}_{\text {o-ring}}\)-structure to an \(\mcal {L}_{\text {o-ring}}(\epsilon )\)-structure by setting \(\epsilon ^{\mcal {M}_X}:=1/(m+1)\). Then \(t_m\cdot \epsilon ^{\mcal {M}_X}=m/m+1\) and \(0&lt;m/m+1\leq 1\). So \(\mcal
+{M}_X\) is a model of \(X\). Thus, by the Compactness Theorem, there exists an \(\mcal {L}_{\text {o-ring}}(\epsilon )\)-structure \(\mcal {M}\) which satisfies \(T\cup \{\phi _n\st n\in \N \}\). Since \(\mcal {M}\models T\), the
+\(\mcal {L}\)-reduct of \(\mcal {M}\) is elementary equivalent to \(\R \) as an ordered ring. For all \(n\in \N \), \(\mcal {M}\models \phi _n\). Therefore \(\epsilon ^\mcal {M}\) is an infinitesimal. Therefore the \(\mcal {L}\)-reduct of
+\(\mcal {M}\) has the required properties.
+</p>
+
+</li>
+
+</ul>
+
+</div>
+
+<p>
+The next example we give is also to ordered structures. This time we use a strict order.
+</p>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-334"></a>
+<span class="amsthmnameplain">Example</span><span class="amsthmnumberplain"> <span class="textup">5.17</span></span>. </span> Let \(\mcal {L}:=\langle &lt;\rangle \) where \(&lt;\) is a binary relation symbol. For each
+\(n\in \N \), let \(\mcal {A}_n\) be the \(\mcal {L}\)-structure with domain \(\{1,\ldots ,n\}\) with \(&lt;^{\mcal {A}_n}\) defined as the usual strict order on \(\{1,\ldots ,n\}\). Let \(T\) be the set of \(\mcal {L}\)-sentences satisfied
+by all \(\mcal {A}_n\). There is an \(\mcal {L}\)-structure \(\mcal {A}\) with domain \(A\) such that \(\mcal {A}\models T\) and for all \(r\in \R \), there exists \(a_r\in A\) such that for all \(r,s\in \R \),
+</p>
+
+<p>
+\[a_r&lt;a_s \text { if and only if }r&lt;s \text { in } \R \]
+</p>
+
+<p>
+To show this we extend our language by \(\R \)-many constant symbols. Let \(\mcal {L}_\R :=\langle &lt;, (c_r)_{r\in \R } \rangle \) where \(&lt;\) is the binary relation symbol from \(\mcal {L}\) and \(c_r\) is a constant symbol for
+all \(r\in \R \). For each pair of rational numbers \(r,s\), let \(\phi _{r&lt;s}\) be the \(\mcal {L}_\R \)-formula \(c_r&lt;c_s\).
+</p>
+
+<p>
+For \(X\subseteq \R \), let
+</p>
+
+<p>
+\[\Sigma _X:=\{\phi _{r&lt;s} \st r,s\in X \text { and } r&lt;s\}\cup \{(\neg \phi _{r&lt;s})\mid r,s\in X \text { and } r \not &lt; s\}.\]
+</p>
+
+<p>
+We will show that for all finite \(Y\subseteq \R \), \(\Sigma _Y\cup T\) has a model. Let \(Y=\{r_1,\ldots ,r_n\}\) with \(r_1&lt;r_2&lt;\ldots &lt;r_n\). We expand \(\mcal {A}_n\) to an \(\mcal {L}_\R \)- structure \(\mcal
+{A}_{n,Y}\) which is a model of \(\Sigma _Y\). For each \(r_i\), let \(c_{r_i}^{\mcal {A}_{n,Y}}\) be \(i\) and for \(r\notin Y\), let \(c_r^{\mcal {A}_{n,Y}}=1\). This means that for all \(r,s\in Y\), \(r&lt;s\) if and only if
+\(c_r&lt;^{\mcal {A}_n}c_s\). So \(\mcal {A}_n\), as an \(\mcal {L}_\R \)-structure, is a model of \(\Sigma _Y\). Finally, \(\mcal {A}_{n,Y}\), as an \(\mcal {L}_\R \)-structure, is a model of \(T\) because, by definition of \(T\), \(\mcal
+{A}_{n,Y}\) is \(\mcal {A}_n\) as an \(\mcal {L}\)-structure.
+</p>
+
+<p>
+If \(S\subseteq \Sigma _\R \cup T\) is finite then there exists a finite subset \(Y\subseteq \R \) such that \(S\subseteq \Sigma _Y\cup T\). So, for any such \(S\), \(\mcal {A}_{n,Y}\) is a model of \(S\). Therefore, by the Compactness
+Theorem, \(\Sigma _\R \cup T\) has a model \(\mcal {A}\). Since \(\mcal {A}\models \Sigma _{\R }\),
+</p>
+
+<p>
+\[c_r^{\mcal {A}}&lt;^{\mcal {A}}c_s^{\mcal {A}} \text { if and only if } r&lt;s.\]
+</p>
+
+<p>
+So setting \(a_r:=c_r^\mcal {A}\) and viewing \(\mcal {A}\) as an \(\mcal {L}\)-structure, gives a model of \(T\) with the required properties.
+</p>
+
+</li>
+
+</ul>
+
+</div>
+
+</section>
+
+</main>
+
+</div>
+
+
+<nav class="botnavigation"><a href="Logic.html" class="linkhome" >
+Home</a></nav>
+
+</body>
+</html>

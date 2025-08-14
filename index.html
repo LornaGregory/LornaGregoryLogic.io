@@ -1,0 +1,1800 @@
+<!DOCTYPE html>
+<html lang="en-UK">
+<head>
+<meta charset="UTF-8" />
+<meta name="author" content="Lorna Gregory" />
+<meta name="generator" content="LaTeX Lwarp package" />
+<meta name="description" content="A description." />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Calculus</title>
+<link rel="stylesheet" type="text/css" href="lwarp.css" />
+
+<script>
+// Lwarp MathJax emulation code
+//
+// Based on code by Davide P. Cervone.
+// Equation numbering: https://github.com/mathjax/MathJax/issues/2427
+// Starred and ifnextchar macros: https://github.com/mathjax/MathJax/issues/2428
+// \left, \right delimiters: https://github.com/mathjax/MathJax/issues/2535
+//
+// Modified by Brian Dunn to adjust equation numbering and add subequations.
+//
+// LaTeX can use \seteqnumber{subequations?}{section}{number} before each equation.
+// subequations? is 0 usually, 1 if inside subequations.
+// section is a string printed as-is, or empty.
+// number is auto-incremented by MathJax between equations.
+//
+MathJax = {
+     subequations: "0",
+     section: "",
+     loader: {
+          load: ['[tex]/tagformat', '[tex]/textmacros'],
+     },
+     startup: {
+          ready() {
+              //       These would be replaced by import commands if you wanted to make
+              //       a proper extension.
+              const Configuration = MathJax._.input.tex.Configuration.Configuration;
+              const CommandMap = MathJax._.input.tex.SymbolMap.CommandMap;
+              const Macro = MathJax._.input.tex.Symbol.Macro;
+              const TexError = MathJax._.input.tex.TexError.default;
+              const ParseUtil = MathJax._.input.tex.ParseUtil.default;
+              const expandable = MathJax._.util.Options.expandable;
+
+
+              //       Insert the replacement string into the TeX string, and check
+              //       that there haven't been too many maxro substitutions (prevents
+              //       infinite loops).
+              const useArgument = (parser, text) => {
+                   parser.string = ParseUtil.addArgs(parser, text, parser.string.slice(parser.i));
+                   parser.i = 0;
+                   if (++parser.macroCount > parser.configuration.options.maxMacros) {
+                        throw new TexError('MaxMacroSub1',
+                        'MathJax maximum macro substitution count exceeded; ' +
+                        'is there a recursive macro call?');
+                   }
+              }
+
+
+              //       Create the command map for:
+              //            \ifstar, \ifnextchar, \ifblank, \ifstrequal, \gsub, \seteqnumber
+              new CommandMap('Lwarp-macros', {
+                   ifstar: 'IfstarFunction',
+                   ifnextchar: 'IfnextcharFunction',
+                   ifblank: 'IfblankFunction',
+                   ifstrequal: 'IfstrequalFunction',
+                   gsubstitute: 'GsubstituteFunction',
+                   seteqnumber: 'SeteqnumberFunction'
+              }, {
+                   //       This function implements an ifstar macro.
+                   IfstarFunction(parser, name) {
+                        const resultstar = parser.GetArgument(name);
+                        const resultnostar = parser.GetArgument(name);
+                        const star = parser.GetStar();                        // true if there is a *
+                        useArgument(parser, star ? resultstar : resultnostar);
+                   },
+
+
+                   //       This function implements an ifnextchar macro.
+                   IfnextcharFunction(parser, name) {
+                        let whichchar = parser.GetArgument(name);
+                        if (whichchar.match(/^(?:0x[0-9A-F]+|[0-9]+)$/i)) {
+                            // $ syntax highlighting
+                            whichchar = String.fromCodePoint(parseInt(whichchar));
+                        }
+                        const resultnextchar = parser.GetArgument(name);
+                        const resultnotnextchar = parser.GetArgument(name);
+                        const gotchar = (parser.GetNext() === whichchar);
+                        useArgument(parser, gotchar ? resultnextchar : resultnotnextchar);
+                   },
+
+
+                   // This function implements an ifblank macro.
+                   IfblankFunction(parser, name) {
+                        const blankarg = parser.GetArgument(name);
+                        const resultblank = parser.GetArgument(name);
+                        const resultnotblank = parser.GetArgument(name);
+                        const isblank = (blankarg.trim() == "");
+                        useArgument(parser, isblank ? resultblank : resultnotblank);
+                   },
+
+
+                   // This function implements an ifstrequal macro.
+                   IfstrequalFunction(parser, name) {
+                        const strequalfirst = parser.GetArgument(name);
+                        const strequalsecond = parser.GetArgument(name);
+                        const resultequal = parser.GetArgument(name);
+                        const resultnotequal = parser.GetArgument(name);
+                        const isequal = (strequalfirst == strequalsecond);
+                        useArgument(parser, isequal ? resultequal : resultnotequal);
+                   },
+
+
+                   // This function implements a gsub macro.
+                   GsubstituteFunction(parser, name) {
+                        const gsubfirst = parser.GetArgument(name);
+                        const gsubsecond = parser.GetArgument(name);
+                        const gsubthird = parser.GetArgument(name);
+                        let gsubresult=gsubfirst.replace(gsubsecond, gsubthird);
+                        useArgument(parser, gsubresult);
+                   },
+
+
+                   //       This function modifies the equation numbers.
+                   SeteqnumberFunction(parser, name) {
+                            //   Get the macro parameters
+                            const star = parser.GetStar();                      // true if there is a *
+                            const optBrackets = parser.GetBrackets(name);        // contents of optional brackets
+                            const newsubequations = parser.GetArgument(name);      // the subequations argument
+                            const neweqsection = parser.GetArgument(name);      // the eq section argument
+                            const neweqnumber = parser.GetArgument(name);        // the eq number argument
+                            MathJax.config.subequations=newsubequations ;       // a string with boolean meaning
+                            MathJax.config.section=neweqsection ;               // a string with numeric meaning
+                            parser.tags.counter = parser.tags.allCounter = neweqnumber ;
+                   }
+
+
+              });
+
+
+              //       Create the Lwarp-macros package
+              Configuration.create('Lwarp-macros', {
+                   handler: {macro: ['Lwarp-macros']}
+              });
+
+
+              MathJax.startup.defaultReady();
+
+
+              // For forward references:
+              MathJax.startup.input[0].preFilters.add(({math}) => {
+                   if (math.inputData.recompile){
+                            MathJax.config.subequations = math.inputData.recompile.subequations;
+                            MathJax.config.section = math.inputData.recompile.section;
+                   }
+              });
+              MathJax.startup.input[0].postFilters.add(({math}) => {
+                   if (math.inputData.recompile){
+                            math.inputData.recompile.subequations = MathJax.config.subequations;
+                            math.inputData.recompile.section = MathJax.config.section;
+                   }
+              });
+
+
+                   // For \left, \right with unicode-math:
+                   const {DelimiterMap} = MathJax._.input.tex.SymbolMap;
+                   const {Symbol} = MathJax._.input.tex.Symbol;
+                   const {MapHandler} = MathJax._.input.tex.MapHandler;
+                   const delimiter = MapHandler.getMap('delimiter');
+                   delimiter.add('\\lBrack', new Symbol('\\lBrack', '\u27E6'));
+                   delimiter.add('\\rBrack', new Symbol('\\rBrack', '\u27E7'));
+                   delimiter.add('\\lAngle', new Symbol('\\lAngle', '\u27EA'));
+                   delimiter.add('\\rAngle', new Symbol('\\rAngle', '\u27EB'));
+                   delimiter.add('\\lbrbrak', new Symbol('\\lbrbrak', '\u2772'));
+                   delimiter.add('\\rbrbrak', new Symbol('\\rbrbrak', '\u2773'));
+                   delimiter.add('\\lbag', new Symbol('\\lbag', '\u27C5'));
+                   delimiter.add('\\rbag', new Symbol('\\rbag', '\u27C6'));
+                   delimiter.add('\\llparenthesis', new Symbol('\\llparenthesis', '\u2987'));
+                   delimiter.add('\\rrparenthesis', new Symbol('\\rrparenthesis', '\u2988'));
+                   delimiter.add('\\llangle', new Symbol('\\llangle', '\u2989'));
+                   delimiter.add('\\rrangle', new Symbol('\\rrangle', '\u298A'));
+                   delimiter.add('\\Lbrbrak', new Symbol('\\Lbrbrak', '\u27EC'));
+                   delimiter.add('\\Rbrbrak', new Symbol('\\Rbrbrak', '\u27ED'));
+                   delimiter.add('\\lBrace', new Symbol('\\lBrace', '\u2983'));
+                   delimiter.add('\\rBrace', new Symbol('\\rBrace', '\u2984'));
+                   delimiter.add('\\lParen', new Symbol('\\lParen', '\u2985'));
+                   delimiter.add('\\rParen', new Symbol('\\rParen', '\u2986'));
+                   delimiter.add('\\lbrackubar', new Symbol('\\lbrackubar', '\u298B'));
+                   delimiter.add('\\rbrackubar', new Symbol('\\rbrackubar', '\u298C'));
+                   delimiter.add('\\lbrackultick', new Symbol('\\lbrackultick', '\u298D'));
+                   delimiter.add('\\rbracklrtick', new Symbol('\\rbracklrtick', '\u298E'));
+                   delimiter.add('\\lbracklltick', new Symbol('\\lbracklltick', '\u298F'));
+                   delimiter.add('\\rbrackurtick', new Symbol('\\rbrackurtick', '\u2990'));
+                   delimiter.add('\\langledot', new Symbol('\\langledot', '\u2991'));
+                   delimiter.add('\\rangledot', new Symbol('\\rangledot', '\u2992'));
+                   delimiter.add('\\lparenless', new Symbol('\\lparenless', '\u2993'));
+                   delimiter.add('\\rparengtr', new Symbol('\\rparengtr', '\u2994'));
+                   delimiter.add('\\Lparengtr', new Symbol('\\Lparengtr', '\u2995'));
+                   delimiter.add('\\Rparenless', new Symbol('\\Rparenless', '\u2996'));
+                   delimiter.add('\\lblkbrbrak', new Symbol('\\lblkbrbrak', '\u2997'));
+                   delimiter.add('\\rblkbrbrak', new Symbol('\\rblkbrbrak', '\u2998'));
+                   delimiter.add('\\lvzigzag', new Symbol('\\lvzigzag', '\u29D8'));
+                   delimiter.add('\\rvzigzag', new Symbol('\\rvzigzag', '\u29D9'));
+                   delimiter.add('\\Lvzigzag', new Symbol('\\Lvzigzag', '\u29DA'));
+                   delimiter.add('\\Rvzigzag', new Symbol('\\Rvzigzag', '\u29DB'));
+                   delimiter.add('\\lcurvyangle', new Symbol('\\lcurvyangle', '\u29FC'));
+                   delimiter.add('\\rcurvyangle', new Symbol('\\rcurvyangle', '\u29FD'));
+                   delimiter.add('\\Vvert', new Symbol('\\Vvert', '\u2980'));
+          }       // ready
+     },           // startup
+
+
+     tex: {
+          packages: {'[+]': ['tagformat', 'Lwarp-macros', 'textmacros']},
+          tags: "ams",
+                   tagformat: {
+                            number: function (n) {
+                                 if(MathJax.config.subequations==0)
+                                        return(MathJax.config.section + n);
+                                 else
+                                        return(MathJax.config.section + String.fromCharCode(96+n));
+                            },
+                   },
+     }
+}
+</script>
+
+
+<script
+          id="MathJax-script"
+          src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"
+></script>
+
+</head>
+<body>
+
+
+<div class="bodywithoutsidetoc">
+
+
+<main class="bodycontainer">
+
+
+<section class="textbody">
+
+<a id="Logic-autofile-0"></a>
+
+<!--MathJax customizations:-->
+<div data-nosnippet
+    style="display:none"
+>
+
+\(\newcommand{\footnotename}{footnote}\)
+
+\(\def \LWRfootnote {1}\)
+
+\(\newcommand {\footnote }[2][\LWRfootnote ]{{}^{\mathrm {#1}}}\)
+
+\(\newcommand {\footnotemark }[1][\LWRfootnote ]{{}^{\mathrm {#1}}}\)
+
+\(\let \LWRorighspace \hspace \)
+
+\(\renewcommand {\hspace }{\ifstar \LWRorighspace \LWRorighspace }\)
+
+\(\newcommand {\TextOrMath }[2]{#2}\)
+
+\(\newcommand {\mathnormal }[1]{{#1}}\)
+
+\(\newcommand \ensuremath [1]{#1}\)
+
+\(\newcommand {\LWRframebox }[2][]{\fbox {#2}} \newcommand {\framebox }[1][]{\LWRframebox } \)
+
+\(\newcommand {\setlength }[2]{}\)
+
+\(\newcommand {\addtolength }[2]{}\)
+
+\(\newcommand {\setcounter }[2]{}\)
+
+\(\newcommand {\addtocounter }[2]{}\)
+
+\(\newcommand {\arabic }[1]{}\)
+
+\(\newcommand {\number }[1]{}\)
+
+\(\newcommand {\noalign }[1]{\text {#1}\notag \\}\)
+
+\(\newcommand {\cline }[1]{}\)
+
+\(\newcommand {\directlua }[1]{\text {(directlua)}}\)
+
+\(\newcommand {\luatexdirectlua }[1]{\text {(directlua)}}\)
+
+\(\newcommand {\protect }{}\)
+
+\(\def \LWRabsorbnumber #1 {}\)
+
+\(\def \LWRabsorbquotenumber &quot;#1 {}\)
+
+\(\newcommand {\LWRabsorboption }[1][]{}\)
+
+\(\newcommand {\LWRabsorbtwooptions }[1][]{\LWRabsorboption }\)
+
+\(\def \mathchar {\ifnextchar &quot;\LWRabsorbquotenumber \LWRabsorbnumber }\)
+
+\(\def \mathcode #1={\mathchar }\)
+
+\(\let \delcode \mathcode \)
+
+\(\let \delimiter \mathchar \)
+
+\(\def \oe {\unicode {x0153}}\)
+
+\(\def \OE {\unicode {x0152}}\)
+
+\(\def \ae {\unicode {x00E6}}\)
+
+\(\def \AE {\unicode {x00C6}}\)
+
+\(\def \aa {\unicode {x00E5}}\)
+
+\(\def \AA {\unicode {x00C5}}\)
+
+\(\def \o {\unicode {x00F8}}\)
+
+\(\def \O {\unicode {x00D8}}\)
+
+\(\def \l {\unicode {x0142}}\)
+
+\(\def \L {\unicode {x0141}}\)
+
+\(\def \ss {\unicode {x00DF}}\)
+
+\(\def \SS {\unicode {x1E9E}}\)
+
+\(\def \dag {\unicode {x2020}}\)
+
+\(\def \ddag {\unicode {x2021}}\)
+
+\(\def \P {\unicode {x00B6}}\)
+
+\(\def \copyright {\unicode {x00A9}}\)
+
+\(\def \pounds {\unicode {x00A3}}\)
+
+\(\let \LWRref \ref \)
+
+\(\renewcommand {\ref }{\ifstar \LWRref \LWRref }\)
+
+\( \newcommand {\multicolumn }[3]{#3}\)
+
+\(\require {textcomp}\)
+
+\(\newcommand {\intertext }[1]{\text {#1}\notag \\}\)
+
+\(\let \Hat \hat \)
+
+\(\let \Check \check \)
+
+\(\let \Tilde \tilde \)
+
+\(\let \Acute \acute \)
+
+\(\let \Grave \grave \)
+
+\(\let \Dot \dot \)
+
+\(\let \Ddot \ddot \)
+
+\(\let \Breve \breve \)
+
+\(\let \Bar \bar \)
+
+\(\let \Vec \vec \)
+
+\(\newcommand {\bm }[1]{\boldsymbol {#1}}\)
+
+\(\newcommand {\mathlarger }[1]{#1}\)
+
+\(\newcommand {\mathsmaller }[1]{#1}\)
+
+\(\newcommand {\LWRmarginnote }[1][]{}\)
+
+\(\newcommand {\marginnote }[2][]{\qquad {\small \textrm {#2}}\LWRmarginnote }\)
+
+</div>
+
+<a id="Logic-autopage-1"></a>
+<div class="titlepage">
+
+<h1>Mathematical Logic</h1>
+
+
+<div class="author">
+
+
+<div class="oneauthor">
+
+<p>
+Lorna Gregory
+</p>
+</div>
+
+</div>
+
+
+<div class="titledate">
+
+<p>
+July 25, 2025
+</p>
+</div>
+
+</div>
+<!--
+...... chapter Contents ......
+-->
+<h3 id="autosec-3">Contents</h3>
+<a id="Logic-autopage-3"></a>
+
+
+
+<nav class="toc">
+
+<p>
+<a href="node-Introduction.html#autosec-5" class="tocchapter" >
+<span class="sectionnumber">1</span>&#x2003;Introduction</a>
+</p>
+
+
+<p>
+<a href="node-Propositional-Logic.html#autosec-15" class="tocchapter" >
+<span class="sectionnumber">2</span>&#x2003;Propositional Logic</a>
+</p>
+</nav>
+
+   </section>
+
+   </main>
+
+   </div>
+
+   </body>
+</html>
+         <!--|Start file|node-Introduction.html|-->
+
+   <!DOCTYPE html>
+<html lang="en-UK">
+<head>
+<meta charset="UTF-8" />
+<meta name="author" content="Lorna Gregory" />
+<meta name="generator" content="LaTeX Lwarp package" />
+<meta name="description" content="A description." />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Calculus — Introduction</title>
+<link rel="stylesheet" type="text/css" href="lwarp.css" />
+
+<script>
+// Lwarp MathJax emulation code
+//
+// Based on code by Davide P. Cervone.
+// Equation numbering: https://github.com/mathjax/MathJax/issues/2427
+// Starred and ifnextchar macros: https://github.com/mathjax/MathJax/issues/2428
+// \left, \right delimiters: https://github.com/mathjax/MathJax/issues/2535
+//
+// Modified by Brian Dunn to adjust equation numbering and add subequations.
+//
+// LaTeX can use \seteqnumber{subequations?}{section}{number} before each equation.
+// subequations? is 0 usually, 1 if inside subequations.
+// section is a string printed as-is, or empty.
+// number is auto-incremented by MathJax between equations.
+//
+MathJax = {
+     subequations: "0",
+     section: "",
+     loader: {
+          load: ['[tex]/tagformat', '[tex]/textmacros'],
+     },
+     startup: {
+          ready() {
+              //       These would be replaced by import commands if you wanted to make
+              //       a proper extension.
+              const Configuration = MathJax._.input.tex.Configuration.Configuration;
+              const CommandMap = MathJax._.input.tex.SymbolMap.CommandMap;
+              const Macro = MathJax._.input.tex.Symbol.Macro;
+              const TexError = MathJax._.input.tex.TexError.default;
+              const ParseUtil = MathJax._.input.tex.ParseUtil.default;
+              const expandable = MathJax._.util.Options.expandable;
+
+
+              //       Insert the replacement string into the TeX string, and check
+              //       that there haven't been too many maxro substitutions (prevents
+              //       infinite loops).
+              const useArgument = (parser, text) => {
+                   parser.string = ParseUtil.addArgs(parser, text, parser.string.slice(parser.i));
+                   parser.i = 0;
+                   if (++parser.macroCount > parser.configuration.options.maxMacros) {
+                        throw new TexError('MaxMacroSub1',
+                        'MathJax maximum macro substitution count exceeded; ' +
+                        'is there a recursive macro call?');
+                   }
+              }
+
+
+              //       Create the command map for:
+              //            \ifstar, \ifnextchar, \ifblank, \ifstrequal, \gsub, \seteqnumber
+              new CommandMap('Lwarp-macros', {
+                   ifstar: 'IfstarFunction',
+                   ifnextchar: 'IfnextcharFunction',
+                   ifblank: 'IfblankFunction',
+                   ifstrequal: 'IfstrequalFunction',
+                   gsubstitute: 'GsubstituteFunction',
+                   seteqnumber: 'SeteqnumberFunction'
+              }, {
+                   //       This function implements an ifstar macro.
+                   IfstarFunction(parser, name) {
+                        const resultstar = parser.GetArgument(name);
+                        const resultnostar = parser.GetArgument(name);
+                        const star = parser.GetStar();                        // true if there is a *
+                        useArgument(parser, star ? resultstar : resultnostar);
+                   },
+
+
+                   //       This function implements an ifnextchar macro.
+                   IfnextcharFunction(parser, name) {
+                        let whichchar = parser.GetArgument(name);
+                        if (whichchar.match(/^(?:0x[0-9A-F]+|[0-9]+)$/i)) {
+                            // $ syntax highlighting
+                            whichchar = String.fromCodePoint(parseInt(whichchar));
+                        }
+                        const resultnextchar = parser.GetArgument(name);
+                        const resultnotnextchar = parser.GetArgument(name);
+                        const gotchar = (parser.GetNext() === whichchar);
+                        useArgument(parser, gotchar ? resultnextchar : resultnotnextchar);
+                   },
+
+
+                   // This function implements an ifblank macro.
+                   IfblankFunction(parser, name) {
+                        const blankarg = parser.GetArgument(name);
+                        const resultblank = parser.GetArgument(name);
+                        const resultnotblank = parser.GetArgument(name);
+                        const isblank = (blankarg.trim() == "");
+                        useArgument(parser, isblank ? resultblank : resultnotblank);
+                   },
+
+
+                   // This function implements an ifstrequal macro.
+                   IfstrequalFunction(parser, name) {
+                        const strequalfirst = parser.GetArgument(name);
+                        const strequalsecond = parser.GetArgument(name);
+                        const resultequal = parser.GetArgument(name);
+                        const resultnotequal = parser.GetArgument(name);
+                        const isequal = (strequalfirst == strequalsecond);
+                        useArgument(parser, isequal ? resultequal : resultnotequal);
+                   },
+
+
+                   // This function implements a gsub macro.
+                   GsubstituteFunction(parser, name) {
+                        const gsubfirst = parser.GetArgument(name);
+                        const gsubsecond = parser.GetArgument(name);
+                        const gsubthird = parser.GetArgument(name);
+                        let gsubresult=gsubfirst.replace(gsubsecond, gsubthird);
+                        useArgument(parser, gsubresult);
+                   },
+
+
+                   //       This function modifies the equation numbers.
+                   SeteqnumberFunction(parser, name) {
+                            //   Get the macro parameters
+                            const star = parser.GetStar();                      // true if there is a *
+                            const optBrackets = parser.GetBrackets(name);        // contents of optional brackets
+                            const newsubequations = parser.GetArgument(name);      // the subequations argument
+                            const neweqsection = parser.GetArgument(name);      // the eq section argument
+                            const neweqnumber = parser.GetArgument(name);        // the eq number argument
+                            MathJax.config.subequations=newsubequations ;       // a string with boolean meaning
+                            MathJax.config.section=neweqsection ;               // a string with numeric meaning
+                            parser.tags.counter = parser.tags.allCounter = neweqnumber ;
+                   }
+
+
+              });
+
+
+              //       Create the Lwarp-macros package
+              Configuration.create('Lwarp-macros', {
+                   handler: {macro: ['Lwarp-macros']}
+              });
+
+
+              MathJax.startup.defaultReady();
+
+
+              // For forward references:
+              MathJax.startup.input[0].preFilters.add(({math}) => {
+                   if (math.inputData.recompile){
+                            MathJax.config.subequations = math.inputData.recompile.subequations;
+                            MathJax.config.section = math.inputData.recompile.section;
+                   }
+              });
+              MathJax.startup.input[0].postFilters.add(({math}) => {
+                   if (math.inputData.recompile){
+                            math.inputData.recompile.subequations = MathJax.config.subequations;
+                            math.inputData.recompile.section = MathJax.config.section;
+                   }
+              });
+
+
+                   // For \left, \right with unicode-math:
+                   const {DelimiterMap} = MathJax._.input.tex.SymbolMap;
+                   const {Symbol} = MathJax._.input.tex.Symbol;
+                   const {MapHandler} = MathJax._.input.tex.MapHandler;
+                   const delimiter = MapHandler.getMap('delimiter');
+                   delimiter.add('\\lBrack', new Symbol('\\lBrack', '\u27E6'));
+                   delimiter.add('\\rBrack', new Symbol('\\rBrack', '\u27E7'));
+                   delimiter.add('\\lAngle', new Symbol('\\lAngle', '\u27EA'));
+                   delimiter.add('\\rAngle', new Symbol('\\rAngle', '\u27EB'));
+                   delimiter.add('\\lbrbrak', new Symbol('\\lbrbrak', '\u2772'));
+                   delimiter.add('\\rbrbrak', new Symbol('\\rbrbrak', '\u2773'));
+                   delimiter.add('\\lbag', new Symbol('\\lbag', '\u27C5'));
+                   delimiter.add('\\rbag', new Symbol('\\rbag', '\u27C6'));
+                   delimiter.add('\\llparenthesis', new Symbol('\\llparenthesis', '\u2987'));
+                   delimiter.add('\\rrparenthesis', new Symbol('\\rrparenthesis', '\u2988'));
+                   delimiter.add('\\llangle', new Symbol('\\llangle', '\u2989'));
+                   delimiter.add('\\rrangle', new Symbol('\\rrangle', '\u298A'));
+                   delimiter.add('\\Lbrbrak', new Symbol('\\Lbrbrak', '\u27EC'));
+                   delimiter.add('\\Rbrbrak', new Symbol('\\Rbrbrak', '\u27ED'));
+                   delimiter.add('\\lBrace', new Symbol('\\lBrace', '\u2983'));
+                   delimiter.add('\\rBrace', new Symbol('\\rBrace', '\u2984'));
+                   delimiter.add('\\lParen', new Symbol('\\lParen', '\u2985'));
+                   delimiter.add('\\rParen', new Symbol('\\rParen', '\u2986'));
+                   delimiter.add('\\lbrackubar', new Symbol('\\lbrackubar', '\u298B'));
+                   delimiter.add('\\rbrackubar', new Symbol('\\rbrackubar', '\u298C'));
+                   delimiter.add('\\lbrackultick', new Symbol('\\lbrackultick', '\u298D'));
+                   delimiter.add('\\rbracklrtick', new Symbol('\\rbracklrtick', '\u298E'));
+                   delimiter.add('\\lbracklltick', new Symbol('\\lbracklltick', '\u298F'));
+                   delimiter.add('\\rbrackurtick', new Symbol('\\rbrackurtick', '\u2990'));
+                   delimiter.add('\\langledot', new Symbol('\\langledot', '\u2991'));
+                   delimiter.add('\\rangledot', new Symbol('\\rangledot', '\u2992'));
+                   delimiter.add('\\lparenless', new Symbol('\\lparenless', '\u2993'));
+                   delimiter.add('\\rparengtr', new Symbol('\\rparengtr', '\u2994'));
+                   delimiter.add('\\Lparengtr', new Symbol('\\Lparengtr', '\u2995'));
+                   delimiter.add('\\Rparenless', new Symbol('\\Rparenless', '\u2996'));
+                   delimiter.add('\\lblkbrbrak', new Symbol('\\lblkbrbrak', '\u2997'));
+                   delimiter.add('\\rblkbrbrak', new Symbol('\\rblkbrbrak', '\u2998'));
+                   delimiter.add('\\lvzigzag', new Symbol('\\lvzigzag', '\u29D8'));
+                   delimiter.add('\\rvzigzag', new Symbol('\\rvzigzag', '\u29D9'));
+                   delimiter.add('\\Lvzigzag', new Symbol('\\Lvzigzag', '\u29DA'));
+                   delimiter.add('\\Rvzigzag', new Symbol('\\Rvzigzag', '\u29DB'));
+                   delimiter.add('\\lcurvyangle', new Symbol('\\lcurvyangle', '\u29FC'));
+                   delimiter.add('\\rcurvyangle', new Symbol('\\rcurvyangle', '\u29FD'));
+                   delimiter.add('\\Vvert', new Symbol('\\Vvert', '\u2980'));
+          }       // ready
+     },           // startup
+
+
+     tex: {
+          packages: {'[+]': ['tagformat', 'Lwarp-macros', 'textmacros']},
+          tags: "ams",
+                   tagformat: {
+                            number: function (n) {
+                                 if(MathJax.config.subequations==0)
+                                        return(MathJax.config.section + n);
+                                 else
+                                        return(MathJax.config.section + String.fromCharCode(96+n));
+                            },
+                   },
+     }
+}
+</script>
+
+
+<script
+          id="MathJax-script"
+          src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"
+></script>
+
+   </head>
+<body>
+
+
+   <a id="Logic-autopage-4"></a>
+<nav class="topnavigation"><a href="index.html" class="linkhome" >
+Home</a></nav>
+
+
+<div class="bodyandsidetoc">
+<div class="sidetoccontainer">
+
+
+<nav class="sidetoc">
+
+
+<div class="sidetoctitle">
+
+   <p>
+<span class="sidetocthetitle">Mathematical Logic</span>
+</p>
+
+<p>
+   Contents
+</p>
+</div>
+
+
+<div class="sidetoccontents">
+
+<p>
+   <a href="index.html" class="linkhome" >
+Home</a>
+</p>
+
+<p>
+   <a href="node-Introduction.html#autosec-5" class="tocchapter" >
+<span class="sectionnumber">1</span>&#x2003;Introduction</a>
+</p>
+
+
+<p>
+   <a href="node-Propositional-Logic.html#autosec-15" class="tocchapter" >
+<span class="sectionnumber">2</span>&#x2003;Propositional Logic</a>
+</p>
+
+
+      </div>
+
+      </nav>
+
+      </div>
+
+
+<main class="bodycontainer">
+
+
+<section class="textbody">
+
+      <h1>Mathematical Logic</h1>
+
+   <!--MathJax customizations:-->
+<div data-nosnippet
+    style="display:none"
+>
+
+      \(\newcommand{\footnotename}{footnote}\)
+
+      \(\def \LWRfootnote {1}\)
+
+      \(\newcommand {\footnote }[2][\LWRfootnote ]{{}^{\mathrm {#1}}}\)
+
+      \(\newcommand {\footnotemark }[1][\LWRfootnote ]{{}^{\mathrm {#1}}}\)
+
+      \(\let \LWRorighspace \hspace \)
+
+      \(\renewcommand {\hspace }{\ifstar \LWRorighspace \LWRorighspace }\)
+
+      \(\newcommand {\TextOrMath }[2]{#2}\)
+
+      \(\newcommand {\mathnormal }[1]{{#1}}\)
+
+      \(\newcommand \ensuremath [1]{#1}\)
+
+      \(\newcommand {\LWRframebox }[2][]{\fbox {#2}} \newcommand {\framebox }[1][]{\LWRframebox } \)
+
+      \(\newcommand {\setlength }[2]{}\)
+
+      \(\newcommand {\addtolength }[2]{}\)
+
+      \(\newcommand {\setcounter }[2]{}\)
+
+      \(\newcommand {\addtocounter }[2]{}\)
+
+      \(\newcommand {\arabic }[1]{}\)
+
+      \(\newcommand {\number }[1]{}\)
+
+      \(\newcommand {\noalign }[1]{\text {#1}\notag \\}\)
+
+      \(\newcommand {\cline }[1]{}\)
+
+      \(\newcommand {\directlua }[1]{\text {(directlua)}}\)
+
+      \(\newcommand {\luatexdirectlua }[1]{\text {(directlua)}}\)
+
+      \(\newcommand {\protect }{}\)
+
+      \(\def \LWRabsorbnumber #1 {}\)
+
+      \(\def \LWRabsorbquotenumber &quot;#1 {}\)
+
+      \(\newcommand {\LWRabsorboption }[1][]{}\)
+
+      \(\newcommand {\LWRabsorbtwooptions }[1][]{\LWRabsorboption }\)
+
+      \(\def \mathchar {\ifnextchar &quot;\LWRabsorbquotenumber \LWRabsorbnumber }\)
+
+      \(\def \mathcode #1={\mathchar }\)
+
+      \(\let \delcode \mathcode \)
+
+      \(\let \delimiter \mathchar \)
+
+      \(\def \oe {\unicode {x0153}}\)
+
+      \(\def \OE {\unicode {x0152}}\)
+
+      \(\def \ae {\unicode {x00E6}}\)
+
+      \(\def \AE {\unicode {x00C6}}\)
+
+      \(\def \aa {\unicode {x00E5}}\)
+
+      \(\def \AA {\unicode {x00C5}}\)
+
+      \(\def \o {\unicode {x00F8}}\)
+
+      \(\def \O {\unicode {x00D8}}\)
+
+      \(\def \l {\unicode {x0142}}\)
+
+      \(\def \L {\unicode {x0141}}\)
+
+      \(\def \ss {\unicode {x00DF}}\)
+
+      \(\def \SS {\unicode {x1E9E}}\)
+
+      \(\def \dag {\unicode {x2020}}\)
+
+      \(\def \ddag {\unicode {x2021}}\)
+
+      \(\def \P {\unicode {x00B6}}\)
+
+      \(\def \copyright {\unicode {x00A9}}\)
+
+      \(\def \pounds {\unicode {x00A3}}\)
+
+      \(\let \LWRref \ref \)
+
+      \(\renewcommand {\ref }{\ifstar \LWRref \LWRref }\)
+
+      \( \newcommand {\multicolumn }[3]{#3}\)
+
+      \(\require {textcomp}\)
+
+      \(\newcommand {\intertext }[1]{\text {#1}\notag \\}\)
+
+      \(\let \Hat \hat \)
+
+      \(\let \Check \check \)
+
+      \(\let \Tilde \tilde \)
+
+      \(\let \Acute \acute \)
+
+      \(\let \Grave \grave \)
+
+      \(\let \Dot \dot \)
+
+      \(\let \Ddot \ddot \)
+
+      \(\let \Breve \breve \)
+
+      \(\let \Bar \bar \)
+
+      \(\let \Vec \vec \)
+
+      \(\newcommand {\bm }[1]{\boldsymbol {#1}}\)
+
+      \(\newcommand {\mathlarger }[1]{#1}\)
+
+      \(\newcommand {\mathsmaller }[1]{#1}\)
+
+      \(\newcommand {\LWRmarginnote }[1][]{}\)
+
+      \(\newcommand {\marginnote }[2][]{\qquad {\small \textrm {#2}}\LWRmarginnote }\)
+
+      </div>
+
+    <!--
+...... chapter Introduction ......
+-->
+<h3 id="autosec-5">Chapter&nbsp;<span class="sectionnumber">1&#x2003;</span>Introduction</h3>
+<a id="Logic-autopage-5"></a>
+<a id="Logic-autofile-1"></a>
+
+<p>
+   These notes will grow as the lecture course progresses. I will mark in the margin where I plan to get to in each lecture and update this to where we have got to after each lecture. I recommend you keep an eye on the “Conventions” section. I’ve left blank
+pages so that the page numbers in the body of the notes don’t need to change if the material at the start is modified.
+</p>
+    <!--
+...... subsection Prerequisites and warm-up questions ......
+-->
+<h5 id="autosec-6">Prerequisites and warm-up questions</h5>
+<a id="Logic-autopage-6"></a>
+
+
+<p>
+   You won’t need to know much of the <i>content</i> of your previous courses in order to understand this course. However, you will need a level of mathematical maturity which you won’t have unless you have attended them! In particular, you will need to
+have experience of the role of definitions in pure mathematics and be comfortable with reading and producing proofs. I will also take some examples from your algebra courses.
+</p>
+
+<p>
+   I have produced some “warm-up” questions for the first week. There won’t be a workshop on these questions but you are very welcome to talk to me about their solutions.
+</p>
+    <!--
+...... subsection Mistakes ......
+-->
+<h5 id="autosec-7">Mistakes</h5>
+<a id="Logic-autopage-7"></a>
+
+
+<p>
+    If you think you’ve found a mistake in the notes, please send me an email. I’m also happy to hear about typos. If you don’t understand something in these notes (or in lectures) then please send me an email or come to one of my office hours. It is really useful
+for me to know what students find difficult to understand or what I might not have explained well.
+</p>
+    <!--
+...... subsection Books and other resources ......
+-->
+<h5 id="autosec-8">Books and other resources</h5>
+<a id="Logic-autopage-8"></a>
+
+
+<p>
+    Although it is not necessary, I highly recommend taking a look at some books on mathematical logic. Many of them will give more details than I am able to give in lectures and/or different perspectives on the material that you might find helpful (or
+interesting). However, you need to approach them in a mature fashion; very few books, if any, will adopt exactly the conventions of this course.
+</p>
+    <!--
+...... subsection Plan ......
+-->
+<h5 id="autosec-9">Plan</h5>
+<a id="Logic-autopage-9"></a>
+
+
+<p>
+   Here is a plan of how the hours of the course will be used up to reading week.
+</p>
+<div class="center">
+   <table>
+
+   <tr style="display:none"><th>.</th></tr>
+
+<tr class="hline">
+<td class="tdc tvertbarl tvertbarr" style="border-left: 1px solid black; border-right: 1px solid black"></td>
+<td colspan="2" class="tdc tvertbarl tvertbarr" style="border-left: 1px solid black; border-right: 1px solid black">Monday</td>
+<td colspan="2" class="tdc tvertbarl tvertbarr" style="border-left: 1px solid black; border-right: 1px solid black">Thursday</td>
+</tr>
+
+<tr class="hline">
+<td class="tdc tvertbarl tvertbarr" style="border-left: 1px solid black; border-right:                     1px solid black"></td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">\(11-12\)</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">\(12-13\)</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">\(16-17\)</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">\(17-18\)</td>
+</tr>
+
+<tr class="hline">
+<td class="tdc tvertbarl tvertbarr" style="border-left: 1px solid black; border-right:                     1px solid black">Wk 1</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">L</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">L</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">L</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">L</td>
+</tr>
+
+<tr class="hline">
+<td class="tdc tvertbarl tvertbarr" style="border-left: 1px solid black; border-right:                     1px solid black">Wk 2</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">L</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">L/W</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">L</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">L</td>
+</tr>
+
+<tr class="hline">
+<td class="tdc tvertbarl tvertbarr" style="border-left: 1px solid black; border-right:                     1px solid black">Wk 3</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">L</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">W</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">L</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">L</td>
+</tr>
+
+<tr class="hline">
+<td class="tdc tvertbarl tvertbarr" style="border-left: 1px solid black; border-right:                     1px solid black">Wk 4</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">L</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">W</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">L</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">L</td>
+</tr>
+
+<tr class="hline">
+<td class="tdc tvertbarl tvertbarr" style="border-left: 1px solid black; border-right:                     1px solid black">Wk 5</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">L</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">W</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">L</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">L</td>
+</tr>
+
+<tr class="hline">
+<td class="tdc tvertbarl tvertbarr" style="border-left: 1px solid black; border-right: 1px solid black">Wk 6</td>
+<td colspan="4" class="tdc tvertbarl tvertbarr" style="border-left: 1px solid black; border-right: 1px solid black">Reading Week</td>
+</tr>
+
+<tr class="hline" aria-hidden="true">
+<td class="tdc"></td>
+<td class="tdc"></td>
+<td class="tdc"></td>
+<td class="tdc"></td>
+<td class="tdc"></td>
+</tr>
+</table>
+
+   </div>
+
+<p>
+L = Lecture, W = Workshop
+</p>
+
+<p>
+The first summative assessment will be released on October 24th and the submission deadline is November 7th (please look up the exact time - it is normally in the afternoon).
+</p>
+<div class="center">
+
+<p>
+   This page is intentionally blank.
+</p>
+</div>
+<div class="center">
+
+<p>
+   This page is intentionally blank.
+</p>
+</div>
+
+      </section>
+
+      </main>
+
+      </div>
+
+
+<nav class="botnavigation"><a href="index.html" class="linkhome" >
+Home</a></nav>
+
+   </body>
+</html>
+         <!--|Start file|node-Propositional-Logic.html|-->
+
+   <!DOCTYPE html>
+<html lang="en-UK">
+<head>
+<meta charset="UTF-8" />
+<meta name="author" content="Lorna Gregory" />
+<meta name="generator" content="LaTeX Lwarp package" />
+<meta name="description" content="A description." />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Calculus — Propositional Logic</title>
+<link rel="stylesheet" type="text/css" href="lwarp.css" />
+
+<script>
+// Lwarp MathJax emulation code
+//
+// Based on code by Davide P. Cervone.
+// Equation numbering: https://github.com/mathjax/MathJax/issues/2427
+// Starred and ifnextchar macros: https://github.com/mathjax/MathJax/issues/2428
+// \left, \right delimiters: https://github.com/mathjax/MathJax/issues/2535
+//
+// Modified by Brian Dunn to adjust equation numbering and add subequations.
+//
+// LaTeX can use \seteqnumber{subequations?}{section}{number} before each equation.
+// subequations? is 0 usually, 1 if inside subequations.
+// section is a string printed as-is, or empty.
+// number is auto-incremented by MathJax between equations.
+//
+MathJax = {
+     subequations: "0",
+     section: "",
+     loader: {
+          load: ['[tex]/tagformat', '[tex]/textmacros'],
+     },
+     startup: {
+          ready() {
+              //       These would be replaced by import commands if you wanted to make
+              //       a proper extension.
+              const Configuration = MathJax._.input.tex.Configuration.Configuration;
+              const CommandMap = MathJax._.input.tex.SymbolMap.CommandMap;
+              const Macro = MathJax._.input.tex.Symbol.Macro;
+              const TexError = MathJax._.input.tex.TexError.default;
+              const ParseUtil = MathJax._.input.tex.ParseUtil.default;
+              const expandable = MathJax._.util.Options.expandable;
+
+
+              //       Insert the replacement string into the TeX string, and check
+              //       that there haven't been too many maxro substitutions (prevents
+              //       infinite loops).
+              const useArgument = (parser, text) => {
+                   parser.string = ParseUtil.addArgs(parser, text, parser.string.slice(parser.i));
+                   parser.i = 0;
+                   if (++parser.macroCount > parser.configuration.options.maxMacros) {
+                        throw new TexError('MaxMacroSub1',
+                        'MathJax maximum macro substitution count exceeded; ' +
+                        'is there a recursive macro call?');
+                   }
+              }
+
+
+              //       Create the command map for:
+              //            \ifstar, \ifnextchar, \ifblank, \ifstrequal, \gsub, \seteqnumber
+              new CommandMap('Lwarp-macros', {
+                   ifstar: 'IfstarFunction',
+                   ifnextchar: 'IfnextcharFunction',
+                   ifblank: 'IfblankFunction',
+                   ifstrequal: 'IfstrequalFunction',
+                   gsubstitute: 'GsubstituteFunction',
+                   seteqnumber: 'SeteqnumberFunction'
+              }, {
+                   //       This function implements an ifstar macro.
+                   IfstarFunction(parser, name) {
+                        const resultstar = parser.GetArgument(name);
+                        const resultnostar = parser.GetArgument(name);
+                        const star = parser.GetStar();                        // true if there is a *
+                        useArgument(parser, star ? resultstar : resultnostar);
+                   },
+
+
+                   //       This function implements an ifnextchar macro.
+                   IfnextcharFunction(parser, name) {
+                        let whichchar = parser.GetArgument(name);
+                        if (whichchar.match(/^(?:0x[0-9A-F]+|[0-9]+)$/i)) {
+                            // $ syntax highlighting
+                            whichchar = String.fromCodePoint(parseInt(whichchar));
+                        }
+                        const resultnextchar = parser.GetArgument(name);
+                        const resultnotnextchar = parser.GetArgument(name);
+                        const gotchar = (parser.GetNext() === whichchar);
+                        useArgument(parser, gotchar ? resultnextchar : resultnotnextchar);
+                   },
+
+
+                   // This function implements an ifblank macro.
+                   IfblankFunction(parser, name) {
+                        const blankarg = parser.GetArgument(name);
+                        const resultblank = parser.GetArgument(name);
+                        const resultnotblank = parser.GetArgument(name);
+                        const isblank = (blankarg.trim() == "");
+                        useArgument(parser, isblank ? resultblank : resultnotblank);
+                   },
+
+
+                   // This function implements an ifstrequal macro.
+                   IfstrequalFunction(parser, name) {
+                        const strequalfirst = parser.GetArgument(name);
+                        const strequalsecond = parser.GetArgument(name);
+                        const resultequal = parser.GetArgument(name);
+                        const resultnotequal = parser.GetArgument(name);
+                        const isequal = (strequalfirst == strequalsecond);
+                        useArgument(parser, isequal ? resultequal : resultnotequal);
+                   },
+
+
+                   // This function implements a gsub macro.
+                   GsubstituteFunction(parser, name) {
+                        const gsubfirst = parser.GetArgument(name);
+                        const gsubsecond = parser.GetArgument(name);
+                        const gsubthird = parser.GetArgument(name);
+                        let gsubresult=gsubfirst.replace(gsubsecond, gsubthird);
+                        useArgument(parser, gsubresult);
+                   },
+
+
+                   //       This function modifies the equation numbers.
+                   SeteqnumberFunction(parser, name) {
+                            //   Get the macro parameters
+                            const star = parser.GetStar();                      // true if there is a *
+                            const optBrackets = parser.GetBrackets(name);        // contents of optional brackets
+                            const newsubequations = parser.GetArgument(name);      // the subequations argument
+                            const neweqsection = parser.GetArgument(name);      // the eq section argument
+                            const neweqnumber = parser.GetArgument(name);        // the eq number argument
+                            MathJax.config.subequations=newsubequations ;       // a string with boolean meaning
+                            MathJax.config.section=neweqsection ;               // a string with numeric meaning
+                            parser.tags.counter = parser.tags.allCounter = neweqnumber ;
+                   }
+
+
+              });
+
+
+              //       Create the Lwarp-macros package
+              Configuration.create('Lwarp-macros', {
+                   handler: {macro: ['Lwarp-macros']}
+              });
+
+
+              MathJax.startup.defaultReady();
+
+
+              // For forward references:
+              MathJax.startup.input[0].preFilters.add(({math}) => {
+                   if (math.inputData.recompile){
+                            MathJax.config.subequations = math.inputData.recompile.subequations;
+                            MathJax.config.section = math.inputData.recompile.section;
+                   }
+              });
+              MathJax.startup.input[0].postFilters.add(({math}) => {
+                   if (math.inputData.recompile){
+                            math.inputData.recompile.subequations = MathJax.config.subequations;
+                            math.inputData.recompile.section = MathJax.config.section;
+                   }
+              });
+
+
+                   // For \left, \right with unicode-math:
+                   const {DelimiterMap} = MathJax._.input.tex.SymbolMap;
+                   const {Symbol} = MathJax._.input.tex.Symbol;
+                   const {MapHandler} = MathJax._.input.tex.MapHandler;
+                   const delimiter = MapHandler.getMap('delimiter');
+                   delimiter.add('\\lBrack', new Symbol('\\lBrack', '\u27E6'));
+                   delimiter.add('\\rBrack', new Symbol('\\rBrack', '\u27E7'));
+                   delimiter.add('\\lAngle', new Symbol('\\lAngle', '\u27EA'));
+                   delimiter.add('\\rAngle', new Symbol('\\rAngle', '\u27EB'));
+                   delimiter.add('\\lbrbrak', new Symbol('\\lbrbrak', '\u2772'));
+                   delimiter.add('\\rbrbrak', new Symbol('\\rbrbrak', '\u2773'));
+                   delimiter.add('\\lbag', new Symbol('\\lbag', '\u27C5'));
+                   delimiter.add('\\rbag', new Symbol('\\rbag', '\u27C6'));
+                   delimiter.add('\\llparenthesis', new Symbol('\\llparenthesis', '\u2987'));
+                   delimiter.add('\\rrparenthesis', new Symbol('\\rrparenthesis', '\u2988'));
+                   delimiter.add('\\llangle', new Symbol('\\llangle', '\u2989'));
+                   delimiter.add('\\rrangle', new Symbol('\\rrangle', '\u298A'));
+                   delimiter.add('\\Lbrbrak', new Symbol('\\Lbrbrak', '\u27EC'));
+                   delimiter.add('\\Rbrbrak', new Symbol('\\Rbrbrak', '\u27ED'));
+                   delimiter.add('\\lBrace', new Symbol('\\lBrace', '\u2983'));
+                   delimiter.add('\\rBrace', new Symbol('\\rBrace', '\u2984'));
+                   delimiter.add('\\lParen', new Symbol('\\lParen', '\u2985'));
+                   delimiter.add('\\rParen', new Symbol('\\rParen', '\u2986'));
+                   delimiter.add('\\lbrackubar', new Symbol('\\lbrackubar', '\u298B'));
+                   delimiter.add('\\rbrackubar', new Symbol('\\rbrackubar', '\u298C'));
+                   delimiter.add('\\lbrackultick', new Symbol('\\lbrackultick', '\u298D'));
+                   delimiter.add('\\rbracklrtick', new Symbol('\\rbracklrtick', '\u298E'));
+                   delimiter.add('\\lbracklltick', new Symbol('\\lbracklltick', '\u298F'));
+                   delimiter.add('\\rbrackurtick', new Symbol('\\rbrackurtick', '\u2990'));
+                   delimiter.add('\\langledot', new Symbol('\\langledot', '\u2991'));
+                   delimiter.add('\\rangledot', new Symbol('\\rangledot', '\u2992'));
+                   delimiter.add('\\lparenless', new Symbol('\\lparenless', '\u2993'));
+                   delimiter.add('\\rparengtr', new Symbol('\\rparengtr', '\u2994'));
+                   delimiter.add('\\Lparengtr', new Symbol('\\Lparengtr', '\u2995'));
+                   delimiter.add('\\Rparenless', new Symbol('\\Rparenless', '\u2996'));
+                   delimiter.add('\\lblkbrbrak', new Symbol('\\lblkbrbrak', '\u2997'));
+                   delimiter.add('\\rblkbrbrak', new Symbol('\\rblkbrbrak', '\u2998'));
+                   delimiter.add('\\lvzigzag', new Symbol('\\lvzigzag', '\u29D8'));
+                   delimiter.add('\\rvzigzag', new Symbol('\\rvzigzag', '\u29D9'));
+                   delimiter.add('\\Lvzigzag', new Symbol('\\Lvzigzag', '\u29DA'));
+                   delimiter.add('\\Rvzigzag', new Symbol('\\Rvzigzag', '\u29DB'));
+                   delimiter.add('\\lcurvyangle', new Symbol('\\lcurvyangle', '\u29FC'));
+                   delimiter.add('\\rcurvyangle', new Symbol('\\rcurvyangle', '\u29FD'));
+                   delimiter.add('\\Vvert', new Symbol('\\Vvert', '\u2980'));
+          }       // ready
+     },           // startup
+
+
+     tex: {
+          packages: {'[+]': ['tagformat', 'Lwarp-macros', 'textmacros']},
+          tags: "ams",
+                   tagformat: {
+                            number: function (n) {
+                                 if(MathJax.config.subequations==0)
+                                        return(MathJax.config.section + n);
+                                 else
+                                        return(MathJax.config.section + String.fromCharCode(96+n));
+                            },
+                   },
+     }
+}
+</script>
+
+
+<script
+          id="MathJax-script"
+          src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"
+></script>
+
+   </head>
+<body>
+
+
+   <a id="Logic-autopage-14"></a>
+<nav class="topnavigation"><a href="index.html" class="linkhome" >
+Home</a></nav>
+
+
+<div class="bodyandsidetoc">
+<div class="sidetoccontainer">
+
+
+<nav class="sidetoc">
+
+
+<div class="sidetoctitle">
+
+   <p>
+<span class="sidetocthetitle">Mathematical Logic</span>
+</p>
+
+<p>
+   Contents
+</p>
+</div>
+
+
+<div class="sidetoccontents">
+
+<p>
+   <a href="index.html" class="linkhome" >
+Home</a>
+</p>
+
+<p>
+   <a href="node-Introduction.html#autosec-5" class="tocchapter" >
+<span class="sectionnumber">1</span>&#x2003;Introduction</a>
+</p>
+
+
+<p>
+   <a href="node-Propositional-Logic.html#autosec-15" class="tocchapter" >
+<span class="sectionnumber">2</span>&#x2003;Propositional Logic</a>
+</p>
+
+
+      </div>
+
+      </nav>
+
+      </div>
+
+
+<main class="bodycontainer">
+
+
+<section class="textbody">
+
+      <h1>Mathematical Logic</h1>
+
+   <!--MathJax customizations:-->
+<div data-nosnippet
+    style="display:none"
+>
+
+      \(\newcommand{\footnotename}{footnote}\)
+
+      \(\def \LWRfootnote {1}\)
+
+      \(\newcommand {\footnote }[2][\LWRfootnote ]{{}^{\mathrm {#1}}}\)
+
+      \(\newcommand {\footnotemark }[1][\LWRfootnote ]{{}^{\mathrm {#1}}}\)
+
+      \(\let \LWRorighspace \hspace \)
+
+      \(\renewcommand {\hspace }{\ifstar \LWRorighspace \LWRorighspace }\)
+
+      \(\newcommand {\TextOrMath }[2]{#2}\)
+
+      \(\newcommand {\mathnormal }[1]{{#1}}\)
+
+      \(\newcommand \ensuremath [1]{#1}\)
+
+      \(\newcommand {\LWRframebox }[2][]{\fbox {#2}} \newcommand {\framebox }[1][]{\LWRframebox } \)
+
+      \(\newcommand {\setlength }[2]{}\)
+
+      \(\newcommand {\addtolength }[2]{}\)
+
+      \(\newcommand {\setcounter }[2]{}\)
+
+      \(\newcommand {\addtocounter }[2]{}\)
+
+      \(\newcommand {\arabic }[1]{}\)
+
+      \(\newcommand {\number }[1]{}\)
+
+      \(\newcommand {\noalign }[1]{\text {#1}\notag \\}\)
+
+      \(\newcommand {\cline }[1]{}\)
+
+      \(\newcommand {\directlua }[1]{\text {(directlua)}}\)
+
+      \(\newcommand {\luatexdirectlua }[1]{\text {(directlua)}}\)
+
+      \(\newcommand {\protect }{}\)
+
+      \(\def \LWRabsorbnumber #1 {}\)
+
+      \(\def \LWRabsorbquotenumber &quot;#1 {}\)
+
+      \(\newcommand {\LWRabsorboption }[1][]{}\)
+
+      \(\newcommand {\LWRabsorbtwooptions }[1][]{\LWRabsorboption }\)
+
+      \(\def \mathchar {\ifnextchar &quot;\LWRabsorbquotenumber \LWRabsorbnumber }\)
+
+      \(\def \mathcode #1={\mathchar }\)
+
+      \(\let \delcode \mathcode \)
+
+      \(\let \delimiter \mathchar \)
+
+      \(\def \oe {\unicode {x0153}}\)
+
+      \(\def \OE {\unicode {x0152}}\)
+
+      \(\def \ae {\unicode {x00E6}}\)
+
+      \(\def \AE {\unicode {x00C6}}\)
+
+      \(\def \aa {\unicode {x00E5}}\)
+
+      \(\def \AA {\unicode {x00C5}}\)
+
+      \(\def \o {\unicode {x00F8}}\)
+
+      \(\def \O {\unicode {x00D8}}\)
+
+      \(\def \l {\unicode {x0142}}\)
+
+      \(\def \L {\unicode {x0141}}\)
+
+      \(\def \ss {\unicode {x00DF}}\)
+
+      \(\def \SS {\unicode {x1E9E}}\)
+
+      \(\def \dag {\unicode {x2020}}\)
+
+      \(\def \ddag {\unicode {x2021}}\)
+
+      \(\def \P {\unicode {x00B6}}\)
+
+      \(\def \copyright {\unicode {x00A9}}\)
+
+      \(\def \pounds {\unicode {x00A3}}\)
+
+      \(\let \LWRref \ref \)
+
+      \(\renewcommand {\ref }{\ifstar \LWRref \LWRref }\)
+
+      \( \newcommand {\multicolumn }[3]{#3}\)
+
+      \(\require {textcomp}\)
+
+      \(\newcommand {\intertext }[1]{\text {#1}\notag \\}\)
+
+      \(\let \Hat \hat \)
+
+      \(\let \Check \check \)
+
+      \(\let \Tilde \tilde \)
+
+      \(\let \Acute \acute \)
+
+      \(\let \Grave \grave \)
+
+      \(\let \Dot \dot \)
+
+      \(\let \Ddot \ddot \)
+
+      \(\let \Breve \breve \)
+
+      \(\let \Bar \bar \)
+
+      \(\let \Vec \vec \)
+
+      \(\newcommand {\bm }[1]{\boldsymbol {#1}}\)
+
+      \(\newcommand {\mathlarger }[1]{#1}\)
+
+      \(\newcommand {\mathsmaller }[1]{#1}\)
+
+      \(\newcommand {\LWRmarginnote }[1][]{}\)
+
+      \(\newcommand {\marginnote }[2][]{\qquad {\small \textrm {#2}}\LWRmarginnote }\)
+
+      </div>
+
+    <!--
+...... chapter Propositional Logic ......
+-->
+<h3 id="autosec-15">Chapter&nbsp;<span class="sectionnumber">2&#x2003;</span>Propositional Logic</h3>
+<a id="Logic-autopage-15"></a>
+<a id="Logic-autofile-2"></a>
+    <!--
+...... subsection Propositional formulas ......
+-->
+<h5 id="autosec-16"><span class="sectionnumber">2.0.1&#x2003;</span>Propositional formulas</h5>
+<a id="Logic-autopage-16"></a>
+
+
+   <a id="propflas"></a>
+<div class="amsthmbodyplain">
+
+      <ul class="list" style="list-style-type:none">
+
+
+
+      <li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-17"></a>
+<span class="amsthmnameplain">Definition</span><span class="amsthmnumberplain"> <span class="textup">1</span></span>. </span> An <b>alphabet</b> of a <b>propositional language</b> \(\mcal {L}\) consists of the following:
+</p>
+<ul class="itemize" style="list-style-type:none">
+
+
+<li>
+<p>
+<span class="listmarker">•</span> A set of <b>propositional variables</b> \(\PROP (\mcal {L})\). The elements will usually be denoted \(p,r,q\) or \(p_1,p_2,p_3,\ldots \).
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">•</span> A set of <b>connectives</b> \(\{\wedge , \vee , \neg , \rightarrow , \bot \}\).
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">•</span> An open bracket “ \((\) ” and a close bracket “ \()\) ” which will collectively be called brackets.
+</p>
+</li>
+</ul>
+
+<p>
+      We will always assume that \(\PROP (\mcal {L})\) does not contain any connectives or brackets. Each of the connectives has an element of the set \(\{0,1,2\}\) assigned to it which we will call its <b>arity</b>. The connective \(\bot \) has
+arity \(0\), the connective \(\neg \) has arity \(1\) and all other connectives listed above have arity \(2\). Connectives with arity \(0\) are called <b>logical constants</b>.
+</p>
+
+      </li>
+
+      </ul>
+
+      </div>
+
+<p>
+   The table below shows useful information about each of the connectives.
+</p>
+   <table>
+
+   <tr style="display:none"><th>.</th></tr>
+
+<tr class="hline">
+<td class="tdc tvertbarl tvertbarr" style="border-left: 1px solid black; border-right:   1px solid black">Connective</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">Arity</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">Name</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">How to say it.</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">How to LaTeX it.</td>
+</tr>
+
+<tr class="hline">
+<td class="tdc tvertbarl tvertbarr" style="border-left: 1px solid black; border-right: 1px solid black">\(\wedge \)</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">\(2\)</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">conjunction</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">and</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black"><span class="verb">\wedge</span></td>
+</tr>
+
+<tr>
+<td class="tdc tvertbarl tvertbarr" style="border-left: 1px solid black; border-right: 1px solid black">\(\vee \)</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">\(2\)</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">disjunction</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">or</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black"><span class="verb">\vee</span></td>
+</tr>
+
+<tr>
+<td class="tdc tvertbarl tvertbarr" style="border-left: 1px solid black; border-right: 1px solid black">\(\neg \)</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">\(1\)</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">negation</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">not</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black"><span class="verb">\neg</span></td>
+</tr>
+
+<tr>
+<td class="tdc tvertbarl tvertbarr" style="border-left: 1px solid black; border-right: 1px solid black">\(\rightarrow \)</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">\(2\)</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">implication</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">implies</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black"><span class="verb">\rightarrow</span></td>
+</tr>
+
+<tr>
+<td class="tdc tvertbarl tvertbarr" style="border-left: 1px solid black; border-right: 1px solid black">\(\bot \)</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">\(0\)</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">falsity</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black">false</td>
+<td class="tdc tvertbarr" style="border-right: 1px solid black"><span class="verb">\bot</span></td>
+</tr>
+
+<tr class="hline" aria-hidden="true">
+<td class="tdc"></td>
+<td class="tdc"></td>
+<td class="tdc"></td>
+<td class="tdc"></td>
+<td class="tdc"></td>
+</tr>
+</table>
+<div class="amsthmbodyplain">
+
+      <ul class="list" style="list-style-type:none">
+
+
+
+      <li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-19"></a>
+<span class="amsthmnameplain">Definition</span><span class="amsthmnumberplain"> <span class="textup">2</span></span>. </span> A <b>word</b> in (an alphabet of ) a propositional language \(\mcal {L}\) is an \(n\)-tuple of elements
+of \(\mcal {L}\). Unusually, we will write the \(n\)-tuple with entries \(a_1,a_2,\ldots , a_n\) as \(a_1a_2\cdots a_n\) rather than \((a_1,\ldots ,a_n)\). The <b>length</b> of a word is simply the length of tuple i.e. the length of
+\(a_1a_2\ldots a_n\) is \(n\). We will call the entries of a word \(a=a_1a_2\ldots a_n\) the <b>letters</b> of \(a\).
+</p>
+
+      </li>
+
+      </ul>
+
+      </div>
+
+<p>
+   We define the set of propositional formulas inductively.
+</p>
+<div class="amsthmbodyplain">
+
+      <ul class="list" style="list-style-type:none">
+
+
+
+      <li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-20"></a>
+<span class="amsthmnameplain">Definition</span><span class="amsthmnumberplain"> <span class="textup">3</span></span>. </span> Let \(\mcal {L}\) be a propositional language. Define \(\PF _0\mcal {L}\) to be the set of propositional
+variables of \(\mcal {L}\) together with the logical constants of \(\mcal {L}\). For each \(i\in \N \), we define \(\PF _i\mcal {L}\) by induction as follows:
+</p>
+
+<p>
+      \[\PF _{i+1}\mcal {L}:= \PF _i\mcal {L}\cup \{(\neg t) \st t\in \PF _i\mcal {L}\} \cup \{(s_1\conn s_2) \st s_1,s_2\in \PF _i\mcal {L} \text { and } \square \text { is a connective of arity } 2\}.\]
+</p>
+
+<p>
+      The set of <b>propositional formulas</b>, denoted \(\PF \mcal {L}\), is the union of the sets \(\PF _i\mcal {L}\) for \(i\in \N _0\). The <b>complexity</b> of a propositional formula \(t\) is the least \(i\in \N _0\) such that \(t\in
+\PF _i\mcal {L}\).
+</p>
+
+      </li>
+
+      </ul>
+
+      </div>
+
+<p>
+   Note that the arity of a connective determines how it is used to construct propositional formulas.
+</p>
+<div class="amsthmbodyplain">
+
+      <ul class="list" style="list-style-type:none">
+
+
+
+      <li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-21"></a>
+<span class="amsthmnameplain">Example</span><span class="amsthmnumberplain"> <span class="textup">4</span></span>. </span> Let \(\mcal {L}\) be the propositional language with set of propositional variables \(\PROP (\mcal
+{L})=\{p\}\). The sets of propositional formulas of complexity \(0\) is
+</p>
+
+<p>
+      \[\PF _0\mcal {L}:=\{p, \bot \}.\]
+</p>
+
+<p>
+      There are \(16\) propositional formulas of complexity \(0\) and \(1\).
+</p>
+<span class="hidden"> \(\seteqnumber{0}{2.}{0}\)</span>
+
+
+
+<!--
+
+
+
+
+  S1 L := {p, ⊥, (¬p), (¬⊥), (p ∧ p), (p ∧ ⊥), (⊥ ∧ p), (⊥ ∧ ⊥),
+                                                                                                                                                                 (p ∨ p), (p ∨ ⊥), (⊥ ∨ p), (⊥ ∨ ⊥), (p → p), (p → ⊥), (⊥ → p), (⊥ → ⊥)}.
+
+
+
+      -->
+
+
+
+<p>
+
+
+\begin{multline*}
+\PF _1\mcal {L}:= \{p, \bot , (\neg p), (\neg \bot ), (p\wedge p), (p\wedge \bot ), (\bot \wedge p), (\bot \wedge \bot ), \\ (p\vee p), (p\vee \bot ), (\bot \vee p), (\bot \vee \bot ), (p\rightarrow p),
+(p\rightarrow \bot ), (\bot \rightarrow p), (\bot \rightarrow \bot ) \}.
+\end{multline*}
+
+
+</p>
+
+<p>
+      Here are a few propositional formulas of complexity \(2\):
+</p>
+
+<p>
+      \[((p\wedge p)\rightarrow \bot ), \quad (\neg (\bot \rightarrow \bot )), \quad ((p\wedge p)\rightarrow (p\vee \bot )).      \]
+</p>
+
+<p>
+
+
+</p>
+
+      </li>
+
+      </ul>
+
+      </div>
+<div class="amsthmbodyplain">
+
+      <ul class="list" style="list-style-type:none">
+
+
+
+      <li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-22"></a>
+<span class="amsthmnameplain">Lemma</span><span class="amsthmnumberplain"> <span class="textup">5</span></span>. </span> The set of propositional formulas \(\PF \mcal {L}\) of a propositional language \(\mcal {L}\) is the
+smallest set \(X\) of words in the alphabet of \(\mcal {L}\) satisfying the following properties:
+</p>
+<ul class="enumerate" style="list-style-type:none">
+
+
+<li>
+<p>
+<span class="listmarker">(i)</span> All propositional variables and logical constants of \(\mcal {L}\) are members of \(X\).
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">(ii)</span> If \(s\in X\) then \((\neg s)\in X\).
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">(iii)</span> For all connectives \(\square \) of arity \(2\), if \(s_1,s_2\in X\) then \((s_1\square s_2)\in X\).
+</p>
+</li>
+</ul>
+
+      </li>
+
+      </ul>
+
+      </div>
+<div class="amsthmproof">
+
+      <a id="Logic-autopage-23"></a>
+
+      <ul class="list" style="list-style-type:none">
+
+
+
+      <li>
+<p>
+<span class="listmarker"> <span class="amsthmproofname">Proof.</span></span> See Exercise Sheet \(1\). <span class="theoremendmark">&#x25A1;</span>
+</p>
+
+      </li>
+
+      </ul>
+
+      </div>
+
+   <a id="Logic-autofile-last"></a>
+</section>
+
+      </main>
+
+      </div>
+
+
+<nav class="botnavigation"><a href="index.html" class="linkhome" >
+Home</a></nav>
+
+   </body>
+</html>

@@ -1,0 +1,2062 @@
+
+<!DOCTYPE html>
+<html lang="en-UK">
+<head>
+<meta charset="UTF-8" />
+<meta name="author" content="Lorna Gregory" />
+<meta name="generator" content="LaTeX Lwarp package" />
+<meta name="description" content="A description." />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Logic — Tarski’s Truth Definition</title>
+<link rel="stylesheet" type="text/css" href="lwarpLorna.css" />
+
+<script>
+// Lwarp MathJax emulation code
+//
+// Based on code by Davide P. Cervone.
+// Equation numbering: https://github.com/mathjax/MathJax/issues/2427
+// Starred and ifnextchar macros: https://github.com/mathjax/MathJax/issues/2428
+// \left, \right delimiters: https://github.com/mathjax/MathJax/issues/2535
+//
+// Modified by Brian Dunn to adjust equation numbering and add subequations.
+//
+// LaTeX can use \seteqnumber{subequations?}{section}{number} before each equation.
+// subequations? is 0 usually, 1 if inside subequations.
+// section is a string printed as-is, or empty.
+// number is auto-incremented by MathJax between equations.
+//
+MathJax = {
+     subequations: "0",
+     section: "",
+     loader: {
+          load: ['[tex]/tagformat', '[tex]/textmacros'],
+     },
+     startup: {
+          ready() {
+              //       These would be replaced by import commands if you wanted to make
+              //       a proper extension.
+              const Configuration = MathJax._.input.tex.Configuration.Configuration;
+              const CommandMap = MathJax._.input.tex.SymbolMap.CommandMap;
+              const Macro = MathJax._.input.tex.Symbol.Macro;
+              const TexError = MathJax._.input.tex.TexError.default;
+              const ParseUtil = MathJax._.input.tex.ParseUtil.default;
+              const expandable = MathJax._.util.Options.expandable;
+
+
+              //       Insert the replacement string into the TeX string, and check
+              //       that there haven't been too many maxro substitutions (prevents
+              //       infinite loops).
+              const useArgument = (parser, text) => {
+                   parser.string = ParseUtil.addArgs(parser, text, parser.string.slice(parser.i));
+                   parser.i = 0;
+                   if (++parser.macroCount > parser.configuration.options.maxMacros) {
+                        throw new TexError('MaxMacroSub1',
+                        'MathJax maximum macro substitution count exceeded; ' +
+                        'is there a recursive macro call?');
+                   }
+              }
+
+
+              //       Create the command map for:
+              //            \ifstar, \ifnextchar, \ifblank, \ifstrequal, \gsub, \seteqnumber
+              new CommandMap('Lwarp-macros', {
+                   ifstar: 'IfstarFunction',
+                   ifnextchar: 'IfnextcharFunction',
+                   ifblank: 'IfblankFunction',
+                   ifstrequal: 'IfstrequalFunction',
+                   gsubstitute: 'GsubstituteFunction',
+                   seteqnumber: 'SeteqnumberFunction'
+              }, {
+                   //       This function implements an ifstar macro.
+                   IfstarFunction(parser, name) {
+                        const resultstar = parser.GetArgument(name);
+                        const resultnostar = parser.GetArgument(name);
+                        const star = parser.GetStar();                        // true if there is a *
+                        useArgument(parser, star ? resultstar : resultnostar);
+                   },
+
+
+                   //       This function implements an ifnextchar macro.
+                   IfnextcharFunction(parser, name) {
+                        let whichchar = parser.GetArgument(name);
+                        if (whichchar.match(/^(?:0x[0-9A-F]+|[0-9]+)$/i)) {
+                            // $ syntax highlighting
+                            whichchar = String.fromCodePoint(parseInt(whichchar));
+                        }
+                        const resultnextchar = parser.GetArgument(name);
+                        const resultnotnextchar = parser.GetArgument(name);
+                        const gotchar = (parser.GetNext() === whichchar);
+                        useArgument(parser, gotchar ? resultnextchar : resultnotnextchar);
+                   },
+
+
+                   // This function implements an ifblank macro.
+                   IfblankFunction(parser, name) {
+                        const blankarg = parser.GetArgument(name);
+                        const resultblank = parser.GetArgument(name);
+                        const resultnotblank = parser.GetArgument(name);
+                        const isblank = (blankarg.trim() == "");
+                        useArgument(parser, isblank ? resultblank : resultnotblank);
+                   },
+
+
+                   // This function implements an ifstrequal macro.
+                   IfstrequalFunction(parser, name) {
+                        const strequalfirst = parser.GetArgument(name);
+                        const strequalsecond = parser.GetArgument(name);
+                        const resultequal = parser.GetArgument(name);
+                        const resultnotequal = parser.GetArgument(name);
+                        const isequal = (strequalfirst == strequalsecond);
+                        useArgument(parser, isequal ? resultequal : resultnotequal);
+                   },
+
+
+                   // This function implements a gsub macro.
+                   GsubstituteFunction(parser, name) {
+                        const gsubfirst = parser.GetArgument(name);
+                        const gsubsecond = parser.GetArgument(name);
+                        const gsubthird = parser.GetArgument(name);
+                        let gsubresult=gsubfirst.replace(gsubsecond, gsubthird);
+                        useArgument(parser, gsubresult);
+                   },
+
+
+                   //       This function modifies the equation numbers.
+                   SeteqnumberFunction(parser, name) {
+                            //   Get the macro parameters
+                            const star = parser.GetStar();                      // true if there is a *
+                            const optBrackets = parser.GetBrackets(name);        // contents of optional brackets
+                            const newsubequations = parser.GetArgument(name);      // the subequations argument
+                            const neweqsection = parser.GetArgument(name);      // the eq section argument
+                            const neweqnumber = parser.GetArgument(name);        // the eq number argument
+                            MathJax.config.subequations=newsubequations ;       // a string with boolean meaning
+                            MathJax.config.section=neweqsection ;               // a string with numeric meaning
+                            parser.tags.counter = parser.tags.allCounter = neweqnumber ;
+                   }
+
+
+              });
+
+
+              //       Create the Lwarp-macros package
+              Configuration.create('Lwarp-macros', {
+                   handler: {macro: ['Lwarp-macros']}
+              });
+
+
+              MathJax.startup.defaultReady();
+
+
+              // For forward references:
+              MathJax.startup.input[0].preFilters.add(({math}) => {
+                   if (math.inputData.recompile){
+                            MathJax.config.subequations = math.inputData.recompile.subequations;
+                            MathJax.config.section = math.inputData.recompile.section;
+                   }
+              });
+              MathJax.startup.input[0].postFilters.add(({math}) => {
+                   if (math.inputData.recompile){
+                            math.inputData.recompile.subequations = MathJax.config.subequations;
+                            math.inputData.recompile.section = MathJax.config.section;
+                   }
+              });
+
+
+                   // For \left, \right with unicode-math:
+                   const {DelimiterMap} = MathJax._.input.tex.SymbolMap;
+                   const {Symbol} = MathJax._.input.tex.Symbol;
+                   const {MapHandler} = MathJax._.input.tex.MapHandler;
+                   const delimiter = MapHandler.getMap('delimiter');
+                   delimiter.add('\\lBrack', new Symbol('\\lBrack', '\u27E6'));
+                   delimiter.add('\\rBrack', new Symbol('\\rBrack', '\u27E7'));
+                   delimiter.add('\\lAngle', new Symbol('\\lAngle', '\u27EA'));
+                   delimiter.add('\\rAngle', new Symbol('\\rAngle', '\u27EB'));
+                   delimiter.add('\\lbrbrak', new Symbol('\\lbrbrak', '\u2772'));
+                   delimiter.add('\\rbrbrak', new Symbol('\\rbrbrak', '\u2773'));
+                   delimiter.add('\\lbag', new Symbol('\\lbag', '\u27C5'));
+                   delimiter.add('\\rbag', new Symbol('\\rbag', '\u27C6'));
+                   delimiter.add('\\llparenthesis', new Symbol('\\llparenthesis', '\u2987'));
+                   delimiter.add('\\rrparenthesis', new Symbol('\\rrparenthesis', '\u2988'));
+                   delimiter.add('\\llangle', new Symbol('\\llangle', '\u2989'));
+                   delimiter.add('\\rrangle', new Symbol('\\rrangle', '\u298A'));
+                   delimiter.add('\\Lbrbrak', new Symbol('\\Lbrbrak', '\u27EC'));
+                   delimiter.add('\\Rbrbrak', new Symbol('\\Rbrbrak', '\u27ED'));
+                   delimiter.add('\\lBrace', new Symbol('\\lBrace', '\u2983'));
+                   delimiter.add('\\rBrace', new Symbol('\\rBrace', '\u2984'));
+                   delimiter.add('\\lParen', new Symbol('\\lParen', '\u2985'));
+                   delimiter.add('\\rParen', new Symbol('\\rParen', '\u2986'));
+                   delimiter.add('\\lbrackubar', new Symbol('\\lbrackubar', '\u298B'));
+                   delimiter.add('\\rbrackubar', new Symbol('\\rbrackubar', '\u298C'));
+                   delimiter.add('\\lbrackultick', new Symbol('\\lbrackultick', '\u298D'));
+                   delimiter.add('\\rbracklrtick', new Symbol('\\rbracklrtick', '\u298E'));
+                   delimiter.add('\\lbracklltick', new Symbol('\\lbracklltick', '\u298F'));
+                   delimiter.add('\\rbrackurtick', new Symbol('\\rbrackurtick', '\u2990'));
+                   delimiter.add('\\langledot', new Symbol('\\langledot', '\u2991'));
+                   delimiter.add('\\rangledot', new Symbol('\\rangledot', '\u2992'));
+                   delimiter.add('\\lparenless', new Symbol('\\lparenless', '\u2993'));
+                   delimiter.add('\\rparengtr', new Symbol('\\rparengtr', '\u2994'));
+                   delimiter.add('\\Lparengtr', new Symbol('\\Lparengtr', '\u2995'));
+                   delimiter.add('\\Rparenless', new Symbol('\\Rparenless', '\u2996'));
+                   delimiter.add('\\lblkbrbrak', new Symbol('\\lblkbrbrak', '\u2997'));
+                   delimiter.add('\\rblkbrbrak', new Symbol('\\rblkbrbrak', '\u2998'));
+                   delimiter.add('\\lvzigzag', new Symbol('\\lvzigzag', '\u29D8'));
+                   delimiter.add('\\rvzigzag', new Symbol('\\rvzigzag', '\u29D9'));
+                   delimiter.add('\\Lvzigzag', new Symbol('\\Lvzigzag', '\u29DA'));
+                   delimiter.add('\\Rvzigzag', new Symbol('\\Rvzigzag', '\u29DB'));
+                   delimiter.add('\\lcurvyangle', new Symbol('\\lcurvyangle', '\u29FC'));
+                   delimiter.add('\\rcurvyangle', new Symbol('\\rcurvyangle', '\u29FD'));
+                   delimiter.add('\\Vvert', new Symbol('\\Vvert', '\u2980'));
+          }       // ready
+     },           // startup
+
+
+     tex: {
+          packages: {'[+]': ['tagformat', 'Lwarp-macros', 'textmacros']},
+          tags: "ams",
+                   tagformat: {
+                            number: function (n) {
+                                 if(MathJax.config.subequations==0)
+                                        return(MathJax.config.section + n);
+                                 else
+                                        return(MathJax.config.section + String.fromCharCode(96+n));
+                            },
+                   },
+     }
+}
+</script>
+
+
+<script
+          id="MathJax-script"
+          src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"
+></script>
+
+</head>
+<body>
+
+
+<a id="Logic-autopage-198"></a>
+<nav class="topnavigation"><a href="Logic.html" class="linkhome" >
+Home</a></nav>
+
+
+<div class="bodyandsidetoc">
+<div class="sidetoccontainer">
+
+
+<nav class="sidetoc">
+
+
+<div class="sidetoctitle">
+
+<p>
+<span class="sidetocthetitle">Mathematical Logic</span>
+</p>
+
+<p>
+Contents
+</p>
+</div>
+
+
+<div class="sidetoccontents">
+
+<p>
+<a href="Logic.html" class="linkhome" >
+Home</a>
+</p>
+
+<p>
+<a href="Introduction.html#autosec-5" class="tocsection" >
+<span class="sectionnumber">1</span>&#x2003;Introduction</a>
+</p>
+
+
+<p>
+<a href="Propositional-Logic.html#autosec-16" class="tocsection" >
+<span class="sectionnumber">2</span>&#x2003;Propositional Logic</a>
+</p>
+
+
+<p>
+<a href="Propositional-Logic.html#autosec-17" class="tocsubsection" >
+<span class="sectionnumber">2.1</span>&#x2003;Propositional formulas</a>
+</p>
+
+
+<p>
+<a href="Truth.html#autosec-95" class="tocsubsection" >
+<span class="sectionnumber">2.2</span>&#x2003;Truth</a>
+</p>
+
+
+<p>
+<a href="Proofs.html#autosec-146" class="tocsubsection" >
+<span class="sectionnumber">2.3</span>&#x2003;Proofs</a>
+</p>
+
+
+<p>
+<a href="Completeness.html#autosec-157" class="tocsubsection" >
+<span class="sectionnumber">2.4</span>&#x2003;Completeness</a>
+</p>
+
+
+<p>
+<a href="Predicate-Logic.html#autosec-168" class="tocsection" >
+<span class="sectionnumber">3</span>&#x2003;Predicate Logic</a>
+</p>
+
+
+<p>
+<a href="Predicate-Logic.html#autosec-169" class="tocsubsection" >
+<span class="sectionnumber">3.1</span>&#x2003;Languages and Structures</a>
+</p>
+
+
+<p>
+<a href="Formulas.html#autosec-174" class="tocsubsection" >
+<span class="sectionnumber">3.2</span>&#x2003;Formulas</a>
+</p>
+
+
+<p>
+<a href="Tarski-Truth-Definition.html#autosec-199" class="tocsubsection" >
+<span class="sectionnumber">3.3</span>&#x2003;Tarski’s Truth Definition</a>
+</p>
+
+
+<p>
+<a href="Proofs-9.html#autosec-245" class="tocsubsection" >
+<span class="sectionnumber">3.4</span>&#x2003;Proofs</a>
+</p>
+
+
+<p>
+<a href="Completeness-10.html#autosec-258" class="tocsubsection" >
+<span class="sectionnumber">3.5</span>&#x2003;Completeness</a>
+</p>
+
+
+<p>
+<a href="Proof-Completeness-Theorem-Predicate-Logic-4th-year-material.html#autosec-272" class="tocsection" >
+<span class="sectionnumber">4</span>&#x2003;Proof of the Completeness Theorem for Predicate Logic (4th year material)</a>
+</p>
+
+
+<p>
+<a href="Application-Compactness-Theorem-Extension-Constants.html#autosec-310" class="tocsection" >
+<span class="sectionnumber">5</span>&#x2003;Application of the Compactness Theorem and Extension by Constants</a>
+</p>
+
+
+<p>
+<a href="Universal-Algebra-Substructures-Homomorphisms.html#autosec-336" class="tocsection" >
+<span class="sectionnumber">6</span>&#x2003;Universal Algebra: Substructures and Homomorphisms</a>
+</p>
+
+
+<p>
+<a href="Further-Model-Theory-4th-year-material.html#autosec-346" class="tocsection" >
+<span class="sectionnumber">7</span>&#x2003;Further Model Theory (4th year material)</a>
+</p>
+
+
+<p>
+<a href="Further-Model-Theory-4th-year-material.html#autosec-347" class="tocsubsection" >
+<span class="sectionnumber">7.1</span>&#x2003;Definable Sets</a>
+</p>
+
+
+<p>
+<a href="Elementary-Substructures.html#autosec-354" class="tocsubsection" >
+<span class="sectionnumber">7.2</span>&#x2003;Elementary Substructures</a>
+</p>
+
+
+<p>
+<a href="Downwards-Lowenheim-Skolem-Theorem.html#autosec-364" class="tocsubsection" >
+<span class="sectionnumber">7.3</span>&#x2003;Downwards Lo&#x0308;wenheim-Skolem Theorem</a>
+</p>
+
+
+<p>
+<a href="Upwards-Lowenheim-Skolem-Theorem.html#autosec-368" class="tocsubsection" >
+<span class="sectionnumber">7.4</span>&#x2003;Upwards Lo&#x0308;wenheim-Skolem Theorem</a>
+</p>
+
+
+<p>
+<a href="Categoricity.html#autosec-371" class="tocsubsection" >
+<span class="sectionnumber">7.5</span>&#x2003;Categoricity</a>
+</p>
+
+
+</div>
+
+</nav>
+
+</div>
+
+
+<main class="bodycontainer">
+
+
+<section class="textbody">
+
+<h1>Mathematical Logic</h1>
+
+<!--MathJax customizations:-->
+<div data-nosnippet
+    style="display:none"
+>
+
+\(\newcommand{\footnotename}{footnote}\)
+
+\(\def \LWRfootnote {1}\)
+
+\(\newcommand {\footnote }[2][\LWRfootnote ]{{}^{\mathrm {#1}}}\)
+
+\(\newcommand {\footnotemark }[1][\LWRfootnote ]{{}^{\mathrm {#1}}}\)
+
+\(\let \LWRorighspace \hspace \)
+
+\(\renewcommand {\hspace }{\ifstar \LWRorighspace \LWRorighspace }\)
+
+\(\newcommand {\TextOrMath }[2]{#2}\)
+
+\(\newcommand {\mathnormal }[1]{{#1}}\)
+
+\(\newcommand \ensuremath [1]{#1}\)
+
+\(\newcommand {\LWRframebox }[2][]{\fbox {#2}} \newcommand {\framebox }[1][]{\LWRframebox } \)
+
+\(\newcommand {\setlength }[2]{}\)
+
+\(\newcommand {\addtolength }[2]{}\)
+
+\(\newcommand {\setcounter }[2]{}\)
+
+\(\newcommand {\addtocounter }[2]{}\)
+
+\(\newcommand {\arabic }[1]{}\)
+
+\(\newcommand {\number }[1]{}\)
+
+\(\newcommand {\noalign }[1]{\text {#1}\notag \\}\)
+
+\(\newcommand {\cline }[1]{}\)
+
+\(\newcommand {\directlua }[1]{\text {(directlua)}}\)
+
+\(\newcommand {\luatexdirectlua }[1]{\text {(directlua)}}\)
+
+\(\newcommand {\protect }{}\)
+
+\(\def \LWRabsorbnumber #1 {}\)
+
+\(\def \LWRabsorbquotenumber &quot;#1 {}\)
+
+\(\newcommand {\LWRabsorboption }[1][]{}\)
+
+\(\newcommand {\LWRabsorbtwooptions }[1][]{\LWRabsorboption }\)
+
+\(\def \mathchar {\ifnextchar &quot;\LWRabsorbquotenumber \LWRabsorbnumber }\)
+
+\(\def \mathcode #1={\mathchar }\)
+
+\(\let \delcode \mathcode \)
+
+\(\let \delimiter \mathchar \)
+
+\(\def \oe {\unicode {x0153}}\)
+
+\(\def \OE {\unicode {x0152}}\)
+
+\(\def \ae {\unicode {x00E6}}\)
+
+\(\def \AE {\unicode {x00C6}}\)
+
+\(\def \aa {\unicode {x00E5}}\)
+
+\(\def \AA {\unicode {x00C5}}\)
+
+\(\def \o {\unicode {x00F8}}\)
+
+\(\def \O {\unicode {x00D8}}\)
+
+\(\def \l {\unicode {x0142}}\)
+
+\(\def \L {\unicode {x0141}}\)
+
+\(\def \ss {\unicode {x00DF}}\)
+
+\(\def \SS {\unicode {x1E9E}}\)
+
+\(\def \dag {\unicode {x2020}}\)
+
+\(\def \ddag {\unicode {x2021}}\)
+
+\(\def \P {\unicode {x00B6}}\)
+
+\(\def \copyright {\unicode {x00A9}}\)
+
+\(\def \pounds {\unicode {x00A3}}\)
+
+\(\let \LWRref \ref \)
+
+\(\renewcommand {\ref }{\ifstar \LWRref \LWRref }\)
+
+\( \newcommand {\multicolumn }[3]{#3}\)
+
+\(\require {textcomp}\)
+
+\(\newcommand {\intertext }[1]{\text {#1}\notag \\}\)
+
+\(\let \Hat \hat \)
+
+\(\let \Check \check \)
+
+\(\let \Tilde \tilde \)
+
+\(\let \Acute \acute \)
+
+\(\let \Grave \grave \)
+
+\(\let \Dot \dot \)
+
+\(\let \Ddot \ddot \)
+
+\(\let \Breve \breve \)
+
+\(\let \Bar \bar \)
+
+\(\let \Vec \vec \)
+
+\(\newcommand {\bm }[1]{\boldsymbol {#1}}\)
+
+\(\newcommand {\R }{\mathbb {R}}\)
+
+\(\newcommand {\C }{\mathbb {C}}\)
+
+\(\newcommand {\Z }{\mathbb {Z}}\)
+
+\(\newcommand {\N }{\mathbb {N}}\)
+
+\(\newcommand {\Q }{\mathbb {Q}}\)
+
+\(\newcommand {\st }{\ \vert \ }\)
+
+\(\newcommand {\mcal }[1]{\mathcal {#1}}\)
+
+\(\newcommand {\TmAlg }{\mathrm {TmAlg}}\)
+
+\(\newcommand {\PROP }{\mathrm {PROP}}\)
+
+\(\newcommand {\PF }{\mathrm {S}}\)
+
+\(\newcommand {\proves }{\vdash }\)
+
+\(\newcommand {\tm }{\textrm {tm}}\)
+
+\(\newcommand {\ctm }{\textrm {ctm}}\)
+
+\(\newcommand {\Fml }{\textrm {Fml}}\)
+
+\(\newcommand {\Fr }{\textrm {Fr}}\)
+
+\(\newcommand {\Vbl }{\textrm {Vbl}}\)
+
+\(\newcommand {\cmpx }{\texttt {cmpx}}\)
+
+\(\newcommand {\supp }{\text {supp}}\)
+
+\(\newcommand {\conn }{\,\square \,}\)
+
+\(\newcommand {\con }{\,\diamond \,}\)
+
+\(\newcommand {\ct }{\texttt {c}}\)
+
+\(\newcommand {\T }{\mathbb {T}}\)
+
+\(\newcommand {\F }{\mathbb {F}}\)
+
+\(\newcommand {\mathlarger }[1]{#1}\)
+
+\(\newcommand {\mathsmaller }[1]{#1}\)
+
+\(\newcommand {\LWRmarginnote }[1][]{}\)
+
+\(\newcommand {\marginnote }[2][]{\qquad {\small \textrm {#2}}\LWRmarginnote }\)
+
+</div>
+
+<!--
+...... subsection Tarski’s Truth Definition ......
+-->
+<h5 id="autosec-199"><span class="sectionnumber">3.3&#x2003;</span>Tarski’s Truth Definition</h5>
+<a id="Logic-autopage-199"></a>
+<a id="Logic-autofile-8"></a>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-200"></a>
+<span class="amsthmnameplain">Definition</span><span class="amsthmnumberplain"> <span class="textup">3.17</span></span><span class="amsthmnoteplain"> (Tarski’s Truth Definition)</span>. </span> Let \(\mcal {L}\) be a (first
+order) language and \(\mcal {M}\) an \(\mcal {L}\)-structure with domain \(M\). We define by induction on the complexity of an \(\mcal {L} \)-formula, the expression <b>\(\phi \) is true in \(\mcal {M} \) at \(h\)</b>, denoted
+</p>
+
+<p>
+\[\mcal {M} \models \phi [h],\]
+</p>
+
+<p>
+for each assignment \(h:\Vbl \rightarrow M\) as follows:
+</p>
+
+<ul class="enumerate" style="list-style-type:none">
+
+
+<li>
+<p>
+<span class="listmarker">(0)</span> \(\mcal {M}\nvDash \bot [h]\)
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">(1)</span> If \(\phi \) is of the form \(t_1= t_2\) with \(\mcal {L} \)-terms \(t_1,t_2\) then
+</p>
+<p>
+\[\mcal {M} \models t_1= t_2\ [h]\iff t^\mcal {M} _1[h]=t^\mcal {M} _2[h].\]
+</p>
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">(2)</span> If \(\phi \) is of the form \(R(t_1,\ldots ,t_n)\) with \(R\in \mcal {R} \) of arity \(n\) and \(t_1,\ldots ,t_n\in \tm (\mcal {L}) \) then
+</p>
+<p>
+\[\mcal {M} \models R(t_1,\ldots ,t_n)\ [h]\iff (t^\mcal {M} _1[h],\ldots ,t^\mcal {M} _n[h])\in R^\mcal {M} .\]
+</p>
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">(3)</span> For the induction step we take \(\phi ,\psi \in \Fml (\mcal {L}) \), \(x\in \Vbl \) and define
+</p>
+<ul class="itemize" style="list-style-type:none">
+
+
+<li>
+<p>
+<span class="listmarker">•</span> \(\mcal {M} \models (\phi \rightarrow \psi )[h] \text { if }\mcal {M}\models \phi [h]\text { implies }\mcal {M}\models \psi [h]\),
+</p>
+</li>
+</ul>
+<p>
+and
+</p>
+<ul class="itemize" style="list-style-type:none">
+
+
+<li>
+<p>
+<span class="listmarker">•</span> \(\mcal {M} \models (\forall x\phi )[h] \text { if } \text {for all }a\in M\text { we have } \mcal {M} \models \phi [h({x\atop a})].\)
+</p>
+</li>
+</ul>
+</li>
+</ul>
+
+</li>
+
+</ul>
+
+</div>
+
+<p>
+You will sometimes, perhaps even in these notes, see <b>\(\phi \) holds in \(\mcal {M}\) at \(h\)</b> or <b>\(\mcal {M}\) satisfies \(\phi \) at \(h\)</b>. Both these phrases mean \(\phi \) is true in \(\mcal {M}\) at \(h\).
+</p>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-201"></a>
+<span class="amsthmnameplain">Proposition</span><span class="amsthmnumberplain"> <span class="textup">3.18</span></span><span class="amsthmnoteplain"> (Derived rules for truth)</span>. </span> Let \(\mcal {L}\) be a (first
+order) language, let \(\mcal {M}\) be an \(\mcal {L}\)-structure with domain \(M\) and let \(h:\Vbl \rightarrow M\) be an assignment.
+</p>
+<ul class="enumerate" style="list-style-type:none">
+
+
+<li>
+<p>
+<span class="listmarker">1.</span> For all \(\mcal {L}\)-formulas \(\phi \),
+</p>
+<p>
+\[M\models (\neg \phi )[h] \text { if and only if } \mcal {M}\nvDash \phi [h].\]
+</p>
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">2.</span> For all \(\mcal {L}\)-formulas \(\phi ,\psi \),
+</p>
+<p>
+\[\mcal {M}\models (\phi \wedge \psi )[h] \text { if and only if }M\models \phi [h] \text { and }M\models \psi [h]\]
+</p>
+<p>
+and
+</p>
+<p>
+\[\mcal {M}\models (\phi \vee \psi )[h] \text { if and only if }M\models \phi [h] \text { or }M\models \psi [h]\]
+</p>
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">3.</span> For all \(\mcal {L}\)-formulas \(\phi \) and \(x\in \Vbl \), \(\mcal {M}\models (\exists x\phi )[h]\) if and only if there exists \(a\in M\) such that \(\mcal {M}\models \phi [h({x\atop a})]\).
+</p>
+</li>
+</ul>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmproof">
+
+<a id="Logic-autopage-202"></a>
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"> <span class="amsthmproofname">Proof.</span></span> 1. and 2. will be on the next exercise sheet. We will prove \(3.\) assuming \(1.\) Recall that \((\exists x \phi )\) is an abbreviation for \((\neg (\forall
+x(\neg \phi )))\). Therefore, by \(1.\), \(\mcal {M}\models (\exists x\phi )[h]\) if and only if \(\mcal {M}\vDash (\forall x(\neg \phi ))[h]\) does not hold. Now \(\mcal {M}\vDash (\forall x(\neg \phi ))[h]\) if and only if for
+all \(a\in M\), \(\mcal {M}\vDash (\neg \phi )[h({x\atop a})]\). So \(\mcal {M}\vDash (\forall x(\neg \phi ))[h]\) if and only if for all \(a\in M\), \(\mcal {M}\vDash \phi [h({x\atop a})]\) does not hold. So \(\mcal {M}\vDash
+(\forall x(\neg \phi ))[h]\) if and only if there exists an \(a\in M\), such that \(\mcal {M}\models \phi [h({x \atop a})]\) as required. <span class="theoremendmark">&#x25A1;</span>
+</p>
+
+</li>
+
+</ul>
+
+</div>
+
+<p>
+We work through an example of how Tarski’s Truth Definition works.
+</p>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-203"></a>
+<span class="amsthmnameplain">Examples</span><span class="amsthmnumberplain"> <span class="textup">3.19</span></span>. </span>
+</p>
+<ul class="enumerate" style="list-style-type:none">
+
+
+<li>
+<p>
+<span class="listmarker">(i)</span> Let \(\mcal {L}:=\langle F,c,d\rangle \) where \(F\) is a unary function symbol and both \(c\) and \(d\) are constant symbols. Let \(\chi \) be the \(\mcal {L}\)-formula
+</p>
+<p>
+\[(\forall v_1(F(v_1)=c\rightarrow F(v_2)=d)).\]
+</p>
+<p>
+Let \(\mcal {M}\) be the \(\mcal {L}\)-structure with domain \(\R \), \(F^{\mcal {M}}:\R \rightarrow \R \) defined by \(F^{\mcal {M}}(r)=r^2+1\), \(c^{\mcal {M}}:=1\) and \(d^{\mcal {M}}:=8\). We will check for which assignments
+\(h:\Vbl \rightarrow \R \), we have that \(\phi \) is true in \(\mcal {M}\) at \(h\).
+</p>
+<p>
+<b>Step 1:</b> By Tarski’s Truth Definition, \(\mcal {M}\models \chi [h]\) if and only if for all \(a\in \R \), \(\mcal {M}\models (F(v_1)=c\rightarrow F(v_2)=d)[h({v_1 \atop a})]\).
+</p>
+<p>
+<b>Step 2:</b> By Tarski’s Truth Definition, \(\mcal {M}\models (F(v_1)=c\rightarrow F(v_2)=d)[h({v_1 \atop a})]\) if and only if \(\mcal {M}\models (F(v_1)=c)[h({v_1 \atop a})]\) implies \(\mcal {M}\models (F(v_2)=d)[h({v_1
+\atop a})]\).
+</p>
+<p>
+<b>Step 3a:</b> \(\mcal {M}\models (F(v_1)=c)[h({v_1 \atop a})]\) if and only if \(F^{\mcal {M}}(h({v_1 \atop a})(v_1))=c^{\mcal {M}}\).
+</p>
+<p>
+Now \(h({v_1 \atop a})(v_1)=a\) by definition and \(c^{\mcal {M}}=1\). So \(\mcal {M}\models (F(v_1)=c)[h({v_1 \atop a})]\) if and only if \(a^2+1=1\).
+</p>
+<p>
+<b>Step 3b:</b> \(\mcal {M}\models (F(v_2)=d)[h({v_1 \atop a})]\) if and only if \(F^{\mcal {M}}(h({v_1 \atop a})(v_2))=d^{\mcal {M}}\).
+</p>
+<p>
+Now \(h({v_1 \atop a})(v_2)=h(v_2)\) and \(d^{\mcal {M}}=8\). Therefore \(F^{\mcal {M}}(h({v_1 \atop a})(v_2))=d^{\mcal {M}}\) if and only if \(h(v_2)^2+1=8\).
+</p>
+<p>
+<b>Step 4:</b> \(\mcal {M}\models \chi [h]\) if and only if for all \(a\in \R \), \(a^2=0\) implies \(h(v_2)^2=7\).
+</p>
+<p>
+<b>Conclusion:</b> \(\mcal {M}\models \chi [h]\) if and only if \(h(v_2)=\pm \sqrt {7}\).
+</p>
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">(ii)</span> Let \(\mcal {L}:=\langle R\rangle \) where \(R\) is a binary relation symbol. Let \(\chi \) be the formula
+</p>
+<p>
+\[(\forall v_1 (\forall v_2 (R(v_1,v_2)\rightarrow R(v_2,v_1)))).\]
+</p>
+<p>
+Let \(\mcal {M}\) be an \(\mcal {L}\)-structure with domain \(M\) and let \(h:\Vbl \rightarrow M\) be an assignment. We consider when \(\mcal {M}\models \chi [h]\).
+</p>
+<p>
+<b>Step 1:</b> \(\mcal {M}\models \chi [h]\) if and only if for all \(a\in M\),
+</p>
+<p>
+\[\mcal {M}\models (\forall v_2 (R(v_1,v_2)\rightarrow R(v_2,v_1)))[h({v_1\atop a})].\]
+</p>
+<p>
+<b>Step 2:</b> \(\mcal {M}\models \chi [h]\) if and only if for all \(a\in M\) and \(b\in M\),
+</p>
+<p>
+\[\mcal {M}\models (R(v_1,v_2)\rightarrow R(v_2,v_1))[h({v_1\atop a})({v_2 \atop b})].\]
+</p>
+<p>
+<b>Step 3:</b> \(\mcal {M}\models \chi [h]\) if and only if for all \(a\in M\) and \(b\in M\),
+</p>
+<p>
+\[(a,b)\in R^{\mcal {M}} \text { implies } (b,a)\in R^{\mcal {M}}.\]
+</p>
+<p>
+<b>Conclusion:</b> \(\mcal {M}\models \chi [h]\) if and only if \(R^{\mcal {M}}\) is a symmetric relation.
+</p>
+</li>
+</ul>
+
+</li>
+
+</ul>
+
+</div>
+
+<p>
+<span role="note" class="marginpar">End of L21 &amp; L22</span>
+</p>
+
+<p>
+We now state some results which link truth in propositional logic with truth in predicate logic.
+</p>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-204"></a>
+<span class="amsthmnameplain">Definition</span><span class="amsthmnumberplain"> <span class="textup">3.20</span></span>. </span> Let \(\mcal {L}\) be a first order language. Let \(t\) be a propositional formula in a propositional
+language with propositional variables \(p_1,\ldots ,p_n\). Let \(\phi _1,\ldots ,\phi _n\) be \(\mcal {L}\)-formulas. We define \(t(p_1/\phi _1,\ldots ,p_n/\phi _n)\) to be the \(\mcal {L}\)-formula obtained by replacing each instance
+of \(p_i\) by \(\phi _i\) for \(1\leq i\leq n\).
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-205"></a>
+<span class="amsthmnameplain">Remark</span><span class="amsthmnumberplain"> <span class="textup">3.21</span></span>. </span> We should really prove that \(t(p_1/\phi _1,\ldots ,p_n/\phi _n)\) in the above definition actually
+is an \(\mcal {L}\)-formula. If you want to carry this out then prove it by induction on the complexity of \(t\).
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-206"></a>
+<span class="amsthmnameplain">Proposition</span><span class="amsthmnumberplain"> <span class="textup">3.22</span></span>. </span> <a id="proptautaretrue"></a>[Propositional tautologies are true in all structures at all
+assignments]
+</p>
+
+<p>
+Let \(\mcal {L}\) be a (first order) language. If \(t\) is a propositional tautology in a propositional language with propositional variables \(p_1,\ldots ,p_n\) and \(\phi _1,\ldots ,\phi _n\) are \(\mcal {L}\)-formulas then \(\mcal
+{M}\models t(p_1/\phi _1,\ldots ,p_n/\phi _n)[h]\) for all \(\mcal {L}\)-structures \(\mcal {M}\) and assignments \(h\).
+</p>
+
+</li>
+
+</ul>
+
+</div>
+
+<p>
+This lemma is non-examinable. It implies the previous proposition and its proof if fun.
+</p>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-207"></a>
+<span class="amsthmnameplain">Lemma</span><span class="amsthmnumberplain"> <span class="textup">3.23</span></span>. </span> <a id="propvalfrompred"></a> Let \(\mcal {L}\) be a (first order) language, \(\phi _1,\ldots ,\phi
+_n\) \(\mcal {L}\)-formulas, \(\mcal {M}\) an \(\mcal {L}\)-structure and \(h\) an assignment of \(\mcal {M}\). Define a function \(v_h\) from the set of propositional formulas in the propositional language with propositional variables
+\(p_1,\ldots ,p_n\) to the set \(\{\T ,\F \}\) by setting \(v_h(t)=\T \) if and only if \(\mcal {M}\models t(p_1/\phi _1,\ldots ,p_n/\phi _n)[h]\). Then \(v_h\) is a valuation.
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmproof">
+
+<a id="Logic-autopage-208"></a>
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"> <span class="amsthmproofname">Proof.</span></span> The proof will be a non-compulsory exercise. <span class="theoremendmark">&#x25A1;</span>
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmproof">
+
+<a id="Logic-autopage-209"></a>
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"> <span class="amsthmproofname">Proof of Proposition <a href="Tarski-Truth-Definition.html#proptautaretrue">3.22</a>.</span></span> Let \(v_h\) be as in the Lemma <a
+href="Tarski-Truth-Definition.html#propvalfrompred">3.23</a>. If \(t\) is a tautology then \(v_h(t)=\T \). Thus \(\mcal {M}\models t(p_1/\phi _1,\ldots ,p_n/\phi _n)[h]\) as required. <span
+class="theoremendmark">&#x25A1;</span>
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<!--
+...... subsubsection Free variables and the scope of a quantifier ......
+-->
+<h6 id="autosec-210">Free variables and the scope of a quantifier</h6>
+<a id="Logic-autopage-210"></a>
+
+
+<p>
+We have a defined in <a href="Formulas.html#freevar">3.16</a> the set of free variables of a formula in a way that is best for using in most proofs. It is not the easiest definition to use in order to calculate the set of free variables or to understand what a
+free variable is.
+</p>
+
+<p>
+Let \(\phi :=a_1a_2\ldots a_n\) be a formula. A <b>subformula</b> of \(\phi \) is a word \(a_ia_{i+1}\ldots a_k\) such that \(i\leq k\) which is also a formula. One can prove that the subformulas of a formula are exactly those formulas which
+appear in its construction tree.
+</p>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-211"></a>
+<span class="amsthmnameplain">Definition</span><span class="amsthmnumberplain"> <span class="textup">3.24</span></span>. </span>
+</p>
+<ul class="enumerate" style="list-style-type:none">
+
+
+<li>
+<p>
+<span class="listmarker">(i)</span> An instance of a variable \(x\) in a formula \(\phi \) is a <b>quantifier instance</b> if it appears directly after \(\forall \) or \(\exists \).
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">(ii)</span> An instance of a variable \(x\) in a formula \(\phi \) is <b>bound</b> if there is a subformula of \(\phi \) of the form \((\forall x \psi )\) (or \((\exists x \psi )\)) and this instance of \(x\)
+occurs in \(\psi \). We call \(\psi \) the <b>scope</b> of the quantifier \(\forall \) (respectively \(\exists \)).
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">(iii)</span> Any instance of a variable \(x\) which is not a quantifier instance or a bound instance is a <b>free</b> instance.
+</p>
+</li>
+</ul>
+
+</li>
+
+</ul>
+
+</div>
+
+<p>
+This exercise will be done during the class.
+</p>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-212"></a>
+<span class="amsthmnameplain">Exercise</span><span class="amsthmnumberplain"> <span class="textup">3.25</span></span>. </span> Let \(\mcal {L}_{\textrm {ring}}:=\langle 0,1,+,\cdot , -\rangle \) be the language of rings.
+Label all the quantifier, free and bound instances of the variable \(v_1\) in the following \(\mcal {L}_{\textrm {ring}}\)-formula
+</p>
+
+<p>
+\[(((\forall v_1(\exists v_2 (v_1\cdot v_2=1)))\vee v_1\cdot v_2=0)\rightarrow (\forall v_2 \, v_1+v_2=0))\]
+</p>
+
+<p>
+
+
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-213"></a>
+<span class="amsthmnameplain">Proposition</span><span class="amsthmnumberplain"> <span class="textup">3.26</span></span>. </span> Let \(\phi \) be a formula. The set of variables which occur as free instances in \(\phi \) is equal
+to the set of free variables of \(\phi \).
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmproof">
+
+<a id="Logic-autopage-214"></a>
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"> <span class="amsthmproofname">Proof.</span></span> Non-examinable and not lectured. <span class="theoremendmark">&#x25A1;</span>
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-215"></a>
+<span class="amsthmnameplain">Notation</span><span class="amsthmnumberplain"> <span class="textup">3.27</span></span>. </span> For \(\phi \) a formula, we will write \(\phi (x_1,\ldots , x_n)\) where \(x_1,\ldots ,x_n\) are
+variables to indicate that the set of free variables of \(\phi \) is contained in \(\{x_1,\ldots ,x_n\}\).
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-216"></a>
+<span class="amsthmnameplain">Definition</span><span class="amsthmnumberplain"> <span class="textup">3.28</span></span>. </span> An <b>\(\mcal {L}\)-sentence</b> is a formula with no free variables i.e. \(\phi \) is a sentence
+if \(\textrm {Fr}(\phi )=\emptyset \).
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<!--
+...... subsubsection Back to Tarski’s Truth Definition ......
+-->
+<h6 id="autosec-217">Back to Tarski’s Truth Definition</h6>
+<a id="Logic-autopage-217"></a>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-218"></a>
+<span class="amsthmnameplain">Proposition</span><span class="amsthmnumberplain"> <span class="textup">3.29</span></span>. </span> <a id="Onlyfrvarcount"></a> Let \(\mcal {L}\) be a language, \(\mcal {M}\) be an \(\mcal
+{L}\)-structure with domain \(M\) and \(\phi \) an \(\mcal {L}\)-formula. If \(h,g:\Vbl \rightarrow M\) are assignments such that \(h(x)=g(x)\) for all \(x\in \Fr (\phi )\) then \(\mcal {M}\models \phi [h]\) if and only if \(\mcal
+{M}\models \phi [g]\).
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmproof">
+
+<a id="Logic-autopage-219"></a>
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"> <span class="amsthmproofname">Proof.</span></span> We won’t include all details in some parts of the proof. On Exercise Sheet \(6\) you will show that for \(t\in \tm (\mcal {L})\), \(t^\mcal {M}[h]=t^{\mcal
+{M}}[g]\) if \(g\) and \(h\) agree on the free variables of \(t\). This implies that if \(\phi \) is an atomic formula then \(\mcal {M}\models \phi [h]\) if and only if \(\mcal {M}\models \phi [g]\). Note that \(\bot \) has no free variables
+and \(\mcal {M}\nvDash \bot [f]\) for all assignments \(f\). So the statement is true for all formulas of complexity \(0\). We now proceed by induction on complexity of formulas.
+</p>
+
+<p>
+Suppose the statement is true for all formulas \(\psi \in \Fml _k(\mcal {L})\). Take \(\phi \in \Fml _{k+1}(\mcal {L})\backslash \Fml _k(\mcal {L})\). Then either \(\phi \) is \((\psi _1\rightarrow \psi _2)\) for some \(\psi
+_1,\psi _2\in \Fml _k(\mcal {L})\) or \(\phi \) is \((\forall y\psi )\) for some \(\psi \in \Fml _k(\mcal {L})\). I leave it to you to write a proof for the case \(\phi \) is \((\psi _1\rightarrow \psi _2)\).
+</p>
+
+<p>
+Suppose \(\phi \) is \((\forall y\psi )\). Then \(\Fr (\phi )=\Fr (\psi )\backslash \{y\}\). Suppose \(h(x)=g(x)\) for all \(x\in \Fr (\phi )\). Then \(\mcal {M}\models \phi [h]\) if and only if for all \(a\in M\), \(\mcal
+{M}\models \psi [h({y\atop a})]\) and \(\mcal {M}\models \phi [g]\) if and only if for all \(a\in M\), \(\mcal {M}\models \psi [g({y\atop a})]\).
+</p>
+
+<p>
+By assumption, \(h(x)=g(x)\) for all \(x\in \Fr (\phi )\). Therefore \(h({y\atop a})(x)=g({y\atop a})(x)\) for all \(x\in \Fr (\phi )\cup \{y\}=\Fr (\psi )\). Therefore, by our induction hypothesis, for all \(a\in M\), \(\mcal
+{M}\models \psi [h({y\atop a})]\) if and only if \(\mcal {M}\models \psi [g({y\atop a})]\). Therefore \(\mcal {M}\models \phi [h]\) if and only if \(\mcal {M}\models \phi [g]\) as required. Hence, by induction on the complexity of
+formulas, the statement of the proposition is true. <span class="theoremendmark">&#x25A1;</span>
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-220"></a>
+<span class="amsthmnameplain">Definition</span><span class="amsthmnumberplain"> <span class="textup">3.30</span></span>. </span>
+</p>
+<ul class="enumerate" style="list-style-type:none">
+
+
+<li>
+<p>
+<span class="listmarker">(i)</span> Let \(\phi (x_1,\ldots ,x_n)\) be an \(\mcal {L}\)-formula and \(\mcal {M}\) an \(\mcal {L}\)-structure with domain \(M\). For \(a_1,\ldots ,a_n\in M\), we write
+</p>
+<p>
+\[\mcal {M}\models \phi [a_1,\ldots ,a_n]\]
+</p>
+<p>
+to mean that
+</p>
+<p>
+\[\mcal {M}\models \phi [h]\]
+</p>
+<p>
+for some/every assignment \(h:\Vbl \rightarrow M\) such that \(h(x_i)=a_i\) for \(1\leq i\leq n\).
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">(ii)</span> Let \(\phi \) be an \(\mcal {L}\)-sentence and \(\mcal {M}\) an \(\mcal {L}\)-structure. We write \(\mcal {M}\models \phi \) to mean that \(\mcal {M}\models \phi [h]\) for some/every valuation
+\(h\). In this case we say <b>\(\mcal {M}\) satisfies \(\phi \)</b> or <b>\(\phi \) is true in \(\mcal {M}\)</b> or <b>\(\phi \) holds in \(\mcal {M}\)</b>. We will sometimes also say <b>\(\mcal {M}\) is a model of \(\phi
+\)</b> or \(\mcal {M}\) <b>models</b> \(\phi \).
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">(iii)</span> Let \(\Sigma \) be a set of \(\mcal {L}\)-sentences and \(\mcal {M}\) is an \(\mcal {L}\)-structure. Then we write \(\mcal {M}\models \Sigma \) to mean that for all \(\phi \in \Sigma \), \(\mcal
+{M}\models \phi \). In this situation we say \(\mcal {M}\) <b>is a model of</b> \(\Sigma \) or \(\mcal {M}\) <b>satisfies</b> \(\Sigma \).
+</p>
+</li>
+</ul>
+
+</li>
+
+</ul>
+
+</div>
+
+<p>
+We are finally ready to define logical implication and logical equivalence for \(\mcal {L}\)-formulas. For arbitrary formulas, the valuations of propositional logic are replaced with \(\mcal {L}\)-structures together with assignments. For (sets of) sentences,
+valuations are replaced by \(\mcal {L}\)-structures.
+</p>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-221"></a>
+<span class="amsthmnameplain">Definition</span><span class="amsthmnumberplain"> <span class="textup">3.31</span></span>. </span>
+</p>
+<ul class="enumerate" style="list-style-type:none">
+
+
+<li>
+<p>
+<span class="listmarker">(i)</span> Let \(\Sigma \subseteq \Fml (\mcal {L})\) and \(\phi \in \Fml (\mcal {L})\). We say \(\Sigma \) <b>logically implies</b> \(\phi \) and write \(\Sigma \models \phi \) if for all \(\mcal
+{L}\)-structures \(\mcal {M}\) and all assignments \(h\), if \(\mcal {M}\models \psi [h]\) for all \(\psi \in \Sigma \) then \(\mcal {M}\models \phi [h]\).
+</p>
+<p>
+As in propositional logic, we will write \(\models \phi \) to mean that \(\emptyset \models \phi \) and \(\psi _1,\ldots ,\psi _n\models \phi \) to mean \(\{\psi _1,\ldots ,\psi _n\}\models \phi \).
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">(ii)</span> We say that \(\mcal {L}\)-formulas \(\phi \) and \(\psi \) are <b>logically equivalent</b> if \(\phi \models \psi \) and \(\psi \models \phi \). In this situation we write \(\phi \equiv \psi \).
+</p>
+</li>
+</ul>
+
+</li>
+
+</ul>
+
+</div>
+
+<p>
+<span role="note" class="marginpar">End of L23 &amp; L24</span>
+</p>
+
+<p>
+Proposition <a href="Tarski-Truth-Definition.html#proptautaretrue">3.22</a> can now be rewritten as follows.
+</p>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-222"></a>
+<span class="amsthmnameplain">Proposition</span><span class="amsthmnumberplain"> <span class="textup">3.32</span></span>. </span> Let \(\mcal {L}\) be a (first order) language. If \(t\) is a propositional tautology in a propositional
+language with propositional variables \(p_1,\ldots ,p_n\) and \(\phi _1,\ldots ,\phi _n\) are \(\mcal {L}\)-formulas then \(\models t(p_1/\phi _1,\ldots ,p_n/\phi _n)\). In particular, for all \(\mcal {L}\)-formulas \(\phi ,\psi \)
+and \(\sigma \),
+</p>
+<ul class="enumerate" style="list-style-type:none">
+
+
+<li>
+<p>
+<span class="listmarker">(i)</span> \(\models (\phi \rightarrow (\psi \rightarrow \phi ))\)
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">(ii)</span> \(\models ((\phi \rightarrow (\psi \rightarrow \sigma ))\rightarrow ((\phi \rightarrow \psi )\rightarrow (\phi \rightarrow \sigma )))\)
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">(iii)</span> \(\models ((\neg (\neg \phi ))\rightarrow \phi )\)
+</p>
+</li>
+</ul>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-223"></a>
+<span class="amsthmnameplain">Example</span><span class="amsthmnumberplain"> <span class="textup">3.33</span></span>. </span> For all sets of \(\mcal {L}\)-formulas \(\Sigma \), \(\Sigma \models \bot \) means there is no
+\(\mcal {L}\)-structure \(\mcal {M}\) and assignment \(h\) such that \(\mcal {M}\models \phi [h]\) for all \(\phi \in \Sigma \).
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-224"></a>
+<span class="amsthmnameplain">Remark</span><span class="amsthmnumberplain"> <span class="textup">3.34</span></span>. </span> <a id="MPfortruth"></a> Let \(\phi ,\psi \) be \(\mcal {L}\)-formulas and \(\Sigma \) a set of
+\(\mcal {L}\)-formulas. If \(\Sigma \models \phi \) and \(\Sigma \models (\phi \rightarrow \psi )\) then \(\Sigma \models \psi \).
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmproof">
+
+<a id="Logic-autopage-225"></a>
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"> <span class="amsthmproofname">Proof.</span></span> Easy exercise! <span class="theoremendmark">&#x25A1;</span>
+</p>
+
+</li>
+
+</ul>
+
+</div>
+
+<p>
+So far everything we have said about logical implication is the same as for Propositional Logic. Here are some examples and non-examples involving quantifiers.
+</p>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-226"></a>
+<span class="amsthmnameplain">Examples</span><span class="amsthmnumberplain"> <span class="textup">3.35</span></span>. </span> <a id="exallandor"></a> Let \(\phi ,\psi \) be \(\mcal {L}\)-formulas and \(x\in \Vbl \).
+</p>
+<ul class="enumerate" style="list-style-type:none">
+
+
+<li>
+<p>
+<span class="listmarker">1.</span> If \(x\notin \Fr (\phi )\) then \(\phi \equiv \forall x \, \phi \equiv \exists x \,\phi \).
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">2.</span> \(\forall x(\phi \wedge \psi )\equiv (\forall x\phi )\wedge (\forall x\psi )\).
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">3.</span> \((\forall x\phi )\vee (\forall x\psi )\) logically implies \(\forall x(\phi \vee \psi )\).
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">4.</span> \(\forall x(\phi \vee \psi )\) does not logically imply \((\forall x\phi )\vee (\forall x\psi )\).
+</p>
+</li>
+</ul>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmproof">
+
+<a id="Logic-autopage-227"></a>
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"> <span class="amsthmproofname">Proof.</span></span> 1. Let \(\mcal {M}\) be an \(\mcal {L}\)-structure with domain \(M\) and let \(h:\Vbl \rightarrow M\) be an assignment. Then \(\mcal {M}\models
+\forall x\phi [h]\) if and only if for all \(a\in \mcal {M}\), \(\mcal {M}\models \phi [h({x\atop a})]\). Since \(x\notin \Fr (\phi )\), for all \(y\in \Fr (\phi )\), \(h(y)=h({x\atop a})(y)\). Therefore, by <a
+href="Tarski-Truth-Definition.html#Onlyfrvarcount">3.29</a>, \(\mcal {M}\models \phi [h]\) if and only if \(\mcal {M}\models \phi [h({x\atop a})]\). Thus \(\mcal {M}\models \phi [h]\) if and only if \(\mcal {M}\models \forall
+x\phi \). The proof for \(\exists \) is similar.
+</p>
+
+<p>
+4. Let \(\mcal {L}:=\langle c\rangle \) where \(c\) is a constant symbol. Let \(\phi \) be \(v_1=c\) and let \(\psi \) be \(v_1\neq c\). Let \(\mcal {M}\) be an \(\mcal {L}\)-structure with domain \(\{0,1\}\) and \(c^{\mcal {M}}:=0\).
+Let \(h:\Vbl \rightarrow \{0,1\}\) be the assignment defined by \(h(v_i)=0\) if \(i=1\) and \(h(v_i)=1\) otherwise. Then \(\mcal {M}\models \forall v_1(\phi \vee \psi )[h]\) but \(\mcal {M}\nvDash (\forall v_1 \phi )\vee
+(\forall v_1 \psi )\).
+</p>
+
+<p>
+I leave 2. and 3. to the reader. <span class="theoremendmark">&#x25A1;</span>
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-228"></a>
+<span class="amsthmnameplain">Proposition</span><span class="amsthmnumberplain"> <span class="textup">3.36</span></span>. </span> <a id="Axgentrueplus"></a> Let \(\phi ,\psi \) be \(\mcal {L}\)-formulas and let \(x,
+x_1,\ldots , x_n\in \Vbl \).
+</p>
+<ul class="enumerate" style="list-style-type:none">
+
+
+<li>
+<p>
+<span class="listmarker">1.</span> For all \(x\notin \Fr (\phi )\), \(\models \phi \rightarrow \forall x \phi \).
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">2.</span> If \(\models \phi \) then \(\models \forall x_1\ldots \forall x_n \phi \).
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">3.</span> \(\models (\forall x (\phi \rightarrow \psi ))\rightarrow ((\forall x\phi )\rightarrow (\forall x \psi ))\)
+</p>
+</li>
+</ul>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmproof">
+
+<a id="Logic-autopage-229"></a>
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"> <span class="amsthmproofname">Proof.</span></span> 1. follows from <a href="Tarski-Truth-Definition.html#exallandor">3.35</a> and <a href="Tarski-Truth-Definition.html#MPfortruth">3.34</a>. I
+leave 3. as an exercise to the reader.
+</p>
+
+<p>
+2. It’s enough to show that if \(\models \phi \) then \(\models \forall x \phi \). Suppose \(\models \phi \). Let \(\mcal {M}\) be an \(\mcal {L}\)-structure with domain \(M\) and let \(h\) be an assignment of \(\mcal {M}\). Then
+\(\mcal {M}\models (\forall x \phi )[h]\) if and only if for all \(a\in M\), \(\mcal {M}\models \phi [h({x\atop a})]\). But this is true because \(\models \phi \). <span class="theoremendmark">&#x25A1;</span>
+</p>
+
+</li>
+
+</ul>
+
+</div>
+
+<p>
+The proof of this remark will be on Exercise sheet 7.
+</p>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-230"></a>
+<span class="amsthmnameplain">Remark</span><span class="amsthmnumberplain"> <span class="textup">3.37</span></span>. </span> If \(x\in \Fr (\phi )\) then \(\models \phi \rightarrow \forall x \phi \) is not always true.
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<!--
+...... subsubsection Substituting terms for variables ......
+-->
+<h6 id="autosec-231">Substituting terms for variables</h6>
+<a id="Logic-autopage-231"></a>
+
+
+<p>
+The words free and simultaneously are important in the next definition.
+</p>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-232"></a>
+<span class="amsthmnameplain">Definition</span><span class="amsthmnumberplain"> <span class="textup">3.38</span></span>. </span> Let \(\phi \in \Fml (\mcal {L})\), let \(t,t_1,\ldots ,t_n\in \tm (\mcal {L})\) and let
+\(x_1,\ldots ,x_n\) be distinct variables.
+</p>
+<ul class="enumerate" style="list-style-type:none">
+
+
+<li>
+<p>
+<span class="listmarker">(i)</span> The expression \(t(x_1/t_1,\ldots ,x_n/t_n)\) denotes the word in (the alphabet of ) \(\mcal {L}\) obtained by replacing every instance of \(x_i\) in \(t\) by \(t_i\) for \(1\leq i\leq n\)
+simultaneously.
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">(ii)</span> The expression \(\phi (x_1/t_1,\ldots ,x_n/t_n)\) denotes the word in (the alphabet of ) \(\mcal {L}\) obtained by replacing every <span class="underline">free</span> instance of \(x_i\) in \(\phi
+\) by \(t_i\) for \(1\leq i\leq n\) simultaneously.
+</p>
+</li>
+</ul>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-233"></a>
+<span class="amsthmnameplain">Remark</span><span class="amsthmnumberplain"> <span class="textup">3.39</span></span>. </span> It can be shown by induction on the complexity of terms and induction on the complexity of formulas that
+\(t(x_1/t_1,\ldots ,x_n/t_n)\) is an \(\mcal {L}\)-term and that \(\phi (x_1/t_1,\ldots ,x_n/t_n)\) is an \(\mcal {L}\)-formula.
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-234"></a>
+<span class="amsthmnameplain">Example</span><span class="amsthmnumberplain"> <span class="textup">3.40</span></span>. </span> Let \(\mcal {L}:=\langle c\rangle \) where \(c\) is a constant symbol. Let \(\phi \) be the
+\(\mcal {L}\)-formula
+</p>
+
+<p>
+\[(((\forall v_1 (v_1=c\vee v_3=c))\wedge v_1=v_1)\wedge v_2=v_1).\]
+</p>
+
+<p>
+Let \(t_1\) be \(v_2\) and let \(t_2\) be \(c\). Then \(\phi (v_1/t_1,v_2/t_2)\) is
+</p>
+
+<p>
+\[(((\forall v_1 (v_1=c\vee v_3=c))\wedge v_2=v_2)\wedge c=v_2).\]
+</p>
+
+<p>
+
+
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-235"></a>
+<span class="amsthmnameplain">Definition</span><span class="amsthmnumberplain"> <span class="textup">3.41</span></span>. </span>
+</p>
+<ul class="enumerate" style="list-style-type:none">
+
+
+<li>
+<p>
+<span class="listmarker">(1)</span> A variable \(y\) is <b>substitutable for the variable \(x\) in a formula \(\phi \)</b> if the variable \(x\) does not occur as a free instance in the scope of a quantifier \(\forall y\) (or \(\exists
+y\)) in \(\phi \).
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">(2)</span> A term \(t\) is <b>substitutable for the variable \(x\) in a formula \(\phi \)</b> if all \(y\in \Fr (t)\) are substitutable for \(x\) in \(\phi \).
+</p>
+</li>
+</ul>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-236"></a>
+<span class="amsthmnameplain">Remark</span>. </span> For any formula \(\phi \) and variable \(x\), \(x\) is substitutable for \(x\) in \(\phi \).
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-237"></a>
+<span class="amsthmnameplain">Examples</span><span class="amsthmnumberplain"> <span class="textup">3.42</span></span>. </span>
+</p>
+<ul class="enumerate" style="list-style-type:none">
+
+
+<li>
+<p>
+<span class="listmarker">(i)</span> The variable \(v_2\) is substitutable for \(v_1\) in the formula \((v_1=v_2\wedge (\forall v_1 \exists v_2 \, v_1=v_2))\).
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">(ii)</span> The variable \(v_1\) is not substitutable for \(v_2\) in the formula \(\exists v_1 \, v_1\neq v_2\).
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">(iii)</span> The term \(F(v_2,v_3)\) where \(F\) is a binary function symbol is substitutable for \(v_1\) in the formula \((v_1=v_2\wedge (\forall v_1 \exists v_2 \, v_1=v_2))\).
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">(iv)</span> The term \(F(v_1,v_2)\) is not substitutable for \(v_2\) in the formula \(\exists v_1 \, v_1\neq v_2\).
+</p>
+</li>
+</ul>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-238"></a>
+<span class="amsthmnameplain">Proposition</span><span class="amsthmnumberplain"> <span class="textup">3.43</span></span>. </span> <a id="soundnesssubax"></a> Let \(\phi \) be an \(\mcal {L}\)-formula, \(x\) a variable and
+\(t\) an \(\mcal {L}\)-term. If \(t\) is substitutable for \(x\) in \(\phi \) then
+</p>
+
+<p>
+\[\models (\forall x \,\phi )\rightarrow \phi (x/t).\]
+</p>
+
+<p>
+
+
+</p>
+
+</li>
+
+</ul>
+
+</div>
+
+<p>
+<span role="note" class="marginpar">End of L25 &amp; L26</span>
+</p>
+
+<p>
+<b>Warning:</b> The condition “\(t\) is substitutable for \(x\) in \(\phi \)” is necessary. For example, if \(\phi \) is \((\exists v_1\, v_1\neq v_2)\) and \(t\) is \(v_1\) then \(\nvDash (\forall v_2 \,\phi )\rightarrow \phi (v_2/v_1)\).
+Checking the details is on Exercise Sheet 7.
+</p>
+
+<p>
+In order to prove this proposition we need to make some observations and prove a lemma.
+</p>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-239"></a>
+<span class="amsthmnameplain">Remark</span><span class="amsthmnumberplain"> <span class="textup">3.44</span></span>. </span> <a id="subrem"></a> Let \(\phi , \psi ,\psi _1,\psi _2\) be formulas, \(t\) a term and \(x,y,z\)
+variables.
+</p>
+<ul class="enumerate" style="list-style-type:none">
+
+
+<li>
+<p>
+<span class="listmarker">(I)</span> Suppose \(\phi \) is \((\psi _1\rightarrow \psi _2)\). Then \(t\) is substitutable for \(x\) in \(\phi \) if and only if \(t\) is substitutable for \(x\) in \(\psi _1\) and in \(\psi _2\).
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">(II)</span> Suppose \(\phi \) is \((\forall z \,\psi )\).
+</p>
+<ul class="enumerate" style="list-style-type:none">
+
+
+<li>
+<p>
+<span class="listmarker">(a)</span> Then \(y\) is substitutable for \(x\) in \(\phi \) if and only if
+</p>
+<ul class="itemize" style="list-style-type:none">
+
+
+<li>
+<p>
+<span class="listmarker">•</span> \(x\notin \Fr (\phi )\); or
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">•</span> \(z\neq y\) and \(y\) is substitutable for \(x\) in \(\psi \).
+</p>
+</li>
+</ul>
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">(b)</span> Then \(t\) is substitutable for \(x\) in \(\phi \) if and only if
+</p>
+<ul class="itemize" style="list-style-type:none">
+
+
+<li>
+<p>
+<span class="listmarker">•</span> \(x\notin \Fr (\phi )\); or
+</p>
+
+
+</li>
+<li>
+
+
+<p>
+<span class="listmarker">•</span> \(z\notin \Fr (t)\) and \(t\) is substitutable for \(x\) in \(\psi \).
+</p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmproof">
+
+<a id="Logic-autopage-240"></a>
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"> <span class="amsthmproofname">Proof.</span></span> (II) is the tricky statement and (II)(b) is an easy consequence of (II)(a). So we prove (II)(a).
+</p>
+
+<p>
+We first prove the forward direction. Suppose \(y\) is substitutable for \(x\) in \(\phi \) and \(x\in \Fr (\phi )\). Then \(z\neq x\) and \(x\in \Fr (\psi )\). Since \(y\) is substitutable for \(x\) in \(\phi \) and \(x\in \Fr (\psi )\),
+\(y\neq z\). Suppose \(y\) is not substitutable for \(x\) in \(\psi \). Then a free instance of \(x\) occurs in the scope of \(\forall y\) in \(\psi \). Since \(z\neq x\), that instance stays free in \(\phi \).
+</p>
+
+<p>
+We now prove the reverse direction. If \(x\notin \Fr (\phi )\) then trivially \(y\) is substitutable for \(x\). So suppose \(z\neq y\) and \(y\) is substitutable for \(x\) in \(\psi \). Then no free instance of \(x\) occurs in the scope of a
+quantifier \(\forall y\) in \(\psi \) and since \(z\neq y\) this is also true for \(\phi \). Therefore \(y\) is substitutable for \(x\) in \(\phi \) as required. <span class="theoremendmark">&#x25A1;</span>
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmbodyplain">
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"><a id="Logic-autopage-241"></a>
+<span class="amsthmnameplain">Lemma</span><span class="amsthmnumberplain"> <span class="textup">3.45</span></span>. </span> <a id="sublemma"></a> Let \(\phi \) be a formula, \(x\) a variable and \(t\) a term. If \(t\) is
+substitutable for \(x\) then for all \(\mcal {L}\)-structures \(\mcal {M}\) and assignments \(h\) of \(\mcal {M}\),
+</p>
+
+<p>
+\[\mcal {M}\models \phi (x/t)[h] \text { if and only if } \mcal {M}\models \phi [h\left ({x\atop t^{\mcal {M}}[h]}\right )].\]
+</p>
+
+<p>
+
+
+</p>
+
+</li>
+
+</ul>
+
+</div>
+<div class="amsthmproof">
+
+<a id="Logic-autopage-242"></a>
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"> <span class="amsthmproofname">Proof.</span></span> The case when \(\phi \) is an atomic formula is on exercise sheet \(7\).
+</p>
+
+<p>
+Suppose the statement is true for all \(\psi \in \Fml _k(\mcal {L})\). Take \(\phi \in \Fml _{k+1}(\mcal {L})\). Then \(\phi \) is either of the form \((\psi _1\rightarrow \psi _2)\) for \(\psi _1,\psi _2\in \Fml _k(\mcal {L})\) or
+\(\phi \) is \(\forall z\psi \) for \(\psi \in \Fml _k(\mcal {L})\) and \(z\in \Vbl \). I leave the case where \(\phi \) is \((\psi _1\rightarrow \psi _2)\) to the reader.
+</p>
+
+<p>
+Suppose \(\phi \) is \(\forall z\,\psi \) for \(\psi \in \Fml _k(\mcal {L})\) and \(z\in \Vbl \). By \(\ref {subrem}\), since \(t\) is substitutable for \(x\) in \(\phi \), either \(x\notin \Fr (\phi )\), or, \(z\notin \Fr (t)\) and
+\(t\) is substitutable for \(x\) in \(\psi \). In the first case, \(\phi (x/t)\) is \(\phi \) and \(\mcal {M}\models \phi [h]\) if and only if \(\mcal {M}\models \phi [h({x\atop a})]\) for any \(a\in M\) because \(x\notin \Fr (\phi )\). So
+we just need to consider the second case. Suppose \(z\notin \Fr (t)\) and \(t\) is substitutable for \(x\) in \(\psi \). We split further into \(2\) cases. First suppose that \(x=z\). Then \((\forall z\psi )(x/t)\) is \(\forall x\psi \). Thus
+the statement of the lemma holds because \(x\notin \Fr (\forall x\psi )\). Now suppose that \(x\neq z\). Then \(\phi (x/t)\) is \(\forall z \psi (x/t)\). So \(\mcal {M}\models \phi (x/t)[h]\) if and only if \(\mcal {M}\models
+\psi (x/t)[h({z\atop a})]\) for all \(a\in M\). By the induction hypothesis, this is true if and only if \(\mcal {M}\models \psi [h({z\atop a})({x\atop t^{\mcal {M}}})]\). Since \(x\neq z\), this is true if and only if \(\mcal {M}\models
+\phi [h({x\atop a})]\) as required. The lemma now follows by induction on the complexity of formulas. <span class="theoremendmark">&#x25A1;</span>
+</p>
+
+</li>
+
+</ul>
+
+</div>
+
+<p>
+The work to prove <a href="Tarski-Truth-Definition.html#soundnesssubax">3.43</a> is mostly in the proof of the previous lemma.
+</p>
+<div class="amsthmproof">
+
+<a id="Logic-autopage-243"></a>
+
+<ul class="list" style="list-style-type:none">
+
+
+
+<li>
+<p>
+<span class="listmarker"> <span class="amsthmproofname">Proof of Proposition <a href="Tarski-Truth-Definition.html#soundnesssubax">3.43</a>.</span></span> We suppose that \(\phi , t\) and \(x\) are as in the statement of the
+proposition. Let \(\mcal {M}\) be an \(\mcal {L}\)-structure with domain \(M\) and let \(h\) be an assignment of \(\mcal {M}\). We need to show \(\mcal {M}\models ((\forall x \phi )\rightarrow \phi (x/t)) [h]\). According to Tarski’s
+Truth Definition, we need to show that if \(\mcal {M}\models (\forall x \phi )[h]\) then \(\mcal {M}\models \phi (x/t)[h]\). Suppose \(\mcal {M}\models (\forall x \phi )[h]\). Then for all \(a\in M\), \(\mcal {M}\models \phi
+[h({x\atop a})]\). So, in particular, \(\mcal {M}\models \phi [h\left ({x\atop t^{\mcal {M}}[h]}\right )].\) By <a href="Tarski-Truth-Definition.html#sublemma">3.45</a> and since \(t\) is substitutable for \(x\) in \(\phi \), this
+is equivalent to \(\mcal {M}\models \phi (x/t)[h]\) as required. <span class="theoremendmark">&#x25A1;</span>
+</p>
+
+</li>
+
+</ul>
+
+</div>
+
+</section>
+
+</main>
+
+</div>
+
+
+<nav class="botnavigation"><a href="Logic.html" class="linkhome" >
+Home</a></nav>
+
+</body>
+</html>
